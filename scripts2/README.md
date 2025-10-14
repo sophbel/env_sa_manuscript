@@ -1,1 +1,6 @@
 ## Script Library ##
+## Data Processing ##
+1) 000_summarise_data.R: This summarises the line-list invasive pneumococcal disease data from GERMS-SA into a cohesive spatiotemporal data frame including geocoding hospitals and adding genomic data to epidemiological data. 
+2) 0_process_data.R and 0_process_data_adm1.R: These bring together the epidemiological, genomic, sociodemographic, environmental datasets together into either weekly or monthly resolution. They are for district level (adm2) and province level (adm1) respectively.
+3) 02_write_formulas.R: Creates lists of formulas to use in different model configurations.
+4) 03_base_model.R: This reads in formulas from a list in the previous script and runs base models. There are 2 flags which can be set in lines 15 and 16 respecitively specifying the time and space resolution whereby time can either be "weekly" or "monthly" and space is either "adm1" or "adm2". This dictates which dataframes are read in and where model outputs are saved.
