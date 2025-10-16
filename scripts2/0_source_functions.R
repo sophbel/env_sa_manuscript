@@ -897,6 +897,78 @@ construct_formula <- function(vars, mod) {
 }
 
 
+############### PCV ART COMPARISON FUNCTIONS ###################################
+############### construct a formula to test perturbations with province replication and without #########
+
+# Function to build a base formula list
+perturbation_formula_list <- function(response_var = "vts", replicate = FALSE) {
+  
+  if(replicate == FALSE){
+  # Define the base components used in all models
+  base_components <- c(
+    'f(id_u, model = "bym2", graph = g, scale.model = TRUE, adjust.for.con.comp = TRUE)',
+    'f(id_m, model = "rw2", cyclic = TRUE, scale.model = TRUE, constr = TRUE)',
+    'f(id_y, model = "iid")')
+    # Define the covariate sets and their descriptions
+    covariates <- list(
+      list(var = "ART_coverage",
+           desc = "spatial, seasonal, and annual accounting for ART coverage"),
+      list(var = "PCV_coverage",
+           desc = "spatial, seasonal, and annual accounting for PCV coverage"),
+      list(var = "vaccination_period",
+           desc = "spatial, seasonal, and annual accounting for vaccination_period"),
+      list(var = "post_vaccination_2009",
+           desc = "spatial, seasonal, and annual accounting for 2009 vaccine"),
+      list(var = "ART_coverage_national",
+           desc = "spatial, seasonal, and annual accounting for ART Nationally"),
+      list(var = c("vaccination_period", "ART_coverage"),
+           desc = "spatial, seasonal, and annual accounting for vaccination_period and ART coverage")
+    )
+  
+  }
+  if(replicate ==TRUE){
+    # Define the base components used in all models
+    base_components <- c(
+      'f(id_u, model = "bym2", graph = g, scale.model = TRUE, adjust.for.con.comp = TRUE)',
+      'f(id_m, model = "rw2", cyclic = TRUE, scale.model = TRUE, constr = TRUE)',
+      'f(id_y, model = "iid", replicate = id_prov)'
+    )
+    # Define the covariate sets and their descriptions
+    covariates <- list(
+      list(var = "ART_coverage",
+           desc = "spatial, seasonal, and annual (replicate) accounting for ART coverage"),
+      list(var = "PCV_coverage",
+           desc = "spatial, seasonal, and annual (replicate) accounting for PCV coverage"),
+      list(var = "vaccination_period",
+           desc = "spatial, seasonal, and annual (replicate) accounting for vaccination_period"),
+      list(var = "post_vaccination_2009",
+           desc = "spatial, seasonal, and annual (replicate) accounting for 2009 vaccine"),
+      list(var = "ART_coverage_national",
+           desc = "spatial, seasonal, and annual (replicate) accounting for ART Nationally"),
+      list(var = c("vaccination_period", "ART_coverage"),
+           desc = "spatial, seasonal, and annual (replicate) accounting for vaccination_period and ART coverage")
+    )
+  }
+  
+  # Initialize the output list
+  out_list <- list()
+  
+  # Loop over each covariate set and build the model
+  for (i in seq_along(covariates)) {
+    base_form <- list()
+    form <- reformulate(
+      c(1, base_components, covariates[[i]]$var),
+      response = response_var
+    )
+    base_form$formula <- as.formula(form)
+    base_form$covs <- paste0(response_var, " ", covariates[[i]]$desc)
+    out_list[[i]] <- base_form
+  }
+    # assign(list_name, out_list, envir = .GlobalEnv)
+  
+  # Also return it for convenience
+  return(out_list)
+}
 ### unscale scaled variables
 unscale<-function(list,mean_1,sd_1){
   new_ID<-list$ID
@@ -908,6 +980,51 @@ unscale<-function(list,mean_1,sd_1){
   }
   return(new_ID)
 }
+
+
+##### MODEL EVALUATION #####
+evaluate_model_list <- function(model_list,
+                                data,
+                                base_intercept,
+                                num_outcomes = 1) {
+  # 1️ Evaluate all models in the list
+  mod_out <- lapply(model_list, function(mod) eval.mod(mod, data))
+  
+  # 2️ Combine all model evaluation metrics into one data frame
+  mod_out <- do.call(rbind, mod_out)
+  
+  # 3️ Evaluate and rank the models across performance metrics
+  mod_out <- eval.ranks(mod_out)
+  
+  # 4️ Clean and standardize model and covariate names
+  mod_out$model <- rownames(mod_out)
+  mod_out$cov <- gsub(" ", "_", mod_out$cov)
+  mod_out$cov <- gsub(",", "", mod_out$cov)
+  
+  # 5️ Compute R² for each model
+  mod_out$rsq <- apply(
+    mod_out,
+    1,
+    function(x) rsq(
+      mod_out[mod_out$cov == x["cov"], ],
+      base_intercept,
+      num_outcomes = num_outcomes
+    )
+  )
+  
+  # 6️ Extract numeric model index and base name
+  mod_out$num <- gsub("mae", "", mod_out$model)
+  mod_out$num[which(mod_out$num == "")] <- 0
+  mod_out$num <- as.numeric(mod_out$num)
+  mod_out$base <- paste0("base", "_none")
+  
+  #  Return the clean evaluated data frame
+  return(mod_out)
+}
+
+
+############### END PCV ART COMPARISON FUNCTIONS ########3
+
 
 
 ### extract lag and create lag column
