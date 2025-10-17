@@ -93,7 +93,9 @@ if(precov==TRUE){
             base_main <- inla.mod(base_form, fam = "nbinomial", df = df_all, nthreads=4, config=FALSE)
             saveRDS(base_main, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
             
-          
+            base_intercept <- inla.mod(base_form_list[[1]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
+            saveRDS(base_intercept, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
+            
 ################################################################################
 ####RUN MODELS#########
 ################################################################################
