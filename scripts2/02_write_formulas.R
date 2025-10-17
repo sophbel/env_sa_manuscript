@@ -71,6 +71,15 @@ base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual")
 base_form_list[[5]]<-base_form
 
+base_form<-list()
+form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
+                      'f(id_m, model = "rw2", cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
+                      'f(id_y, model = "iid", replicate = id_prov, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))'),
+                    "disease")
+base_form$formula <- as.formula(form)
+base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov)")
+base_form_list[[6]]<-base_form
+
 
 base_form<-list()
 form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T,  adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
@@ -80,7 +89,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T,  a
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual accounting for 2009 vaccine")
-base_form_list[[6]]<-base_form
+base_form_list[[7]]<-base_form
 
 
 base_form<-list()
@@ -91,7 +100,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T,  a
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual accounting for both vaccines")
-base_form_list[[7]]<-base_form
+base_form_list[[8]]<-base_form
 
 base_form<-list()
 form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
@@ -102,7 +111,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual accounting for both vaccines and covid")
-base_form_list[[8]]<-base_form
+base_form_list[[9]]<-base_form
 
 
 
@@ -116,7 +125,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal (rep by prov), and annual accounting for both vaccines")
-base_form_list[[9]]<-base_form
+base_form_list[[10]]<-base_form
 
 
 base_form<-list()
@@ -127,7 +136,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov) accounting for both vaccines")
-base_form_list[[10]]<-base_form
+base_form_list[[11]]<-base_form
 
 
 base_form<-list()
@@ -138,7 +147,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov) accounting for 2009 vaccine")
-base_form_list[[11]]<-base_form
+base_form_list[[12]]<-base_form
 
 base_form<-list()
 form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
@@ -148,7 +157,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal (rep by prov), and annual (rep by prov) accounting for both vaccines")
-base_form_list[[12]]<-base_form
+base_form_list[[13]]<-base_form
 
 
 base_form<-list()
@@ -160,7 +169,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov) accounting for both vaccines and covid")
-base_form_list[[13]]<-base_form
+base_form_list[[14]]<-base_form
 
 base_form<-list()
 form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
@@ -171,7 +180,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov) accounting for both vaccines and population_density")
-base_form_list[[14]]<-base_form
+base_form_list[[15]]<-base_form
 
 
 base_form<-list()
@@ -183,7 +192,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial (rep by prov), seasonal (rep by prov), and annual (rep by prov) accounting for both vaccines and covid")
-base_form_list[[15]]<-base_form
+base_form_list[[16]]<-base_form
 
 base_form<-list()
 form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
@@ -194,7 +203,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov) accounting for PCV Coverage and population_density")
-base_form_list[[16]]<-base_form
+base_form_list[[17]]<-base_form
 
 base_form<-list()
 form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
@@ -205,7 +214,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov) accounting for ART Coverage and population_density")
-base_form_list[[17]]<-base_form
+base_form_list[[18]]<-base_form
 
 base_form<-list()
 form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
@@ -216,7 +225,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov) accounting for ART Coverage and vaccination")
-base_form_list[[18]]<-base_form
+base_form_list[[19]]<-base_form
 
 base_form<-list()
 form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
@@ -227,7 +236,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov) accounting for ART Coverage and PCV coverage")
-base_form_list[[19]]<-base_form
+base_form_list[[20]]<-base_form
 
 base_form<-list()
 form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(2, 0.01))))',
@@ -239,7 +248,7 @@ form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, ad
                     "disease")
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (rep by prov) accounting for ART Coverage and vaccination period and population density")
-base_form_list[[20]]<-base_form
+base_form_list[[21]]<-base_form
 
 
 saveRDS(base_form_list,file="/home/sbelman/Documents/env_sa_manuscript/formulas/base_form_list.rds")

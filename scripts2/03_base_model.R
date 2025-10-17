@@ -11,8 +11,8 @@
 ################################################################################
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 # weekly=FALSE
-precov=FALSE
-time = "monthly"
+precov=TRUE ### set whether the run ends in 2020 or 2023
+time = "weekly"
 space="adm2"
       ## load disease data
   data<-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_",space,"_",time,"_lag_sc.csv"))
@@ -20,7 +20,10 @@ space="adm2"
 
 ## subset by only pre covid
 if(precov==TRUE){
-  data <- subset(data,data$date <= as.Date("2020-01-01"))
+  data <- subset(data,data$date < as.Date("2021-01-01"))
+  endyear = 2020
+}else{
+  endyear = 2023
 }
       ## load shape
       # landscan_raster <- raster("/home/sbelman/Documents/BRD/SouthAfrica/sociodemographic/landscan_2022/landscan-global-2022.tif")
@@ -74,6 +77,8 @@ if(precov==TRUE){
             var_cases <- var(df$disease, na.rm=T)
             var_cases/mean_cases
             
+            # table(df$vaccination_period, df$year)
+            
             
  ############################ run base formula used later ####
             base_form<-list()
@@ -86,7 +91,7 @@ if(precov==TRUE){
             base_form$covs<-paste0("spatial, seasonal, and annual (province replication) accounting for both vaccination binary, and population density")
         
             base_main <- inla.mod(base_form, fam = "nbinomial", df = df_all, nthreads=4, config=FALSE)
-            saveRDS(base_main, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_2023.rds"))
+            saveRDS(base_main, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
             
           
 ################################################################################
@@ -117,18 +122,18 @@ if(precov==TRUE){
       mod_out <- mod_out[,c("num","base","waic","mae","cpo","rsq","cov")]
 
      #### read and save the base model
-#    saveRDS(base_mod_list,file="/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_list_weekly.rds")
+#    saveRDS(base_mod_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_list_weekly_",endyear,".rds"))
 
-     write.table(mod_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_summary_statisics_",time,"_",space,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE, sep =",")
-     # saveRDS(base_mod_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_list_",time,"_",space,".rds"))
-     saveRDS(base_mod_list[[1]],file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,".rds"))
+     write.table(mod_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_summary_statisics_",time,"_",space,"_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE, sep =",")
+     # saveRDS(base_mod_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_list_",time,"_",space,"_",endyear,".rds"))
+     saveRDS(base_mod_list[[1]],file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
    
 #     
 ##########################################################################################
 ####### TEST MIXED BASE MODELS WITH SOCIODEMOGRAPHIC VARS ##################      
 ########################################################################################## 
      ### load intercept
-    # int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,".rds"))
+    # int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
     #   base_test_list <- list()
     #   base_form<-list()
     #   form <- reformulate(c(1, 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01))))',
@@ -204,8 +209,8 @@ if(precov==TRUE){
     # 
     #   mod_out <- mod_out[,c("num","base","waic","mae","cpo","rsq","cov")]
     # 
-    #   saveRDS(base_test_models[[5]], file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,".rds"))
-    #   write.table(mod_out, file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/mod_out_",time,"_intervention_test_",space,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = "," )
+    #   saveRDS(base_test_models[[5]], file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
+    #   write.table(mod_out, file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/mod_out_",time,"_intervention_test_",space,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = "," )
 
       
 ##########################################################################################
@@ -218,7 +223,7 @@ if(precov==TRUE){
       # basestring_vec <- paste0(time_vec, "_20092011_popdens_", space_vec)
   #     
   #     ### read in a list of the base models
-  #     mbase <- lapply(basestring_vec, function(re) readRDS(paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_", re, ".rds")))
+  #     mbase <- lapply(basestring_vec, function(re) readRDS(paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_", re, "_",endyear,".rds")))
   #     
   #     #### seasonal and annual random effects
   #     mod_idm_all <- mod_idy_all <- NULL
@@ -281,7 +286,7 @@ if(precov==TRUE){
   #       full_spatial_rr[,2:6] <- exp(full_spatial[,2:6])
   # 
   #     }
-  #     write.table(full_spatial_rr, paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/spatial_effects_",time,"_",space,".csv"),
+  #     write.table(full_spatial_rr, paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/spatial_effects_",time,"_",space,"_",endyear,".csv"),
   #                 sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
   #     full_spatial_rr[order(full_spatial_rr$mean),]
   #     ## extract specific values
@@ -319,7 +324,7 @@ if(precov==TRUE){
   #       labs(fill="Province",color = "Province")+
   #       facet_wrap(region ~.)
   # 
-  #     pdf("/home/sbelman/Documents/BRD/SouthAfrica/manuscript/random_effects/res_weekly_adm2.pdf", width = 13, height =4.5)
+  # pdf(paste0("/home/sbelman/Documents/BRD/SouthAfrica/manuscript/random_effects/res_weekly_adm2_",endyear,".pdf"), width = 13, height =4.5)
   #     print(      spat_list[[4]]+m+y)
   #     dev.off()
   # cbind(mp$month_name,exp(mp[,2:6]))

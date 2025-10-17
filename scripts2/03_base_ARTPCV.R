@@ -10,7 +10,7 @@ shp<-st_read("/home/sbelman/Documents/BRD/SouthAfrica/shps/gadm41_namematch_ZAF_
 ## read adjacency matrix
 g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
 base_intercept <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_weekly_intercept_adm2.rds"))
-
+precov = TRUE
 ################################################################################
 #### PREPARE DATA
 ################################################################################
@@ -54,6 +54,14 @@ df <- left_join(df, art_national, by="date")
 ### create vt column
 df <- df %>%
   mutate(vts = pcv7 + pcv13)
+
+## subset by only pre covid
+if(precov==TRUE){
+  df <- subset(df,data$df <= as.Date("2020-01-01"))
+  endyear = 2020
+}else{
+  endyear = 2023
+}
 
 ################################################################################
 #### write a formula list ####
@@ -244,7 +252,7 @@ base_pcvartprovrep_children_formula_list <- perturbation_formula_list(response_v
 #   base_pcvart_model_list[[i]] <- inla.mod(base_pcvart_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
 # }
 # 
-# saveRDS(base_pcvart_model_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly.rds")
+# saveRDS(base_pcvart_model_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly_",endyear,".rds"))
 
 
 # #################### with province replication ###################
@@ -256,17 +264,17 @@ base_pcvartprovrep_children_formula_list <- perturbation_formula_list(response_v
 #   print("run nbinomial")
 #   base_pcvartprovrep_model_list[[i]] <- inla.mod(base_pcvartprovrep_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
 # }
-# saveRDS(base_pcvartprovrep_model_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_model_list_weekly.rds")
+# saveRDS(base_pcvartprovrep_model_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_model_list_weekly_",endyear,".rds"))
 
-base_pcvart_model_list <- readRDS(file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly.rds")
+base_pcvart_model_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly_",endyear,".rds"))
 mod_out <- evaluate_model_list(base_pcvart_model_list, df, base_intercept, num_outcomes = 1)
 mod_out$outcome <- "disease"
-base_pcvartprovrep_model_list <- readRDS(file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_model_list_weekly.rds")
+base_pcvartprovrep_model_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_model_list_weekly_",endyear,".rds"))
 mod_out_pr <- evaluate_model_list(base_pcvartprovrep_model_list, df, base_intercept, num_outcomes = 1)
 mod_out_pr$outcome <- "disease"
 ### save the base models
 mod_out_bases <- rbind(mod_out, mod_out_pr)
-write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_summary_statisics_weekly.csv",quote=FALSE,row.names=FALSE,col.names=TRUE)
+write.table(mod_out_bases,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_summary_statisics_weekly_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE)
 
 
 ##################### NO PROVINCE REPLICATION - SUBSET MODELS ###################
@@ -278,7 +286,7 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
           print("run nbinomial")
           base_pcvart_nvtmodel_list[[i]] <- inla.mod(base_pcvart_nvt_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
         }      
-        saveRDS(base_pcvart_nvtmodel_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_nvtmodel_list_weekly.rds")
+        saveRDS(base_pcvart_nvtmodel_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_nvtmodel_list_weekly_",endyear,".rds"))
         mod_out_nvt <- evaluate_model_list(base_pcvart_nvtmodel_list, df, base_intercept, num_outcomes = 1)
         mod_out_nvt$outcome <- "nvts"
         ### extract fixed effects and save
@@ -308,7 +316,7 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
           print("run nbinomial")
           base_pcvart_vtsmodel_list[[i]] <- inla.mod(base_pcvart_vts_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
         }      
-        saveRDS(base_pcvart_vtsmodel_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_vtsmodel_list_weekly.rds")
+        saveRDS(base_pcvart_vtsmodel_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_vtsmodel_list_weekly_",endyear,".rds"))
         mod_out_vts <- evaluate_model_list(base_pcvart_vtsmodel_list, df, base_intercept, num_outcomes = 1)
         mod_out_vts$outcome <- "vts"
         ### extract fixed effects and save 
@@ -337,7 +345,7 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
           print("run nbinomial")
           base_pcvart_adultmodel_list[[i]] <- inla.mod(base_pcvart_adults_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
         }      
-        saveRDS(base_pcvart_adultmodel_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_adultmodel_list_weekly.rds")
+        saveRDS(base_pcvart_adultmodel_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_adultmodel_list_weekly_",endyear,".rds"))
         mod_out_adults <- evaluate_model_list(base_pcvart_adultmodel_list, df, base_intercept, num_outcomes = 1)
         mod_out_adults$outcome <- "adults"
         ### extract fixed effects and save
@@ -366,7 +374,7 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
           print("run nbinomial")
           base_pcvart_childrenmodel_list[[i]] <- inla.mod(base_pcvart_children_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
         }      
-        saveRDS(base_pcvart_childrenmodel_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_childrenmodel_list_weekly.rds")
+        saveRDS(base_pcvart_childrenmodel_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_childrenmodel_list_weekly_",endyear,".rds"))
         mod_out_children <- evaluate_model_list(base_pcvart_childrenmodel_list, df, base_intercept, num_outcomes = 1)
         mod_out_children$outcome <- "children"
         ### extract fixed effects and save
@@ -390,12 +398,12 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
         mod_out <- rbind(mod_out_nvt, mod_out_vts, mod_out_adults, mod_out_children)
         ## save table
         mod_out_tmp <- mod_out[,c("num","base","waic","mae","cpo","rsq","cov")]
-        write.table(mod_out,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_variousoutcomes_summary_statisics_weekly.csv",quote=FALSE,row.names=FALSE,col.names=TRUE)
+        write.table(mod_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_variousoutcomes_summary_statisics_weekly_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE)
         
         
         ########## LOAD ORIGINAL MODELS AGAIN ####
         # ##### load only the models we need
-        base_pcvart_model_list <- readRDS(file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly.rds")
+        base_pcvart_model_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly_",endyear,".rds"))
         covs <- sapply(base_pcvart_model_list, function(x) x$cov)
         
         ### base models
@@ -437,7 +445,7 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
               print("run nbinomial")
               base_pcvartprovrep_nvtmodel_list[[i]] <- inla.mod(base_pcvartprovrep_nvt_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
             }      
-            saveRDS(base_pcvartprovrep_nvtmodel_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_nvtmodel_list_weekly.rds")
+            saveRDS(base_pcvartprovrep_nvtmodel_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_nvtmodel_list_weekly_",endyear,".rds"))
             mod_out_nvt <- evaluate_model_list(base_pcvartprovrep_nvtmodel_list, df, base_intercept, num_outcomes = 1)
             mod_out_nvt$outcome <- "nvts"
             ### extract fixed effects and save
@@ -467,7 +475,7 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
               print("run nbinomial")
               base_pcvartprovrep_vtsmodel_list[[i]] <- inla.mod(base_pcvartprovrep_vts_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
             }      
-            saveRDS(base_pcvartprovrep_vtsmodel_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_vtsmodel_list_weekly.rds")
+            saveRDS(base_pcvartprovrep_vtsmodel_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_vtsmodel_list_weekly_",endyear,".rds"))
             mod_out_vts <- evaluate_model_list(base_pcvartprovrep_vtsmodel_list, df, base_intercept, num_outcomes = 1)
             mod_out_vts$outcome <- "vts"
             ### extract fixed effects and save 
@@ -496,7 +504,7 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
               print("run nbinomial")
               base_pcvartprovrep_adultmodel_list[[i]] <- inla.mod(base_pcvartprovrep_adults_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
             }      
-            saveRDS(base_pcvartprovrep_adultmodel_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_adultmodel_list_weekly.rds")
+            saveRDS(base_pcvartprovrep_adultmodel_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_adultmodel_list_weekly_",endyear,".rds"))
             mod_out_adults <- evaluate_model_list(base_pcvartprovrep_adultmodel_list, df, base_intercept, num_outcomes = 1)
             mod_out_adults$outcome <- "adults"
             ### extract fixed effects and save
@@ -525,7 +533,7 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
               print("run nbinomial")
               base_pcvartprovrep_childrenmodel_list[[i]] <- inla.mod(base_pcvartprovrep_children_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
             }      
-            saveRDS(base_pcvartprovrep_childrenmodel_list,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_childrenmodel_list_weekly.rds")
+            saveRDS(base_pcvartprovrep_childrenmodel_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_childrenmodel_list_weekly_",endyear,".rds"))
             mod_out_children <- evaluate_model_list(base_pcvartprovrep_childrenmodel_list, df, base_intercept, num_outcomes = 1)
             mod_out_children$outcome <- "children"
             ### extract fixed effects and save
@@ -549,7 +557,7 @@ write.table(mod_out_bases,file="/home/sbelman/Documents/env_sa_manuscript/models
             mod_out <- rbind(mod_out_nvt, mod_out_vts, mod_out_adults, mod_out_children)
             ## save table
             mod_out_tmp <- mod_out[,c("num","base","waic","mae","cpo","rsq","cov")]
-            write.table(mod_out,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_variousoutcomes_summary_statisics_weekly.csv",quote=FALSE,row.names=FALSE,col.names=TRUE)
+            write.table(mod_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_variousoutcomes_summary_statisics_weekly_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE)
             
             
             ########## LOAD ORIGINAL MODELS AGAIN ####
@@ -651,10 +659,10 @@ fixed_national_all_pr_model <- ggplot(fixedeffs_pr)+
   scale_color_manual(values=color_labels)+
   labs(color="Model")+
   facet_wrap(model ~.)
-pdf("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_perturbations.pdf", width = 8, height =5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_perturbations_",endyear,".pdf"), width = 8, height =5)
 print(fixed_national_all_pr_model)
 dev.off()
-ggsave("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_perturbations.png", width = 8, height =5)
+ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_perturbations_",endyear,".png"), width = 8, height =5)
 
 
 fixedeffs_pr[which(fixedeffs_pr$outcome=="NVT"),]
@@ -815,7 +823,7 @@ a<-ggplot()+
   scale_linetype_manual(values = lines) +
   facet_wrap(region ~.)
 a
-pdf("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/yearlyrandom_provRep_perturbations.pdf", width = 8, height =5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/yearlyrandom_provRep_perturbations_",endyear,".pdf"), width = 8, height =5)
 print(a)
 dev.off()
 
