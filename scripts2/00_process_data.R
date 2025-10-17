@@ -514,7 +514,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
       
       ## summarise
       data_summarized_month <- data2 %>%
-        mutate(month = floor_date(date, unit = "month")) %>%  # Convert date to start of the month being a Sunday
+        mutate(month = floor_date(date, unit = "month")) %>%  # 
         group_by(GID_2, district, month) %>%  # Group by GID_2, district, and monthly date
         summarize(disease = sum(disease, na.rm = TRUE),
                   sequenced = sum(sequenced, na.rm = TRUE),

@@ -9,7 +9,7 @@ data<-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_w
 shp<-st_read("/home/sbelman/Documents/BRD/SouthAfrica/shps/gadm41_namematch_ZAF_2.shp")
 ## read adjacency matrix
 g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
-base_intercept <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_weekly_intercept_adm2.rds"))
+base_intercept <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_weekly_intercept_adm2_2019.rds"))
 precov = TRUE
 ################################################################################
 #### PREPARE DATA
@@ -54,11 +54,12 @@ df <- left_join(df, art_national, by="date")
 ### create vt column
 df <- df %>%
   mutate(vts = pcv7 + pcv13)
+df$vaccination_period <- as.factor(df$vaccination_period)
 
 ## subset by only pre covid
 if(precov==TRUE){
-  df <- subset(df,data$df <= as.Date("2020-01-01"))
-  endyear = 2020
+  df <- subset(df,df$date < as.Date("2020-01-01"))
+  endyear = 2019
 }else{
   endyear = 2023
 }
@@ -243,7 +244,7 @@ base_pcvartprovrep_children_formula_list <- perturbation_formula_list(response_v
 #### RUN PCV ART MODELS
 ################################################################################
 ##################### with no province replication ###################
-##### no province replication
+# ##### no province replication
 # base_pcvart_model_list <-list()
 # threads=4
 # for(i in 1:length(base_pcvart_formula_list)) {
@@ -264,12 +265,12 @@ base_pcvartprovrep_children_formula_list <- perturbation_formula_list(response_v
 #   print("run nbinomial")
 #   base_pcvartprovrep_model_list[[i]] <- inla.mod(base_pcvartprovrep_formula_list[[i]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
 # }
-# saveRDS(base_pcvartprovrep_model_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_model_list_weekly_",endyear,".rds"))
+# saveRDS(base_pcvartprovrep_model_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_model_list_weekly_",endyear,".rds"))
 
-base_pcvart_model_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly_",endyear,".rds"))
+# base_pcvart_model_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly_",endyear,".rds"))
 mod_out <- evaluate_model_list(base_pcvart_model_list, df, base_intercept, num_outcomes = 1)
 mod_out$outcome <- "disease"
-base_pcvartprovrep_model_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_model_list_weekly_",endyear,".rds"))
+base_pcvartprovrep_model_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_model_list_weekly_",endyear,".rds"))
 mod_out_pr <- evaluate_model_list(base_pcvartprovrep_model_list, df, base_intercept, num_outcomes = 1)
 mod_out_pr$outcome <- "disease"
 ### save the base models
@@ -429,12 +430,7 @@ write.table(mod_out_bases,file=paste0("/home/sbelman/Documents/env_sa_manuscript
         
         ### fixed effects join together ###
         fixed_effects_all <- rbind(fixed_effects, fixed_effects_nvts, fixed_effects_vts, fixed_effects_adults, fixed_effects_children)
-        write.table(fixed_effects_all,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_variousoutcomes_fixedeffects_adm2_weekly.csv",quote=FALSE,row.names=FALSE,col.names=TRUE)
-
-
-
-
-
+        write.table(fixed_effects_all,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE)
 
 ##################### WITH PROVINCE REPLICATION - SUBSET MODELS ###################
             ### with no province replication but just non-vaccine types
@@ -557,13 +553,14 @@ write.table(mod_out_bases,file=paste0("/home/sbelman/Documents/env_sa_manuscript
             mod_out <- rbind(mod_out_nvt, mod_out_vts, mod_out_adults, mod_out_children)
             ## save table
             mod_out_tmp <- mod_out[,c("num","base","waic","mae","cpo","rsq","cov")]
-            write.table(mod_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_variousoutcomes_summary_statisics_weekly_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE)
+            write.table(mod_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_variousoutcomes_summary_statisics_weekly_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE)
+            
             
             
             ########## LOAD ORIGINAL MODELS AGAIN ####
             # ##### load only the models we need
-            base_pcvart_model_list <- readRDS(file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly.rds")
-            base_pcvartprovrep_model_list <- readRDS(file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_model_list_weekly.rds")
+            base_pcvart_model_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_model_list_weekly_",endyear,".rds"))
+            base_pcvartprovrep_model_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_model_list_weekly_",endyear,".rds"))
             covs <- sapply(base_pcvartprovrep_model_list, function(x) x$cov)
             
             ### base models
@@ -588,13 +585,14 @@ write.table(mod_out_bases,file=paste0("/home/sbelman/Documents/env_sa_manuscript
        
             ### fixed effects join together ###
             fixed_effects_all_pr <- rbind(fixed_effects_pr, fixed_effects_nvts_pr, fixed_effects_vts_pr, fixed_effects_adults_pr, fixed_effects_children_pr)
-            write.table(fixed_effects_all_pr,file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_variousoutcomes_fixedeffects_adm2_weekly.csv",quote=FALSE,row.names=FALSE,col.names=TRUE)
+            write.table(fixed_effects_all_pr,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvartprovrep_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE)
 
 #################################################################################
 # #### PLOT COMPARISONS OF DIFFERENT OUTCOMES AND PERTURBATIONS
 #################################################################################
-            fixed_effects_all_pr <- fread(file="/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_variousoutcomes_fixedeffects_adm2_weekly.csv")
-            fixed_effects_all <- fread(file="/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_variousoutcomes_fixedeffects_adm2_weekly.csv")
+            endyear = 2019
+            fixed_effects_all_pr <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"))
+            fixed_effects_all <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"))
 
 #################### NO PROVINCE REPLICATION FIXED EFFECTS #########
 fixedeffs <- cbind(fixed_effects_all, model = rep(c("ART","PCV", "vaccine_periods", "2009vaccine","ARTnational","ART_Vax","ART_Vax"),5), 
@@ -604,21 +602,50 @@ colnames(fixedeffs) <- c("mean","sd","lowerCI","median","upperCI","mode","kld","
 color_labels <- c("ART" = "#097969","PCV" = "#D91656", "ARTnational" = "grey", "ART_Vax" = "darkblue", "vaccine_periods"="orange","2009vaccine"="purple" )
 
 fixed_national_all <- ggplot(fixedeffs)+
-  geom_point(aes(x=effect,y=median, group=model, color= model, shape = outcome ),size=3, position=position_dodge(width=0.5)) +
-  geom_errorbar(aes(x=effect,ymin=lowerCI,ymax=upperCI, group=model, color= model, shape = outcome), width=.3, position=position_dodge(width=0.5))+
+  geom_hline(yintercept=0,linetype="dashed",color="red")+
+  geom_point(aes(x=effect,y=median, group=model, color= model),size=3, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(x=effect,ymin=lowerCI,ymax=upperCI, group=model, color= model), width=.3, position=position_dodge(width=0.5))+
   theme_bw()+
   xlab("Intervention")+
-  ggtitle("All IPD") + 
+  ggtitle(paste0("2005-",endyear)) + 
   # ylim(-4,0.1)+
   ylab("Effect")+
-  geom_hline(yintercept=0,linetype="dashed",color="red")+
   theme(axis.text.x = element_text(angle=45,hjust=1, size=13), axis.text = element_text(size=13), axis.title = element_text(size=13)) +
   scale_color_manual(values=color_labels)+
   labs(color="Model")+
   facet_wrap(outcome ~.)
 
+unique(fixedeffs$outcome)
+fixedeffs$outcome <- factor(fixedeffs$outcome,
+                               levels = c("disease", "adults", "children", "vts", "nvts"), 
+                               labels = c("disease", "adult (15-64)", "children (≤5)", "VT", "NVT"))
 
-#################### NO PROVINCE REPLICATION FIXED EFFECTS #########
+fixed_national_all_model <- ggplot(fixedeffs)+
+  geom_hline(yintercept=0,linetype="dashed",color="red")+
+  geom_point(aes(x=outcome,y=median, group=model, color= effect),size=3, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(x=outcome,ymin=lowerCI,ymax=upperCI, group=model, color= effect), width=.3, position=position_dodge(width=0.5))+
+  theme_bw()+
+  xlab("Intervention")+
+  ggtitle(paste0("2005-",endyear)) + 
+  # ggtitle("Province Replicated Fixed Effects") + 
+  # ylim(-4,0.1)+
+  ylab("Effect")+
+  theme(axis.text.x = element_text(angle=45,hjust=1, size=13), axis.text = element_text(size=13), axis.title = element_text(size=13)) +
+  scale_color_manual(values=color_labels)+
+  labs(color="Model")+
+  facet_wrap(model ~.)
+
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_perturbations_",endyear,".pdf"), width = 8, height =5)
+print(fixed_national_all_model)
+dev.off()
+
+print(fixed_national_all_model)
+ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_perturbations_",endyear,".png"), width = 8, height =5)
+dev.off()
+
+
+#################### WITH PROVINCE REPLICATION FIXED EFFECTS #########
 fixedeffs_pr <- cbind(fixed_effects_all_pr, model = rep(c("ART","PCV", "vaccine_periods", "2009vaccine","ARTnational","ART_Vax","ART_Vax"),5), 
                    effect = rep(c("ART","PCV","vaccine_periods","2009vaccine","ARTnational","vaccine_periods","ART"),5))
 fixedeffs_pr$model <- factor(fixedeffs_pr$model, levels = c("ART_Vax","ART","ARTnational","2009vaccine","vaccine_periods","PCV"))
@@ -628,14 +655,14 @@ fixedeffs_pr$effect <- factor(fixedeffs_pr$effect, levels = c("ART_Vax","ART","A
 
 fixedeffs_pr$outcome <- factor(fixedeffs_pr$outcome, levels = c("disease","adults","children","vts","nvts"))
 fixed_national_all_pr <- ggplot(fixedeffs_pr)+
+  geom_hline(yintercept=0,linetype="dashed",color="red")+
   geom_point(aes(x=effect,y=median, group=model, color= model ),size=3, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(x=effect,ymin=lowerCI,ymax=upperCI, group=model, color= model), width=.3, position=position_dodge(width=0.5))+
   theme_bw()+
   xlab("Intervention")+
-  ggtitle("Province Replicated Fixed Effects") + 
+  ggtitle(paste0("Province Replicated 2005-",endyear)) + 
   # ylim(-4,0.1)+
   ylab("Effect")+
-  geom_hline(yintercept=0,linetype="dashed",color="red")+
   theme(axis.text.x = element_text(angle=45,hjust=1, size=13), axis.text = element_text(size=13), axis.title = element_text(size=13)) +
   scale_color_manual(values=color_labels)+
   labs(color="Model")+
@@ -652,6 +679,7 @@ fixed_national_all_pr_model <- ggplot(fixedeffs_pr)+
   geom_errorbar(aes(x=outcome,ymin=lowerCI,ymax=upperCI, group=model, color= effect), width=.3, position=position_dodge(width=0.5))+
   theme_bw()+
   xlab("Intervention")+
+  ggtitle(paste0("Province Replicated 2005-",endyear)) + 
   # ggtitle("Province Replicated Fixed Effects") + 
   # ylim(-4,0.1)+
   ylab("Effect")+
@@ -659,13 +687,16 @@ fixed_national_all_pr_model <- ggplot(fixedeffs_pr)+
   scale_color_manual(values=color_labels)+
   labs(color="Model")+
   facet_wrap(model ~.)
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_perturbations_",endyear,".pdf"), width = 8, height =5)
+
+### save
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_provrep_perturbations_",endyear,".pdf"), width = 8, height =5)
 print(fixed_national_all_pr_model)
 dev.off()
-ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_perturbations_",endyear,".png"), width = 8, height =5)
+print(fixed_national_all_pr_model)
+ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/fixed_effect_provrep_perturbations_",endyear,".png"), width = 8, height =5)
+dev.off()
 
-
-fixedeffs_pr[which(fixedeffs_pr$outcome=="NVT"),]
+# fixedeffs_pr[which(fixedeffs_pr$outcome=="NVT"),]
 ################################ VIF ###########################################
 
 ##### calculate Variance inflation factor between vaccine_periods and NVT coverage nationally
@@ -707,61 +738,6 @@ for(j in 1:n_fixed){
   classic_vif[j] <- 1 / (1 - R2)
 }
 
-
-
-### fixed effect models with province replicates
-modART_pr <- base_pcvartprovrep_model_list[[1]]
-modPCV_pr <- base_pcvartprovrep_model_list[[2]]
-mod_vaxperiod_pr <- base_pcvartprovrep_model_list[[3]]
-mod_2009_pr <- base_pcvartprovrep_model_list[[4]]
-mod_ARTnational_pr <- base_pcvartprovrep_model_list[[5]]
-mod_vaxART_pr <- base_pcvartprovrep_model_list[[6]]
-
-
-
-
-# mod_ARTPCV_pr <- base_pcvart_model_list[[8]]
-# modART_pr_national <- base_pcvart_model_list[[15]]
-# 
-# ### non linear effect models
-# mod_PCV_NL <- base_pcvart_model_list[[9]]
-# mod_ART_NL <- base_pcvart_model_list[[10]]
-# mod_PCVART_NL <- base_pcvart_model_list[[11]]
-# mod_PCV_prNL <- base_pcvart_model_list[[12]]
-# mod_ART_prNL <- base_pcvart_model_list[[13]]
-# mod_PCVART_prNL <- base_pcvart_model_list[[14]]
-# 
-# ################################################################################
-# #### EXTRACT VARIABLE EFFECTS 
-# ################################################################################
-#### extract all effects and bind to plot
-fixed_effects <- rbind(modART$summary.fixed[2,],
-                       modPCV$summary.fixed[2,],
-                       mod_vaxperiod$summary.fixed[2,],
-                       mod_2009$summary.fixed[2,],
-                       mod_vaxART$summary.fixed[2:3,])
-
-fixedeffs <- cbind(fixed_effects, model = c("ART","PCV", "vaccine_periods", "2009vaccine","ART_Vax","ART_Vax"), effect = c("ART","PCV","vaccine_periods","2009vaccine","vaccine_periods","ART"))
-fixedeffs$model <- factor(fixedeffs$model, levels = c("ART_Vax","ART","ARTnational","2009vaccine","vaccine_periods","PCV"))
-
-colnames(fixedeffs) <- c("mean","sd","lowerCI","median","upperCI","mode","kld","model","effect")
-fixedeffs_rr <-fixedeffs
-# fixedeffs[, 1:5] <- exp(fixedeffs[,1:5])
-color_labels <- c("ART" = "#097969","PCV" = "#D91656", "ART_Vax" = "darkblue", "vaccine_periods"="orange","2009vaccine"="purple" )
-
-fixed_national_all <- ggplot(fixedeffs)+
-  geom_point(aes(x=effect,y=median, group=model, color= model ),size=3, position=position_dodge(width=0.5)) +
-  geom_errorbar(aes(x=effect,ymin=lowerCI,ymax=upperCI, group=model, color= model), width=.3, position=position_dodge(width=0.5))+
-  theme_bw()+
-  xlab("Intervention")+
-  ggtitle("All IPD") + 
-  ylim(-4,0.1)+
-  ylab("Effect")+
-  geom_hline(yintercept=0,linetype="dashed",color="red")+
-  theme(axis.text.x = element_text(angle=45,hjust=1, size=13), axis.text = element_text(size=13), axis.title = element_text(size=13)) +
-  scale_color_manual(values=color_labels)+
-  labs(color="Model")
-
 ################# INTERANNUAL RANDOM EFFECTS ###################################
 ### interannual random effects from the same models
 # plot_random_effects(mod_base, modART, title_a = "base", title_b = "ART", return = "year")
@@ -780,6 +756,14 @@ fixed_national_all <- ggplot(fixedeffs)+
 # plot_random_effect_provRep(mod_base_pr, mod_vaxART_pr, title_a = "base", title_b = "ART and VaccinePeriods", type = "annual")
 
 ### plot for supplement
+### fixed effect models with province replicates
+modART_pr <- base_pcvartprovrep_model_list[[1]]
+modPCV_pr <- base_pcvartprovrep_model_list[[2]]
+mod_vaxperiod_pr <- base_pcvartprovrep_model_list[[3]]
+mod_2009_pr <- base_pcvartprovrep_model_list[[4]]
+mod_ARTnational_pr <- base_pcvartprovrep_model_list[[5]]
+mod_vaxART_pr <- base_pcvartprovrep_model_list[[6]]
+
 baseidy <- mod_base_pr$summary.random$id_y
 vaxperiodidy <- mod_vaxperiod_pr$summary.random$id_y
 ARTidy <- modART_pr$summary.random$id_y

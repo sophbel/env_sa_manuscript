@@ -20,8 +20,8 @@ space="adm2"
 
 ## subset by only pre covid
 if(precov==TRUE){
-  data <- subset(data,data$date < as.Date("2021-01-01"))
-  endyear = 2020
+  data <- subset(data,data$date < as.Date("2020-01-01"))
+  endyear = 2019
 }else{
   endyear = 2023
 }
