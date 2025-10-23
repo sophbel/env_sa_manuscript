@@ -13,7 +13,8 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 # weekly=FALSE
 precov=TRUE ### set whether the run ends in 2020 or 2023
 time = "weekly"
-space="adm2"
+space="adm1"
+threads = 4
       ## load disease data
   data<-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_",space,"_",time,"_lag_sc.csv"))
 
@@ -93,7 +94,7 @@ if(precov==TRUE){
             base_main <- inla.mod(base_form, fam = "nbinomial", df = df_all, nthreads=4, config=FALSE)
             saveRDS(base_main, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
             
-            base_intercept <- inla.mod(base_form_list[[1]], fam = "nbinomial", df = df, nthreads=threads, config=FALSE)
+            base_intercept <- inla.mod(base_form_list[[1]], fam = "nbinomial", df = df, nthreads=4, config=FALSE)
             saveRDS(base_intercept, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
             
 ################################################################################
@@ -134,7 +135,7 @@ if(precov==TRUE){
 ##########################################################################################
 ####### TEST MIXED BASE MODELS WITH SOCIODEMOGRAPHIC VARS ##################      
 ########################################################################################## 
-     ### load intercept
+    # ## load intercept
     # int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
     #   base_test_list <- list()
     #   base_form<-list()
