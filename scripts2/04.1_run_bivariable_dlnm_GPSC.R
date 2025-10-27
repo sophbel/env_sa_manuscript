@@ -20,7 +20,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 interaction = FALSE
 ### set resolution
 time = "weekly"
-space = "adm2"
+space = "adm1"
 ### set the time period 2005 - 2019 is precov and 2005-2023 is not precov
 precov = TRUE
 
@@ -123,12 +123,17 @@ all_gpscs <- all
 all <- grep("lag0",all, value = TRUE)
 if(interaction == TRUE){
   # cov_names <- grep("tasmax|hurs|absh|pm2p5|pm10|o3|so2", all, value = TRUE)
-  cov_names <- grep("hurs|absh|pm2p5|pm10|prlrmean", all, value = TRUE)
-  cov_names2 <- grep("hurs|absh|tasmax|pm2p5|pm10|so2", all, value = TRUE)
+  cov_names <- grep("hurs|absh|pm2p5|pm10|prlrsum", all, value = TRUE)
+  cov_names2 <- grep("hurs|absh|tasmax|pm2p5|pm10|so2|prlrsum", all, value = TRUE)
   
 }else{
-  cov_names <- grep("hurs|absh|pm2p5|pm10|prlrmean", all, value = TRUE)
-  cov_names2 <- grep("hurs|absh|tasmax|tasmin|pm2p5|pm10|so2", all, value = TRUE)
+  if(space == "adm2"){
+  cov_names <- grep("hurs|absh|pm2p5|pm10|prlrsum", all, value = TRUE)
+  cov_names2 <- grep("hurs|absh|tasmax|tasmin|pm2p5|pm10|so2|prlrsum", all, value = TRUE)
+  }else{
+    cov_names <- grep("hurs|absh|pm2p5|pm10", all, value = TRUE)
+    cov_names2 <- grep("hurs|absh|tasmax|tasmin|pm2p5|pm10|so2", all, value = TRUE)
+  }
   }
 cov_names_labels <- gsub("_lag0", "", cov_names)
 ### select which GPSCs will be includes
@@ -210,7 +215,7 @@ for(gp in 1:length(gpsc_vec_sub)){
         ############################### PREPARE CROSSBASIS  ############################
           # Creating a crossbasis with a vector and allow the function do the lags including the group for me
           if(time=="weekly"){
-            max_lag <- 12
+            max_lag <- 8
             lag_knots <- c(2,4) # Log-spaced knots
             lag_knots <- logknots(max_lag, 2)
           }else{
@@ -302,8 +307,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                     "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                     "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                     "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
-                    "+ post_vaccination_2009",
-                    "+ post_vaccination_2011",
+                    "+ vaccination_period",
                     "+ population_density",
                     paste0("+ f(hurs_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
                   )
@@ -326,8 +330,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                     "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                     "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                     "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
-                    "+ post_vaccination_2009",
-                    "+ post_vaccination_2011",
+                    "+ vaccination_period",
                     "+ population_density",
                     paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
                   )
@@ -350,8 +353,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                 "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
-                "+ post_vaccination_2009",
-                "+ post_vaccination_2011",
+                "+ vaccination_period",
                 "+ population_density",
                 paste("+",cov_names2[c2])
               )
@@ -372,8 +374,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                 "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
-                "+ post_vaccination_2009",
-                "+ post_vaccination_2011",
+                "+ vaccination_period",
                 "+ population_density",
                 paste0("+ f(hurs_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
               )
@@ -391,8 +392,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                   "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                   "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                   "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
-                  "+ post_vaccination_2009",
-                  "+ post_vaccination_2011",
+                  "+ vaccination_period",
                   "+ population_density",
                   paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
                 )
@@ -409,8 +409,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                   "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                   "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                   "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
-                  "+ post_vaccination_2009",
-                  "+ post_vaccination_2011",
+                  "+ vaccination_period",
                   "+ population_density",
                   paste("+",cov_names2[c2])
                 )
@@ -433,7 +432,7 @@ for(gp in 1:length(gpsc_vec_sub)){
             verbose = FALSE,
             data = cb_df)
           mod$cov <- cov_names[c]
-          mod$cov2 <-cov_names2[c2]
+          mod$cov2 <- cov_names2[c2]
         
         ######## CROSSPREDICTION AND PLOT ##############################################
           print("extract covariance")
@@ -663,19 +662,19 @@ for(gp in 1:length(gpsc_vec_sub)){
         }
         
         ############## SAVE FILES ##############################################
-        saveRDS(model_out,file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_12week_mixeddf.rds"))
-        # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_12week_mixeddf.rds"))
-        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_12week_mixeddf.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,".rds"))
+        # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,".rds"))
+        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
   } ### end of loop through gpscs
 
 
 if(interaction==TRUE){
-write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_bivariable_12week_mixeddf.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(gpsc_results, file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_12week_mixeddf.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_bivariable_12week_mixeddf.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }else{
-  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/nointeraction_results_fits_",time,"_",space,"_bivariable_12week_mixeddf.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",time,"_",space,"_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }
  
 # 
@@ -687,7 +686,7 @@ st_vec <- c("weekly_adm1","weekly_adm2")
 ### read in bivariable
 stlist <- list()
 for(s in 1:length(st_vec)){
-  m1 <- fread(file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/nointeraction_results_fits_",st_vec[s],"_bivariable_12week_mixeddf.csv"))
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_",max_lag,"_",endyear,".csv"))
   m1$space_time <- st_vec[s]
   stlist[[s]] <- m1
 }
@@ -698,7 +697,7 @@ fit_list_biv$cov2 <- gsub("_lag0","",fit_list_biv$cov2)
 ### read in univariable
 stlist <- list()
 for(s in 1:length(st_vec)){
-  m1 <- fread(file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/nointeraction_results_fits_",st_vec[s],"_12week_mixeddf.csv"))
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_",max_lag,"_",endyear,".csv"))
   m1$space_time <- st_vec[s]
   stlist[[s]] <- m1
 }
