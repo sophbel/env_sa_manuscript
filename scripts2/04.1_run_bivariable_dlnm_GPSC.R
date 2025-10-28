@@ -471,7 +471,7 @@ for(gp in 1:length(gpsc_vec_sub)){
             ## define z given scaled interaction
             z_low <- quantile(scaled_nonzero, 0.1)
             z_med <- quantile(scaled_nonzero, 0.5)
-            z_high <- quantile(scaled_nonzero, 0.9)
+            z_high <- quantile(scaled_nonzero, 0.8)
             
             ## interaction crossprediciton
             coef_low <- original_coefs + z_low * original_coefs_interact
