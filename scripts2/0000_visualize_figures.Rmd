@@ -38,7 +38,7 @@ shp$estimated_cells <- shp$area_km2 / 107.6
 
 
 # Sum each of those columns
-columns_of_interest <- c("disease", "age_lt5", "age_5t14","age_14t64","age_gt65","bact_count","mening_count","other_count","nvt","pcv7","pcv13",grep("Sero",colnames(sa_adm1_weekly),value=T))  
+columns_of_interest <- c("disease", "age_lt6", "age_6t14","age_15t64","age_gt65","bact_count","mening_count","other_count","nvt","pcv7","pcv13",grep("Sero",colnames(sa_adm1_weekly),value=T))  
 columns_of_interest <- grep("Sero",colnames(sa_adm1_weekly),value=T)
 columns_of_interest <- grep("GPSC",colnames(sa_adm1_weekly),value=T)
 
@@ -55,10 +55,11 @@ summary_table[order(-summary_table$count), ]
 ```{r}
 time = "weekly"
 space = "adm2"
+endyear = 2019
 data<-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_",space,"_",time,"_lag_sc.csv"))
 g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
 shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
-basemod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_2019.rds"))
+basemod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
 ## spatial effects
 N=52
 mod<-basemod
@@ -115,9 +116,86 @@ mod<-basemod
         labs(fill="Province",color = "Province")+
         facet_wrap(region ~.)
 
-pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/random_effects/res_weekly_adm2.pdf", width = 12,height=4)
+pdf(file=paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure2/res_weekly_adm2_",endyear,".pdf"), width = 12,height=4)
 print(spat+m+y)
 dev.off()
+```
+
+#### report random effects by space and month
+```{r}
+endyear = 2019
+space = "adm2"
+time = "weekly"
+if(space == "adm1"){
+shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+}else{
+  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+}
+N = nrow(shp$NAME_1)
+
+### spatial model
+## create a table including the random effects for weekly models at province and district level
+mat_both <- NULL
+for(endyears in c(2019,2023)){
+  endyear <- endyears
+  basemod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
+  N <- length(shp$NAME_1)
+  spa <- basemod$summary.random$id_u[1:N,]
+  
+    ## matrix
+    mat_re <- matrix(nrow = N, ncol = 8)
+    mat_re[,1] <- paste0("2005-",endyear)
+    mat_re[,2] <- paste0("weekly_",space)
+    mat_re[,3] <- "spatial"
+    if (space == "adm1") {
+        mat_re[,4] <- shp$NAME_1
+        mat_re[,5] <- shp$NAME_1
+      } else if (space == "adm2") {
+        mat_re[,4] <- shp$NAME_1
+        mat_re[,5] <- shp$NAME_2
+      }
+    mat_re[,6] <- exp(spa$mean)
+    mat_re[,7] <- exp(spa$'0.025quant')
+    mat_re[,8] <- exp(spa$'0.975quant')
+    mat_re <- data.frame(mat_re)
+    mat_re[,6:8] <- sapply(mat_re[,6:8], as.numeric)
+    colnames(mat_re) <- c("years", "space_time", "random_effect","effect_indicator","effect_indicator", "RR", "RR_lower","RR_upper")
+    
+    ## bind
+    mat_both <- rbind(mat_both,mat_re)
+}
+
+
+### seasonal effect
+## create a table including the random effects for weekly models at province and district level
+mat_both_seas <- NULL
+for(endyears in c(2019,2023)){
+  endyear <- endyears
+  basemod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
+  seasmod <- basemod$summary.random$id_m
+  N <- nrow(seasmod)
+  
+    ## matrix
+    mat_re <- matrix(nrow = N, ncol = 8)
+    mat_re[,1] <- paste0("2005-",endyear)
+    mat_re[,2] <- paste0("weekly_",space)
+    mat_re[,3] <- "seasonal"
+    mat_re[,4] <- c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+    mat_re[,5] <- c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+    mat_re[,6] <- exp(seasmod$mean)
+    mat_re[,7] <- exp(seasmod$'0.025quant')
+    mat_re[,8] <- exp(seasmod$'0.975quant')
+    mat_re <- data.frame(mat_re)
+    mat_re[,6:8] <- sapply(mat_re[,6:8], as.numeric)
+    colnames(mat_re) <- c("years", "space_time", "random_effect","effect_indicator","effect_indicator", "RR", "RR_lower","RR_upper")
+    
+    ## bind
+    mat_both_seas <- rbind(mat_both_seas,mat_re)
+}
+matres <- rbind(mat_both, mat_both_seas)
+
+write.table(matres, file = paste0("/home/sbelman/Documents/env_sa_manuscript/figures/random_effects/res_",space,"_",time,".csv"), quote = FALSE, sep = ",", col.names = TRUE, row.names = FALSE)
+
 ```
 
 
@@ -581,22 +659,67 @@ pprov<-ggplot(shp)+
 # print(pprov)
 # dev.off()
 ```
+### base model random effects plots 
+### number of different serotypes in different time periods
+```{r}
+data2<- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+dat_23 <- subset(data2, data2$year>2019)
+table(dat_23$ageyears, dat_23$vaccine_status_phen)
+## group Vax status together
+data2 <- data2 %>%
+  mutate(
+    vt_group = case_when(
+      vaccine_status_phen %in% c("PCV7", "PCV13") ~ "VT",
+      vaccine_status_phen == "NVT" ~ "NVT",
+      TRUE ~ "unknown"
+    )
+  )
+## group ages
+df_summary <- data2 %>%
+  mutate(
+    age_group = case_when(
+      ageyears <= 5 ~ "0-5",
+      ageyears > 5 & ageyears <= 18 ~ "6-18",
+      ageyears > 18 & ageyears <= 64 ~ "19-64",
+      ageyears >= 65 ~ "65+",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  group_by(year, age_group, vt_group) %>%
+  summarise(count = n(), .groups = "drop")
+df_summary$age_group <- factor(df_summary$age_group, levels = c("0-5","6-18","19-64","65+"))
+df_summary$vt_group <- factor(df_summary$vt_group, levels = c("NVT","VT","unknown"))
 
+agegroupsyear <- ggplot(df_summary, aes(x = year, y = count, color = age_group, group = interaction(vt_group, age_group))) +
+  geom_line(size = 1.2) +
+  geom_point() +
+  labs(x = "Year",y = "case count",color = "Age Group") +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 13), axis.title = element_text(size = 14), title = element_text(size=14))+
+  facet_wrap(vt_group ~.)
+
+print(agegroupsyear)
+ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/agegroup_year.png"), width = 12, height =5)
+dev.off()
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/agegroup_year.pdf"), width = 12, height =5)
+print(agegroupsyear)
+dev.off()
+```
 ##### ENVIRONMENTAL DATA SUMMARY PLOTS
 #### days with particulate matter of 100ug/m3
 ```{r}
 ### adm1
 data_unscaled <- fread("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
 # Filter for high PM2.5 weeks and count per province and year
-weeks_over_100_by_dist_year <- data_unscaled %>%
-  filter(pm2p5_lag0 > 50) %>%
+weeks_over_50_by_dist_year <- data_unscaled %>%
+  filter(pm2p5_lag0 >= 50) %>%
   group_by(NAME_1, year) %>%
-  summarise(weeks_over_100 = n(), .groups = "drop") %>%
+  summarise(weeks_over_50 = n(), .groups = "drop") %>%
   arrange(NAME_1,year) 
 # View results
 color_labels = c("Eastern_Cape" = "#008080", "Free_State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
                      "Limpopo" = "#228B22", "Mpumalanga" = "#FFC000", "North_West" = "#8B5A2B", "Northern_Cape" = "#606060", "Western_Cape" = "#1A2D6D" )
-weeksover <- ggplot(weeks_over_100_by_dist_year, aes(x = year, y = weeks_over_100, color = NAME_1)) +
+weeksover <- ggplot(weeks_over_50_by_dist_year, aes(x = year, y = weeks_over_50, color = NAME_1)) +
   geom_line(size = 1, alpha = 0.7) +
   # geom_point(alpha = 0.7) +
   scale_color_manual(values=color_labels)+
@@ -635,6 +758,26 @@ pm2p5vhum <- ggplot(data_unscaled, aes(x = pm2p5_lag0, y = hurs_lag0, group=prov
   theme_minimal()+
   theme(legend.position = "none")
 
+pm2p5vso2 <- ggplot(data_unscaled, aes(x = pm2p5_lag0, y = so2_lag0, group=province,color=province)) +
+  geom_point(alpha = 0.2) +
+  scale_color_manual(values=color_labels)+
+  labs(
+    x = "PM2.5",
+    y = "SO2"
+  ) +
+  theme_minimal()+
+  theme(legend.position = "right")
+
+prlrvhum <- ggplot(data_unscaled, aes(x = prlrsum_lag0, y = hurs_lag0, group=province,color=province)) +
+  geom_point(alpha = 0.4) +
+  scale_color_manual(values=color_labels)+
+  labs(
+    x = "Precipitation (mm)",
+    y = "Relative Humidity (%)"
+  ) +
+  theme_minimal()+
+  theme(legend.position = "none")
+
 ##### pm2.5 and pm10
 hist_pm25 <- ggplot(data_unscaled, aes(x = pm2p5_lag0, group=province, fill=province)) +
   geom_histogram( color = "black", bins = 30) +
@@ -660,7 +803,7 @@ ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/supplement/env_de
 Load Data. The cumulative and lagged effects of top univariable and additive effect models across South Africa. 
 ```{r}
 # ##  VISUALIZE BIVARIABLE OUTPUTS 
-st_vec <- c("weekly_adm1","weekly_adm2")
+# st_vec <- c("weekly_adm1","weekly_adm2")
 st_vec <- c("weekly_adm2")
 endyear = 2019
 
@@ -704,8 +847,8 @@ linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid","absh"="
 ### Plot with lags across 8 weeks
 ```{r}
 # Relative humidity
-tmphurs <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","absh","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:8) & fit_list$space_time=="weekly_adm2")
-tmphurs$cov2 <- factor(tmphurs$cov2, levels = c("pm2p5","pm10","so2","absh","tasmax","tasmin","none"))
+tmphurs <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","absh","tasmax","so2","none") & fit_list$lag_num %in% c(0:8) & fit_list$space_time=="weekly_adm2")
+tmphurs$cov2 <- factor(tmphurs$cov2, levels = c("pm2p5","pm10","so2","absh","tasmax","none"))
 plot_hurs <- ggplot(tmphurs)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -725,8 +868,8 @@ plot_hurs <- ggplot(tmphurs)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 
 ### pm2.5
-tmppm2 <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmppm2$cov2 <- factor(tmppm2$cov2, levels = c("absh","hurs","tasmax","tasmin","none"))
+tmppm2 <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","so2","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmppm2$cov2 <- factor(tmppm2$cov2, levels = c("absh","hurs","tasmax","so2","none"))
 plot_pm2p5 <- ggplot(tmppm2)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -747,8 +890,8 @@ plot_pm2p5 <- ggplot(tmppm2)+
 
 
 ### PM10
-tmppm1 <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmppm1$cov2 <- factor(tmppm1$cov2, levels = c("absh","hurs","tasmax","tasmin","none"))
+tmppm1 <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","so2","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmppm1$cov2 <- factor(tmppm1$cov2, levels = c("absh","hurs","tasmax","so2","none"))
 plot_pm10 <- ggplot(tmppm1)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype=cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -768,8 +911,8 @@ plot_pm10 <- ggplot(tmppm1)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 
 # ABSH
-tmpabsh <- subset(fit_list, fit_list$cov%in%c("absh") & fit_list$cov2%in%c("hurs","pm2p5","pm10","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmpabsh$cov2 <- factor(tmpabsh$cov2, levels = c("pm2p5","pm10","so2","hurs","tasmax","tasmin","none"))
+tmpabsh <- subset(fit_list, fit_list$cov%in%c("absh") & fit_list$cov2%in%c("hurs","pm2p5","pm10","tasmax","so2","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmpabsh$cov2 <- factor(tmpabsh$cov2, levels = c("pm2p5","pm10","so2","hurs","tasmax","none"))
 plot_absh <- ggplot(tmpabsh)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -787,7 +930,43 @@ plot_absh <- ggplot(tmpabsh)+
   facet_wrap(.~lag_week, nrow = 1)+
   xlab(expression(paste('Water (g/m'^3,')' )))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-plot_pm2p5/plot_pm10/plot_hurs/plot_absh
+
+
+# SO2
+tmpso2 <- subset(fit_list, fit_list$cov%in%c("so2") & fit_list$cov2%in%c("hurs","absh","pm2p5","pm10","tasmax","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmpso2$cov2 <- factor(tmpso2$cov2, levels = c("pm2p5","pm10","absh","hurs","tasmax","none"))
+plot_so2 <- ggplot(tmpso2)+
+  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
+  scale_color_manual(values = color_labels)+
+  scale_fill_manual(values = color_labels)+
+  scale_linetype_manual(values = linetype_labels)+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  # scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  ggtitle("Sulfur Dioxide")+
+  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+  facet_wrap(.~lag_week, nrow = 1)+
+  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
+# plot_so2
+# plot_pm2p5/plot_pm10
+# plot_hurs/plot_absh
+space_time_str <- "weekly_adm2"
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm2p5pm10_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=4)
+(plot_pm2p5/ plot_pm10)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/abshhurs_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=4)
+(plot_hurs/plot_absh)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/so2_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=2)
+(plot_so2)
+dev.off()
 ```
 ### Print the numbers I need from the above figure
 ```{r}
@@ -827,10 +1006,11 @@ data_unscaled_aggregate <- data_unscaled %>%
   summarise(pm2p5 = mean(pm2p5_lag0,na.rm=T),
             pm10 = mean(pm10_lag0,na.rm=T),
             hurs = mean(hurs_lag0,na.rm=T),
-            absh = mean(absh_lag0,na.rm=T),)
+            absh = mean(absh_lag0,na.rm=T),
+            so2 = mean(so2_lag0, na.rm=T))
 # PM2.5
-tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
-tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","tasmin","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","so2","none") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","so2","none"))
 plot_pm2p5_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -850,10 +1030,10 @@ plot_pm2p5_cum <- ggplot(tmp)+
   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "none")
+        legend.position = "right")
 # PM10
-tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
-tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","tasmin","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","so2","none") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","so2","none"))
 plot_pm10_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -875,8 +1055,8 @@ plot_pm10_cum <- ggplot(tmp)+
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
         legend.position = "right")
 # HURS
-tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","tasmin","none") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
-tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","tasmin","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","so2","none") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
 plot_hurs_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -896,10 +1076,10 @@ plot_hurs_cum <- ggplot(tmp)+
   xlab("Percent")+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "none")
+        legend.position = "right")
 # ABSH
-tmp <- subset(fit_list, fit_list$cov%in%c("absh") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","tasmin","none") & fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
-tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","tasmin","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("absh") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","so2","none") & fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
+tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
 plot_absh_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -921,20 +1101,69 @@ plot_absh_cum <- ggplot(tmp)+
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
         legend.position = "right")
 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_additive_sa_",space_time_str,".pdf"),width  =9,height=7)
+# Sulfur Dioxide
+tmp <- subset(fit_list, fit_list$cov%in%c("so2") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","absh","none") & fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
+tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","absh","none"))
+plot_so2_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
+  geom_rug(data= data_unscaled, aes(x = so2_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  scale_color_manual(values = color_labels)+
+  scale_fill_manual(values = color_labels)+
+  scale_linetype_manual(values = linetype_labels)+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  # scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+  ggtitle("Sulfur Dioxide")+
+  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+  # facet_wrap(.~lag_week, nrow = 1)+
+  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+
+### save each individually
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm2p5_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_pm2p5_cum)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/so2_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_so2_cum)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm10_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_pm10_cum)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/absh_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_absh_cum)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/hurs_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_hurs_cum)
+dev.off()
+
+### save together
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/cumulative_additive_sa_",space_time_str,".pdf"),width  =9,height=7)
 (plot_pm2p5_cum + plot_pm10_cum)/
   (plot_hurs_cum + plot_absh_cum)
 dev.off()
+# 
+# if(space_time_str=="weekly_adm2"){
+# (plot_pm2p5_cum + plot_pm10_cum)/
+#   (plot_hurs_cum + plot_absh_cum)
+#   ggsave(file = paste0("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_additive_sa_",space_time_str,".png"), width = 9, height = 7)
+#   }else{
+#    (plot_pm2p5_cum + plot_pm10_cum + plot_hurs_cum )
+#     ggsave(file = paste0("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_additive_sa_",space_time_str,".png"), width = 13, height = 4)
+# 
+#   }
 
-if(space_time_str=="weekly_adm2"){
-(plot_pm2p5_cum + plot_pm10_cum)/
-  (plot_hurs_cum + plot_absh_cum)
-  ggsave(file = paste0("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_additive_sa_",space_time_str,".png"), width = 9, height = 7)
-  }else{
-   (plot_pm2p5_cum + plot_pm10_cum + plot_hurs_cum )
-    ggsave(file = paste0("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_additive_sa_",space_time_str,".png"), width = 13, height = 4)
 
-  }
+
 
 # Maximum temperature
 space_time_str <- "weekly_adm2"
@@ -1085,18 +1314,22 @@ ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_addi
 ###### GAUTENG VS SOUTH AFRICA
 ```{r}
 ############# CUMULATIVE EFFECT PLOTS ############
-max_lag <- 12
-noint <- fread(file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms_suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_mixeddf_",prov_name,".csv"))
+max_lag <- 8
+prov_name = "Gauteng"
+space = "adm2"
+endyear = 2019
+time = "weekly"
+noint <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_",endyear,"_",prov_name,".csv"))
 noint$cov <- gsub("_lag0","",noint$covariate)
 noint$prov <- "Gauteng"
 
 ## WHOLE COUNTRY
-m1 <- fread(file = paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/nointeraction_results_fits_weekly_adm1_12week_mixeddf.csv"))
+m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm1_8_2019.csv"))
 m1$cov <- gsub("_lag0","",m1$covariate)
 m1$prov <- "South_Africa"
 # bind
 nointall <- rbind(noint,m1)
-ggplot(nointall[which(nointall$cov%notin%c("spi3","spi6")),])+
+cumgaut <- ggplot(nointall[which(nointall$cov%notin%c("spi3","spi6")),])+
   geom_hline(yintercept=1, linetype="dashed",color="red")+
   geom_line(aes(x = var, y = exp(cumulative_fit), group=interaction(cov,prov),color=prov))+
   geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=interaction(cov,prov), fill=prov), alpha=0.5)+
@@ -1107,7 +1340,7 @@ ggplot(nointall[which(nointall$cov%notin%c("spi3","spi6")),])+
   facet_wrap(cov~., scales="free")
 
 ############# LAG EFFECT Plots ############
-nointalltmp <- subset(nointall, nointall$cov%in%c("pm2p5","pm10","so2","hurs","absh","tasmin") & nointall$lag_num<7)
+nointalltmp <- subset(nointall, nointall$cov%in%c("pm2p5","pm10","so2","hurs","absh","tasmin") & nointall$lag_num<9)
 ggplot(nointalltmp)+
   geom_hline(yintercept=1, linetype="dashed",color="red")+
   geom_line(aes(x = var, y = exp(fit), group=interaction(cov,prov, lag_num),color=prov))+
@@ -1117,22 +1350,22 @@ ggplot(nointalltmp)+
   # ylim(0.1,3)+
   xlab("Variable")+
   theme(legend.title = element_blank())+
-  facet_wrap(cov~lag, scales="free", ncol=7)
-ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/gauteng_vs_southafrica_lags.png",width=15,height=15)
+  facet_wrap(cov~lag, scales="free", ncol=9)
+ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/gauteng_vs_southafrica_lags.png",width=20,height=15)
 ```
 
 #### SUBSET BY MULTIPLE OUTCOME MODELS
 ### READ IN FITS
 ```{r}
 ## multiple outcomes
-    dlnm_multiout_demog <- fread("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms_suboutcomes/dlnm_subsetoutcomes_bivhurs_results_fits_weekly_adm2_demographic_mixeddf.csv")
-    dlnm_multiout_sero <- fread("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms_suboutcomes/dlnm_subsetoutcomes_bivhurs_results_fits_weekly_adm2_serotype_mixeddf.csv")
+    dlnm_multiout_demog <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/demographic/dlnm_subsetoutcomes_results_fits_weekly_adm2_demographic_2019.csv")
+    dlnm_multiout_sero <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/serotypes/dlnm_subsetoutcomes_results_fits_weekly_adm2_serotype_2019.csv")
     dlnm_multiout <- rbind(dlnm_multiout_demog, dlnm_multiout_sero)
     dlnm_multiout$cov <- gsub("_lag0","",dlnm_multiout$covariate)
 
-    max_lag = 12
+    max_lag = 8
     ## no interaction single outcome of disease
-    dlnm_norm <- fread("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/nointeraction_results_fits_weekly_adm2_12week_mixeddf.csv")
+    dlnm_norm <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm2_8_2019.csv")
     dlnm_norm$cov <- gsub("_lag0","",dlnm_norm$covariate)
     dlnm_norm_fit <- dlnm_norm[,c("fit","lowerCI","upperCI","cumulative_fit","cum_lowerCI","cum_upperCI","cov","predvar","lag_num")]
     colnames(dlnm_norm_fit) <- c("fit_dis","lowerCI_dis","upperCI_dis","cumulative_fit_dis","cum_lowerCI_dis","cum_upperCI_dis", "cov","predvar","lag_num")
@@ -1182,7 +1415,7 @@ ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/gauteng_vs_southafrica
     fits_sero <- subset(fits, fits$GPSC%in%outcomes & fits$lag_num%in%seq(0,max_lag,1))
     fits_pcv_type <- subset(fits, fits$GPSC%in%c("pcv7","pcv13","nvt")& fits$lag_num%in%seq(0,max_lag,1))
     fits_distypes <- subset(fits, fits$GPSC%in%c("bact_count","mening_count","other_count")& fits$lag_num%in%seq(0,max_lag,1))
-    fits_age <- subset(fits, fits$GPSC%in%c("age_gt65","age_gt80","age_lt5","age_18t64","female_count")& fits$lag_num%in%seq(0,max_lag,1))
+    fits_age <- subset(fits, fits$GPSC%in%c("age_gt65","age_lt6","age_15t64","female_count")& fits$lag_num%in%seq(0,max_lag,1))
     
     ## label group
     pcv13_vec <- paste0("Sero",c( "1", "3", "5", "6A", "7F", "19A"),"_count")
@@ -1198,7 +1431,7 @@ ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/gauteng_vs_southafrica
 #### age distributions
 ```{r}
   fits_age_cum <- fits_age[which(fits_age$lag_num==3),]
-  fits_age_cum$GPSC <- factor(fits_age_cum$GPSC, levels = c("age_lt5","age_18t64","age_gt65", "age_gt80","female_count"))
+  fits_age_cum$GPSC <- factor(fits_age_cum$GPSC, levels = c("age_lt6","age_15t64","age_gt65", "age_gt80","female_count"))
   plot_age <- ggplot(fits_age_cum)+
       geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
       geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1217,11 +1450,42 @@ ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/gauteng_vs_southafrica
             strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
             legend.position = "right")
     plot_age
-    ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/age_pm2p5_cumulative.png", width = 5,height=3)
+    ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/age_pm2p5_cumulative.png", width = 5,height=3)
     
-# pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/age_pm2p5_cumulative.pdf", width = 5,height=3)
-# print(plot_age)
-# dev.off()
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/age_pm2p5_cumulative.pdf", width = 5,height=3)
+print(plot_age)
+dev.off()
+
+
+#### across lags
+ ### across lags
+   fits_age_lag <- fits_age[which(fits_age$lag_num<9),]
+     fits_age_lag$GPSC <- factor(fits_age_lag$GPSC, levels = c("age_lt6","age_15t64","age_gt65", "age_gt80","female_count"))
+   plot_agelag <- ggplot(fits_age_lag)+
+      geom_line(aes(x=predvar,y=exp(fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
+      geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+      geom_ribbon(aes(x=predvar, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(lag_week,GPSC,cov), fill = GPSC),alpha=0.1)+
+      # geom_line(aes(x=predvar,y=exp(fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7)+
+      # geom_ribbon(aes(x=predvar, ymin=exp(lowerCI_dis),ymax=exp(upperCI_dis), group=interaction(lag_week,GPSC)), fill = "black" ,alpha=0.1)+
+      theme_bw()+
+      xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+      ylab("Relative Risk")+
+      scale_y_continuous(trans="log10", limits = c(0.8,1.5), breaks = c(0.8,1, 1.3))+
+      # scale_y_continuous(trans="log10")+
+      #     scale_color_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="other invasive disease"), 
+      #                    values = c("bact_count"="#D7191C","mening_count"="#2C7BB6","other_count"="#1A9641"))+
+      # scale_fill_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="other invasive disease"),
+      #                   values =  c("bact_count"="#D7191C","mening_count"="#2C7BB6","other_count"="#1A9641"))+
+      ggtitle("PM2.5")+
+      facet_grid(GPSC~lag_num )+
+      labs(color="Disease Type",fill="Disease Type")+
+      theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+            strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
+            legend.position = "right")
+   
+      pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/age_pm2p5_weekly.pdf", width = 12,height=5)
+      print(plot_agelag)
+      dev.off()
 
 ```
 
@@ -1243,9 +1507,9 @@ ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/gauteng_vs_southafrica
       ylab("Relative Risk")+
       # scale_y_continuous(trans="log10", limits = c(0.9,1.25), breaks = c(0.9, 1, 1.25))+
       scale_y_continuous(trans="log10")+
-      scale_color_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="non-invasive disease"), 
+      scale_color_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="other invasive disease"), 
                          values = c("bact_count"="#D7191C","mening_count"="#2C7BB6","other_count"="#1A9641"))+
-      scale_fill_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="non-invasive disease"),
+      scale_fill_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="other invasive disease"),
                         values =  c("bact_count"="#D7191C","mening_count"="#2C7BB6","other_count"="#1A9641"))+
       ggtitle("PM2.5")+
       # facet_wrap(GPSC~. , ncol=3)+
@@ -1254,14 +1518,14 @@ ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/gauteng_vs_southafrica
             strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
             legend.position = "right")
     plot_dis
-    ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/disease_type_pm2p5_cumulative.png", width = 5,height=3)
+    ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/disease_type_pm2p5_cumulative.png", width = 5,height=3)
     
-# pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/disease_type_pm2p5_cumulative.pdf", width = 5,height=3)
-# print(plot_dis)
-# dev.off()
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/disease_type_pm2p5_cumulative.pdf", width = 5,height=3)
+print(plot_dis)
+dev.off()
     
     ### across lags
-   fits_distypeslag <- fits_distypes[which(fits_distypes$lag_num<7),]
+   fits_distypeslag <- fits_distypes[which(fits_distypes$lag_num<9),]
    plot_dislag <- ggplot(fits_distypeslag)+
       geom_line(aes(x=predvar,y=exp(fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
       geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1273,24 +1537,26 @@ ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/gauteng_vs_southafrica
       ylab("Relative Risk")+
       # scale_y_continuous(trans="log10", limits = c(0.9,1.25), breaks = c(0.9, 1, 1.25))+
       scale_y_continuous(trans="log10")+
-          scale_color_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="non-invasive disease"), 
+          scale_color_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="other invasive disease"), 
                          values = c("bact_count"="#D7191C","mening_count"="#2C7BB6","other_count"="#1A9641"))+
-      scale_fill_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="non-invasive disease"),
+      scale_fill_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="other invasive disease"),
                         values =  c("bact_count"="#D7191C","mening_count"="#2C7BB6","other_count"="#1A9641"))+
       ggtitle("PM2.5")+
-      facet_wrap(lag_num~. , ncol=7)+
+      facet_wrap(lag_num~. , ncol=9)+
       labs(color="Disease Type",fill="Disease Type")+
       theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
             strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
             legend.position = "right")
-   
+   pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/disease_type_pm2p5_weekly.pdf", width = 12,height=3)
+  print(plot_dislag)
+  dev.off()
    
 
 ```
 
 ##### ART PCV PLOTS
 ```{r}
-summary_df <- fread("/home/sbelman/Documents/env_sa_manuscript/figures/figure2/coverage_cat_summarydf.csv")
+summary_df <- fread("/home/sbelman/Documents/env_sa_manuscript/figures/figure4/coverage_cat_summarydf.csv")
 # Define color palette
 color_labels <- c("ART" = "#097969", "PCV" = "#D91656", "ART_PCV" = "darkblue")
 
@@ -1393,15 +1659,15 @@ plot_sero <- ggplot(fits_sero_cum) +
   ggtitle("PM2.5") +
   scale_y_continuous(trans = "log10")
 
-# pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/serotype_pm2p5_cumulative.pdf", width = 10,height=3)
-# print(plot_sero)
-# dev.off()
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/serotype_pm2p5_cumulative.pdf", width = 10,height=3)
+print(plot_sero)
+dev.off()
 plot_sero
-ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/serotype_pm2p5_cumulative.png", width = 12,height=5)
+ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/serotype_pm2p5_cumulative.png", width = 12,height=5)
 
 ### waic across all serotype models
-mod_gof1<-fread("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms_suboutcomes/mod_gof_dlnm_alloutcomes_bivhurs_weekly_adm2_serotype_mixeddf.csv")
-mod_gof2<-fread("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms_suboutcomes/mod_gof_dlnm_alloutcomes_bivhurs_weekly_adm2_demographic_mixeddf.csv")
+mod_gof1<-fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/serotypes/mod_gof_dlnm_alloutcomes_weekly_adm2_serotype_2019.csv")
+mod_gof2<-fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/demographic/mod_gof_dlnm_alloutcomes_weekly_adm2_demographic_2019.csv")
 mod_gof <- rbind(mod_gof1,mod_gof2)
 mod_gofpm2 <- mod_gof[which(mod_gof$cov=="pm2p5"),]
 mod_gof_long <- mod_gofpm2 %>%
@@ -1447,15 +1713,15 @@ pcv_cols <- c("nvt"="#E75480","pcv7" ="#522081","pcv13"="darkgreen")
             strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
             legend.position = "right")
     plot_pcv_cum
-# pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/pcv_pm2p5_cumulative.pdf", width = 5,height=3)
-# print(plot_pcv_cum)
-# dev.off()
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/pcv_pm2p5_cumulative.pdf", width = 5,height=3)
+print(plot_pcv_cum)
+dev.off()
 plot_pcv_cum
-ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/pcv_pm2p5_cumulative.png", width = 5,height=3)
+ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/pcv_pm2p5_cumulative.png", width = 5,height=3)
 
     
     ## plot first 4 weeks
-     fits_pcv_type_4 <- fits_pcv_type[which(fits_pcv_type$lag_num%in%0:6),]
+     fits_pcv_type_4 <- fits_pcv_type[which(fits_pcv_type$lag_num%in%0:8),]
   fits_pcv_type_4$GPSC <- factor(fits_pcv_type_4$GPSC, levels = c("nvt","pcv7","pcv13"), labels =  c("nvt","pcv7","pcv13"))
   plot_pcv_4 <- ggplot(fits_pcv_type_4)+
       geom_line(aes(x=predvar,y=exp(fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
@@ -1471,17 +1737,17 @@ ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models
       # scale_y_continuous(trans="log10", limits = c(0.9,1.25), breaks = c(0.9, 1, 1.25))+
       scale_y_continuous(trans="log10")+
       ggtitle("PM2.5")+
-      facet_wrap(lag_num~. , ncol=7)+
+      facet_wrap(lag_num~. , ncol=9)+
       labs(color="Vaccine Type",fill="Vaccine Type")+
       theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
             strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
             legend.position = "right")
   plot_pcv_4
-#   pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/pcv_pm2p5_6weeks.pdf", width = 12,height=3)
-# print(plot_pcv_4)
-# dev.off()
+  pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/pcv_pm2p5_8weeks.pdf", width = 12,height=3)
+print(plot_pcv_4)
+dev.off()
 plot_pcv_cum
-ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/pcv_pm2p5_cumulative.png", width = 10,height=3)
+ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/pcv_pm2p5_cumulative.png", width = 10,height=3)
 
 ```
 #### plot the relative risk ratio for each sub model as compared to the main models with the cumulative effect
@@ -1607,6 +1873,7 @@ plot_2 <- ggplot(fits_age[which(fits_age$GPSC=="age_gt65"),])+
 
 ```
 
+
 ############ interaction effect plots ##########
 #### GPSC serotype proportions
 ```{r}
@@ -1623,7 +1890,6 @@ dtgpsc[order(-N)]$GPSC
 gpsc_vec <- paste0("GPSC",dtgpsc$GPSC,"_count")
 ```
 
-
 #### interaction fit results for GPSCs read in the data
 ### focusing on GPSC26 and GPSC56 (both serotype 12F), GPSC1 and GPSC21 (both serotype 19F), and GPSC3 (serotype 8)
 ```{r}
@@ -1632,7 +1898,7 @@ st_vec <- c("weekly_adm1","weekly_adm2")
 
 stlist <- list()
 for(s in 1:length(st_vec)){
-  m1 <- fread(file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/nointeraction_results_fits_",st_vec[s],"_6week_mixeddf.csv"))
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_",st_vec[s],"_8_2019.csv"))
   m1$space_time <- st_vec[s]
   stlist[[s]] <- m1
 }
@@ -1646,7 +1912,7 @@ st_vec <- c("weekly_adm1","weekly_adm2")
 stlist <- list()
 
 for(s in 1:length(st_vec)){
-  m1 <- fread(file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/gpsc_results_fits_",st_vec[s],"_allGPSCs_propprov_6week_mixeddf.csv"))
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/gpsc_results_fits_",st_vec[s],"_allGPSCs_propprov_8_2019.csv"))
   m1$space_time <- st_vec[s]
   stlist[[s]] <- m1
 }
@@ -1659,7 +1925,7 @@ allfits <- rbind(interfit_list, fit_list_norm)
 
 ##### plot relative risk from the cumulative plots high vs. low proportion of each
 ```{r}
-data2<- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 dtgpsc <- data.table(table(data2$GPSC))[which(data.table(table(data2$GPSC))$N>100 | data.table(table(data2$GPSC))$V1%in%c("8","41"))]
 gpsc_vec <- paste0("GPSC",dtgpsc[order(-N)]$GPSC)
 ########## calculate the relative risk ratio at 180ug/m3 for pm2.5 and pm10 for each GPSC high vs low and medium vs. low
@@ -1693,7 +1959,7 @@ madm1_rr <- madm1_wide %>%
     
   )
 madm1_rr$cov <- gsub("_lag0","",madm1_rr$covariate)
-madm1_rr$GPSC <- factor(madm1_rr$GPSC, levels = gpsc_vec)
+# madm1_rr$GPSC <- factor(madm1_rr$GPSC, levels = gpsc_vec)
 
 ## pm
 pmplot <- madm1_rr[which(madm1_rr$cov=="pm2p5"&madm1_rr$var%in%c(100)&madm1_rr$lag%in%c("lag2")),]#&madm1_rr$GPSC%notin%c("GPSC56","GPSC8")),]
@@ -1774,7 +2040,7 @@ madm1_rr <- madm1_wide %>%
     RR_ratio_upper = exp((fit_high - fit_low) + 1.96 * SE_diff),
   )
 madm1_rr$cov <- gsub("_lag0","",madm1_rr$covariate)
-madm1_rr$GPSC <- factor(madm1_rr$GPSC, levels = gpsc_vec)
+# madm1_rr$GPSC <- factor(madm1_rr$GPSC, levels = gpsc_vec)
 
 ## pm
 pmplot <- madm1_rr[which(madm1_rr$cov=="pm2p5"&madm1_rr$var%in%c(100)&madm1_rr$lag%in%c("lag3")),]#&madm1_rr$GPSC%notin%c("GPSC56","GPSC8")),]
@@ -1848,6 +2114,7 @@ p14 <- ggplot(allfits_pivoted)+
   scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   ylim(0,3.5)+
   # xlab(cov_names_labels[c])+
+        scale_y_continuous(trans="log10")+
   theme_bw()+
   ylab("Effect")+
   facet_wrap(GPSC~.,scales="free_x")+
@@ -1855,7 +2122,7 @@ p14 <- ggplot(allfits_pivoted)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13),
         strip.text.y = element_text(angle=0))
 p14
-pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/interaction/cumulative_effect_pm2p5.pdf", width = 8,height=6)
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure5/cumulative_effect_pm2p5.pdf", width = 8,height=6)
 print(p14)
 dev.off()
 ```
@@ -1876,7 +2143,7 @@ main_gpsc <- tmps %>% filter(GPSC != "no_interaction")
 #               dplyr::select(space_time, cov, var,lag,cumulative_fit_noint, cum_lowerCI_noint, cum_upperCI_noint),
 #             by = c("var","cov","space_time","lag"))
 main_gpsc$lagweek <- paste0("week ",main_gpsc$lag_num)
-main_gpsc$lagweek <- factor(main_gpsc$lagweek, levels = c("week 0", "week 1","week 2","week 3","week 4","week 5","week 6"))
+main_gpsc$lagweek <- factor(main_gpsc$lagweek, levels = c("week 0", "week 1","week 2","week 3","week 4","week 5","week 6","week 7","week 8"))
 p14 <- ggplot(main_gpsc)+
   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lagweek),  color=interaction_level))+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1884,7 +2151,8 @@ p14 <- ggplot(main_gpsc)+
   scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   # ylim(0,3.5)+
-  # xlab(cov_names_labels[c])+
+  # xlab(cov_names_labels[c])
+        scale_y_continuous(trans="log10")+
   theme_bw()+
   ylab("Effect")+
   facet_grid(GPSC~lagweek,scales="free_x")+
@@ -1892,9 +2160,37 @@ p14 <- ggplot(main_gpsc)+
   theme(axis.text = element_text(size=10),axis.title=element_text(size=13), strip.text = element_text(size=13),
         strip.text.y = element_text(angle=0))
 p14
-pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/interaction/lagged_effect_pm2p5.pdf", width = 10,height=8)
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure5/lagged_effect_pm2p5.pdf", width = 10,height=8)
 print(p14)
 dev.off()
+
+
+
+p15 <- ggplot(main_gpsc[which(main_gpsc$GPSC%in%c("GPSC14","GPSC21","GPSC26")),])+
+  geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lagweek),  color=interaction_level))+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(cov, GPSC, interaction_level,lagweek), fill=interaction_level),alpha=0.2)+
+  scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
+  scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
+  # ylim(0,3.5)+
+  # xlab(cov_names_labels[c])+
+          scale_y_continuous(trans="log10")+
+
+  theme_bw()+
+  ylab("Effect")+
+  facet_grid(GPSC~lagweek,scales="free_x")+
+  labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
+  theme(axis.text = element_text(size=10),axis.title=element_text(size=13), strip.text = element_text(size=13),
+        strip.text.y = element_text(angle=0))
+p15
+
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure5/lagged_effect_selectGPSCs_pm2p5.pdf", width = 10,height=3)
+print(p15)
+dev.off()
+table(data2[which(data2$GPSC=="26"),]$serotype) ## serotype 12F (NVT)
+table(data2[which(data2$GPSC=="21"),]$serotype) ## serotype 19F (PCV7)
+table(data2[which(data2$GPSC=="14"),]$serotype) ## serotype 23F (PCV7)
+
 ```
 
 ##### cumulative dose response curves for 6 notable GPSC pairs

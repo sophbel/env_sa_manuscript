@@ -566,6 +566,7 @@ write.table(mod_out_bases,file=paste0("/home/sbelman/Documents/env_sa_manuscript
             ### base models
             mod_base <- base_pcvart_model_list[[2]]
             mod_base_pr <- base_pcvart_model_list[[3]]
+            # saveRDS(mod_base_pr, file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_noperturbations_weekly_",endyear,".rds"))
             
             ### fixed effect models no province replicates
             modART_pr <- base_pcvartprovrep_model_list[[1]]
@@ -590,7 +591,7 @@ write.table(mod_out_bases,file=paste0("/home/sbelman/Documents/env_sa_manuscript
 #################################################################################
 # #### PLOT COMPARISONS OF DIFFERENT OUTCOMES AND PERTURBATIONS
 #################################################################################
-            endyear = 2019
+            endyear = 2023
             fixed_effects_all_pr <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvartprovrep_models/base_pcvartprovrep_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"))
             fixed_effects_all <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/pcvart_models/base_pcvart_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"))
 
@@ -625,7 +626,7 @@ fixed_national_all_model <- ggplot(fixedeffs)+
   geom_point(aes(x=outcome,y=median, group=model, color= effect),size=3, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(x=outcome,ymin=lowerCI,ymax=upperCI, group=model, color= effect), width=.3, position=position_dodge(width=0.5))+
   theme_bw()+
-  xlab("Intervention")+
+  xlab("Outcome")+
   ggtitle(paste0("2005-",endyear)) + 
   # ggtitle("Province Replicated Fixed Effects") + 
   # ylim(-4,0.1)+
@@ -678,7 +679,7 @@ fixed_national_all_pr_model <- ggplot(fixedeffs_pr)+
   geom_point(aes(x=outcome,y=median, group=model, color= effect),size=3, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(x=outcome,ymin=lowerCI,ymax=upperCI, group=model, color= effect), width=.3, position=position_dodge(width=0.5))+
   theme_bw()+
-  xlab("Intervention")+
+  xlab("Outcome")+
   ggtitle(paste0("Province Replicated 2005-",endyear)) + 
   # ggtitle("Province Replicated Fixed Effects") + 
   # ylim(-4,0.1)+
