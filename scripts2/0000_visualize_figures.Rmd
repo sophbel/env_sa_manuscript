@@ -673,6 +673,7 @@ dev.off()
 data2<- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 dat_23 <- subset(data2, data2$year>2019)
 table(dat_23$ageyears, dat_23$vaccine_status_phen)
+
 ## group Vax status together
 data2 <- data2 %>%
   mutate(
@@ -712,6 +713,33 @@ dev.off()
 pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/agegroup_year.pdf"), width = 12, height =5)
 print(agegroupsyear)
 dev.off()
+
+
+
+#####particular serotypes by age and year
+data23f4 <- subset(data2, data2$serotype%in%c("23F","4","8"))
+## group ages
+df_summary <- data23f4 %>%
+  mutate(
+    age_group = case_when(
+      ageyears <= 5 ~ "0-5",
+      ageyears > 5 & ageyears < 18 ~ "6-17",
+      ageyears >= 18 & ageyears <= 64 ~ "18-64",
+      ageyears >= 65 ~ "65+",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  group_by(year, age_group, serotype) %>%
+  summarise(count = n(), .groups = "drop")
+df_summary$age_group <- factor(df_summary$age_group, levels = c("0-5","6-17","18-64","65+"))
+
+agegroupsyearsero <- ggplot(df_summary, aes(x = year, y = count, color = age_group, group = interaction(serotype, age_group))) +
+  geom_line(size = 1.2) +
+  geom_point() +
+  labs(x = "Year",y = "case count",color = "Age Group") +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 13), axis.title = element_text(size = 14), title = element_text(size=14))+
+  facet_wrap(.~serotype )
 ```
 
 #### FIGURE S2
