@@ -654,128 +654,47 @@ write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/
 
 
 ############# CUMULATIVE EFFECT PLOTS ############
-max_lag <- 8
-noint <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_",endyear,"_",prov_name,".csv"))
-noint$cov <- gsub("_lag0","",noint$covariate)
-noint$prov <- "Gauteng"
+# max_lag <- 8
+# noint <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_",endyear,"_",prov_name,".csv"))
+# noint$cov <- gsub("_lag0","",noint$covariate)
+# noint$prov <- "Gauteng"
+# 
+# ggplot(noint)+
+#   geom_hline(yintercept=1, linetype="dashed",color="red")+
+#   geom_line(aes(x = var, y = exp(cumulative_fit), group=cov))+
+#   geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=cov), alpha=0.5)+
+#   theme_bw()+
+#   ylab("Relative Risk")+
+#   # ylim(0.1,3)+
+#   xlab("Variable")+
+#   facet_wrap(cov~., scales="free")
+# 
+# ## WHOLE COUNTRY
+# m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm2_8_",endyear,".csv"))
+# m1$cov <- gsub("_lag0","",m1$covariate)
+# m1$prov <- "South_Africa"
+# # bind
+# nointall <- rbind(noint,m1)
+# ggplot(nointall)+
+#   geom_hline(yintercept=1, linetype="dashed",color="red")+
+#   geom_line(aes(x = var, y = exp(cumulative_fit), group=interaction(cov,prov),color=prov))+
+#   geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=interaction(cov,prov), fill=prov), alpha=0.5)+
+#   theme_bw()+
+#   ylab("Relative Risk")+
+#   # ylim(0.1,3)+
+#   xlab("Variable")+
+#   facet_wrap(cov~., scales="free")
+# 
+# ############# LAG EFFECT Plots ############
+# nointalltmp <- subset(nointall, nointall$cov%in%c("pm2p5","pm10","so2","hurs","absh","tasmin") & nointall$lag_num<7)
+# ggplot(nointalltmp)+
+#   geom_hline(yintercept=1, linetype="dashed",color="red")+
+#   geom_line(aes(x = var, y = exp(fit), group=interaction(cov,prov, lag_num),color=prov))+
+#   geom_ribbon(aes(x = var, ymin = exp(lowerCI), ymax= exp(upperCI), group=interaction(cov,prov,lag_num), fill=prov), alpha=0.5)+
+#   theme_bw()+
+#   ylab("Relative Risk")+
+#   # ylim(0.1,3)+
+#   xlab("Variable")+
+#   facet_wrap(cov~lag, scales="free", ncol=7)
+# 
 
-ggplot(noint)+
-  geom_hline(yintercept=1, linetype="dashed",color="red")+
-  geom_line(aes(x = var, y = exp(cumulative_fit), group=cov))+
-  geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=cov), alpha=0.5)+
-  theme_bw()+
-  ylab("Relative Risk")+
-  # ylim(0.1,3)+
-  xlab("Variable")+
-  facet_wrap(cov~., scales="free")
-
-## WHOLE COUNTRY
-m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm2_8_",endyear,".csv"))
-m1$cov <- gsub("_lag0","",m1$covariate)
-m1$prov <- "South_Africa"
-# bind
-nointall <- rbind(noint,m1)
-ggplot(nointall)+
-  geom_hline(yintercept=1, linetype="dashed",color="red")+
-  geom_line(aes(x = var, y = exp(cumulative_fit), group=interaction(cov,prov),color=prov))+
-  geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=interaction(cov,prov), fill=prov), alpha=0.5)+
-  theme_bw()+
-  ylab("Relative Risk")+
-  # ylim(0.1,3)+
-  xlab("Variable")+
-  facet_wrap(cov~., scales="free")
-
-############# LAG EFFECT Plots ############
-nointalltmp <- subset(nointall, nointall$cov%in%c("pm2p5","pm10","so2","hurs","absh","tasmin") & nointall$lag_num<7)
-ggplot(nointalltmp)+
-  geom_hline(yintercept=1, linetype="dashed",color="red")+
-  geom_line(aes(x = var, y = exp(fit), group=interaction(cov,prov, lag_num),color=prov))+
-  geom_ribbon(aes(x = var, ymin = exp(lowerCI), ymax= exp(upperCI), group=interaction(cov,prov,lag_num), fill=prov), alpha=0.5)+
-  theme_bw()+
-  ylab("Relative Risk")+
-  # ylim(0.1,3)+
-  xlab("Variable")+
-  facet_wrap(cov~lag, scales="free", ncol=7)
-
-### check event and exposure distributions to understand early lags ############
-##### there is stronger correlation between lags3-6 than 1 and 2 with data explaining this results
-sapply(0:8, function(lag) {
-  cor(df[[paste0("pm2p5_lag", lag)]], df$disease, use = "complete.obs")
-})
-
-vif_manual <- function(model) {
-  mm <- model.matrix(model)[, -1]  # remove intercept
-  vif_vals <- sapply(1:ncol(mm), function(i) {
-    r2 <- summary(lm(mm[, i] ~ mm[, -i]))$r.squared
-    1 / (1 - r2)
-  })
-  names(vif_vals) <- colnames(mm)
-  return(vif_vals)
-}
-model <- lm(disease ~ pm2p5_lag0 + pm2p5_lag1 + pm2p5_lag2 +
-              pm2p5_lag3 + pm2p5_lag4 , data = df)
-vif_manual(model)
-
-# Extract covariance matrix for fixed effects
-Q <- mod$misc$lincomb.derived.covariance.matrix
-
-# Calculate a pseudo-VIF: diagonal(Q) / sd^2
-vif_bayes <- diag(Q) / (summary(mod)$fixed[, "sd"]^2)
-print(vif_bayes)
-
-############# high versus low prevalence plots for GPSCs of interest ############
-
-noint <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_",endyear,"_",prov_name,".csv"))
-gpsc_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",endyear,"_",prov_name,".csv"))
-# gpsc_results <- rbind(noint, gpsc_results)
-
-no_int <- noint %>% filter(GPSC == "no_interaction") %>%
-  rename_with(~paste0(., "_noint"), c("fit", "lowerCI", "upperCI"))
-main_gpsc <- gpsc_results %>% filter(GPSC != "no_interaction")
-main_gpsc <- subset(main_gpsc, main_gpsc$covariate %in% c("absh_lag0","hurs_lag0","pm10_lag0","pm2p5_lag0"))
-
-allfits_pivoted <- main_gpsc %>%
-  left_join(no_int %>%
-              dplyr::select( covariate, var,lag,fit_noint, lowerCI_noint, upperCI_noint),
-            by = c("var","lag"))
-
-tmps <- subset(gpsc_results, gpsc_results$cov == "pm10_lag0" & gpsc_results$interaction_level %in% c("high","low","none"))
-p14 <- ggplot(tmps)+
-  geom_line(aes(x=var,y=fit, group=interaction(cov, GPSC, interaction_level,lag),  color=interaction_level))+
-  geom_hline(yintercept = 0, linetype = "dashed", color="red", alpha=0.6)+
-  # geom_line(aes(x = var, y = fit_noint, group=interaction(lag,interaction_level)), color = "black", linetype="dotted") +
-  geom_ribbon(aes(x=var, ymin=lowerCI,ymax=upperCI, group=interaction(cov, GPSC, interaction_level,lag), fill=interaction_level),alpha=0.2)+
-  # geom_ribbon(aes(x=var, ymin=lowerCI_noint,ymax=upperCI_noint, group=interaction(cov, GPSC)),fill="black",alpha=0.03)+
-  scale_color_manual(values = c("high"="red","low"="blue", "none" = "darkgreen")) +
-  scale_fill_manual(values = c("high"="red","low"="blue", "none" = "darkgreen")) +
-  # ylim(-0.2,0.2)+
-  xlab(cov_names_labels[c])+
-  theme_bw()+
-  ylab("Effect")+
-  facet_grid(GPSC~lag,scales="free_x")+
-  labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13),
-        strip.text.y = element_text(angle=0))
-p14
-
-
-
-gpsc_results$cov <- gsub("_lag0","",gpsc_results$covariate)
-tmps <- subset(gpsc_results, gpsc_results$cov == "pm2p5" & gpsc_results$interaction_level %in% c("high","low","none") & gpsc_results$lag_num==3)
-p14 <- ggplot(tmps)+
-  geom_line(aes(x=var,y=(cumulative_fit), group=interaction(cov, GPSC, interaction_level,lag),  color=interaction_level))+
-  geom_hline(yintercept = 0, linetype = "dashed", color="red", alpha=0.6)+
-  # geom_line(aes(x = var, y = fit_noint, group=interaction(lag,interaction_level)), color = "black", linetype="dotted") +
-  geom_ribbon(aes(x=var, ymin=cum_lowerCI,ymax=cum_upperCI, group=interaction(cov, GPSC, interaction_level,lag), fill=interaction_level),alpha=0.2)+
-  # geom_ribbon(aes(x=var, ymin=lowerCI_noint,ymax=upperCI_noint, group=interaction(cov, GPSC)),fill="black",alpha=0.03)+
-  scale_color_manual(values = c("high"="red","low"="blue", "none" = "darkgreen")) +
-  scale_fill_manual(values = c("high"="red","low"="blue", "none" = "darkgreen")) +
-  # ylim(-0.2,0.2)+
-  # xlab(cov_names_labels[c])+
-  theme_bw()+
-  ylab("Effect")+
-  facet_wrap(GPSC~.,scales="free_x")+
-  labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13),
-        strip.text.y = element_text(angle=0))
-p14

@@ -238,7 +238,7 @@ dis_data <- sa_adm2_weekly %>%
   group_by(district)%>%
   summarise(
     disease = sum(disease, na.rm = TRUE),
-    population_size = sum(population_size,na.rm = TRUE),
+    population_size = first(population_size),
     .groups = "drop"
   )
 
@@ -246,32 +246,36 @@ shp_dis <- shp %>%
   left_join(dis_data, by = "district")
 # Define nice breaks for the legend
 legend_breaks <- c(1, 10, 100, 1000, 10000, 50000, 100000)
+# legend_breaks_inc <- c(1, 5, 10, 50, 100, 500, 1000)
 
 # Plot with log-transformed color scale but real value labels
-displot <- ggplot(shp_dis) +
-  geom_sf(aes(fill = disease), color = "white", size = 0.1) +
-  scale_fill_viridis(
-    trans = "log10",
-    breaks = legend_breaks,
-    labels = scales::comma(legend_breaks),
-    na.value = "gray90",
-    name = "Disease counts"
-  ) +
+## incidence
+displotinc <- ggplot(shp_dis) +
+  geom_sf(aes(fill = (disease/population_size)*100000), color = "white", size = 0.1) +
+  scale_fill_viridis(trans = "log10",
+                     # breaks = legend_breaks_inc, labels = scales::comma(legend_breaks_inc),
+                     na.value = "gray90",name = "Disease Incidence\nper 100,000") +
   theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", size = 16),
-    plot.subtitle = element_text(size = 12),
-    legend.position = "right",
-    panel.grid = element_blank(),
-    axis.text = element_blank(),
-    axis.title = element_blank(),
-    axis.ticks = element_blank()
-  )
-
+  theme(plot.title = element_text(face = "bold", size = 16),plot.subtitle = element_text(size = 12),legend.position = "right",
+    panel.grid = element_blank(),axis.text = element_blank(),axis.title = element_blank(),axis.ticks = element_blank())
+## count
+displot_count <- ggplot(shp_dis) +
+  geom_sf(aes(fill = disease), color = "white", size = 0.1) +
+  scale_fill_viridis(trans = "log10",breaks = legend_breaks,labels = scales::comma(legend_breaks),
+                     na.value = "gray90",name = "Disease counts") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 16),plot.subtitle = element_text(size = 12),legend.position = "right",
+    panel.grid = element_blank(),axis.text = element_blank(),axis.title = element_blank(),axis.ticks = element_blank())
+displot_count+displotinc
     
 pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure1/dis_inc.pdf", width = 7,height=5)
-print(displot)
+print(displotinc)
 dev.off()
+
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure1/dis_counts.pdf", width = 7,height=5)
+print(displot_count)
+dev.off()
+
 
 ```
 #### FIGURE 1C
@@ -2114,7 +2118,7 @@ dev.off()
 ```{r}
 space = "adm1"
 tmps <- subset(allfits, allfits$cov== "pm2p5" & allfits$interaction_level %in% c("low","high","none") & allfits$lag_num==3 & allfits$space_time==paste0("weekly_",space))
-# tmps <- subset(allfits, allfits$cov == "pm10" & allfits$interaction_level %in% c("low","none") & allfits$lag_num==3 & allfits$space_time=="weekly_adm2")
+
 
 no_int <- tmps %>% filter(GPSC == "no_interaction") %>%
   rename_with(~paste0(., "_noint"), c("cumulative_fit", "cum_lowerCI", "cum_upperCI"))
@@ -2132,45 +2136,49 @@ p14 <- ggplot(allfits_pivoted)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
   geom_line(aes(x = var, y = exp(cumulative_fit_noint), group=interaction(lag,interaction_level)), color = "black", linetype="solid") +
   geom_ribbon(aes(x=var, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(cov, GPSC, interaction_level,lag), fill=interaction_level),alpha=0.2)+
-  geom_ribbon(aes(x=var, ymin=exp(cum_lowerCI_noint) ,ymax= exp(cum_upperCI_noint), group=interaction(cov, GPSC)),fill="black",alpha=0.09)+
-  scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
-  scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
+  geom_ribbon(aes(x=var, ymin=exp(cum_lowerCI_noint) ,ymax= exp(cum_upperCI_noint), group=interaction(cov, GPSC)),fill="black",alpha=0.4)+
+  # scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
+  # scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
+   scale_color_manual(values = c("high"="red")) +
+  scale_fill_manual(values = c("high"="red")) +
   # xlab(cov_names_labels[c])+
   scale_y_continuous(trans="log10")+
   theme_bw()+
   ylab("Relative Risk")+
   facet_wrap(GPSC~.,scales="free")+
   labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13),
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle=45, hjust = 1),
         strip.text.y = element_text(angle=0))
 p14
-pdf(file=paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/cumulative_effect_pm2p5",space,".pdf"), width = 8,height=6)
+pdf(file=paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/cumulative_effect_pm2p5",space,".pdf"), width = 8,height=7)
 print(p14)
 dev.off()
 ```
-##### 6 week lagged dose response curves
+##### 8 week lagged dose response curves
 ```{r}
 space = "adm2"
 tmps <- subset(allfits, allfits$cov== "pm2p5" & allfits$interaction_level %in% c("low","high","none") & allfits$space_time==paste0("weekly_",space))
 # tmps <- subset(allfits, allfits$cov == "pm10" & allfits$interaction_level %in% c("low","none") & allfits$lag_num==3 & allfits$space_time=="weekly_adm2")
 main_gpsc <- tmps %>% filter(GPSC != "no_interaction")
 # 
-# no_int <- tmps %>% filter(GPSC == "no_interaction") %>%
-#   rename_with(~paste0(., "_noint"), c("f", "cum_lowerCI", "cum_upperCI"))
+no_int <- tmps %>% filter(GPSC == "no_interaction") %>%
+  rename_with(~paste0(., "_noint"), c("fit", "lowerCI", "upperCI"))
 # 
-# main_gpsc <- tmps %>% filter(GPSC != "no_interaction")
+main_gpsc <- tmps %>% filter(GPSC != "no_interaction")
 # 
 # # Step 2: Join them back by cov, var, and space_time
-# allfits_pivoted <- main_gpsc %>%
-#   left_join(no_int %>% 
-#               dplyr::select(space_time, cov, var,lag,cumulative_fit_noint, cum_lowerCI_noint, cum_upperCI_noint),
-#             by = c("var","cov","space_time","lag"))
-main_gpsc$lagweek <- paste0("week ",main_gpsc$lag_num)
-main_gpsc$lagweek <- factor(main_gpsc$lagweek, levels = c("week 0", "week 1","week 2","week 3","week 4","week 5","week 6","week 7","week 8"))
-p14 <- ggplot(main_gpsc)+
+allfits_pivoted <- main_gpsc %>%
+  left_join(no_int %>%
+              dplyr::select(space_time, cov, var,lag,fit_noint, lowerCI_noint, upperCI_noint),
+            by = c("var","cov","space_time","lag"))
+
+allfits_pivoted$lagweek <- paste0("week ",allfits_pivoted$lag_num)
+allfits_pivoted$lagweek <- factor(allfits_pivoted$lagweek, levels = c("week 0", "week 1","week 2","week 3","week 4","week 5","week 6","week 7","week 8"))
+p14 <- ggplot(allfits_pivoted)+
   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lagweek),  color=interaction_level))+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
   geom_ribbon(aes(x=var, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(cov, GPSC, interaction_level,lagweek), fill=interaction_level),alpha=0.2)+
+    geom_line(aes(x = var, y = exp(fit_noint), group=interaction(cov, GPSC, interaction_level,lagweek)), color = "black", linetype="solid") +
   scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   # ylim(0,3.5)+
@@ -2180,17 +2188,18 @@ p14 <- ggplot(main_gpsc)+
   ylab("Relative Risk")+
   facet_grid(GPSC~lagweek,scales="free_x")+
   labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
-  theme(axis.text = element_text(size=10),axis.title=element_text(size=13), strip.text = element_text(size=13),
+  theme(axis.text = element_text(size=12),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45, hjust = 1), 
         strip.text.y = element_text(angle=0))
-p14
-pdf(file= paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/lagged_effect_pm2p5_",space,".pdf"), width = 10,height=8)
+
+pdf(file= paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/lagged_effect_pm2p5_",space,".pdf"), width = 10,height=10)
 print(p14)
 dev.off()
 
 
 #### select GPSCs
-p15 <- ggplot(main_gpsc[which(main_gpsc$GPSC%in%c("GPSC14","GPSC21","GPSC26")),])+
+p15 <- ggplot(allfits_pivoted[which(allfits_pivoted$GPSC%in%c("GPSC14","GPSC21","GPSC26")),])+
   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lagweek),  color=interaction_level))+
+      geom_line(aes(x = var, y = exp(fit_noint), group=interaction(cov, GPSC, interaction_level,lagweek)), color = "black", linetype="solid") +
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
   geom_ribbon(aes(x=var, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(cov, GPSC, interaction_level,lagweek), fill=interaction_level),alpha=0.2)+
   scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
@@ -2212,9 +2221,10 @@ print(p15)
 dev.off()
 
 #### serotype 19F types
-p16 <- ggplot(main_gpsc[which(main_gpsc$GPSC%in%c("GPSC1","GPSC21")),])+
+p16 <- ggplot(allfits_pivoted[which(allfits_pivoted$GPSC%in%c("GPSC1","GPSC21")),])+
   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lagweek),  color=interaction_level))+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+        geom_line(aes(x = var, y = exp(fit_noint), group=interaction(cov, GPSC, interaction_level,lagweek)), color = "black", linetype="dotted") +
   geom_ribbon(aes(x=var, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(cov, GPSC, interaction_level,lagweek), fill=interaction_level),alpha=0.2)+
   scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
@@ -2240,7 +2250,66 @@ dev.off()
 # table(data2[which(data2$GPSC=="14"),]$serotype) ## serotype 23F (PCV7) acute risks for serotype 23F
 
 ```
+### plot prevalence of each GPSC over time
+```{r}
+data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+df <- sa_adm2_weekly %>%
+  mutate(year = year(date)) %>%
+  group_by(GID_1, year) %>%
+  summarise(
+    GPSC1_count = sum(GPSC1_count, na.rm = TRUE),
+    GPSC21_count = sum(GPSC21_count, na.rm = TRUE),
+    disease = sum(disease, na.rm = TRUE),
+    .groups = "drop"
+  )
+overall <- df %>%
+  group_by(year,GID_1) %>%
+  summarise(
+    GPSC1_count = sum(GPSC1_count, na.rm = TRUE),
+    GPSC21_count = sum(GPSC21_count, na.rm = TRUE),
+    disease = sum(disease, na.rm = TRUE)
+  ) %>%
+  mutate(
+    GPSC1_prev = GPSC1_count / disease,
+    GPSC21_prev = GPSC21_count / disease
+  )
 
+library(ggplot2)
+
+ggplot(overall, aes(x = year)) +
+  geom_line(aes(y = GPSC1_prev, colour = "GPSC1"), size = 1.2) +
+  geom_line(aes(y = GPSC21_prev, colour = "GPSC21"), size = 1.2) +
+  labs(
+    y = "Proportion of disease",
+    x = "Year",
+    colour = "Type",
+    title = "Prevalence of GPSC1 vs GPSC21 over time"
+  ) +
+  theme_minimal()
+ggplot(overall, aes(x = year)) +
+  geom_line(aes(y = GPSC1_prev, colour = "GPSC1")) +
+  geom_line(aes(y = GPSC21_prev, colour = "GPSC21")) +
+  facet_wrap(~ GID_1) +
+  labs(
+    y = "Proportion of disease",
+    x = "Year",
+    colour = "Type",
+    title = "Prevalence of GPSC1 vs GPSC21 by province"
+  ) +
+  theme_minimal()
+
+datagpsc21 <- data2[which(data2$GPSC=="21" & data2$year < 2020)]
+(table(datagpsc21$serotype, datagpsc21$year))
+
+sum(table(datagpsc21$serotype, datagpsc21$year))
+
+datagpsc1 <- data2[which(data2$GPSC=="1"& data2$year < 2020)]
+(table(datagpsc1$serotype, datagpsc1$year))
+rowSums(table(datagpsc1$serotype, datagpsc1$year))
+
+data19f <- data2[which(data2$serotype=="19F"& data2$year < 2020)]
+(table(data19f$GPSC, data19f$year))
+```
 
 ### proportion of GPSCs for each serotype 19f, 12f, and 6a
 ```{r}
