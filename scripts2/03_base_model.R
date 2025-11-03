@@ -12,7 +12,7 @@
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 # weekly=FALSE
 precov=TRUE ### set whether the run ends in 2020 or 2023
-time = "weekly"
+time = "monthly"
 space="adm1"
 threads = 4
       ## load disease data

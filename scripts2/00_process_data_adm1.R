@@ -287,10 +287,10 @@ data_summarized_week <- data2 %>%
             
             # Creating counts for ages <1, <5, 5-21,, >65, >80
             age_lt1 = sum(ageyears <1, na.rm=T),
-            age_lt5 = sum(ageyears <=5, na.rm=T),
-            age_5t14 = sum(ageyears>5 & ageyears<=14,na.rm=T),
-            age_14t24 = sum(ageyears>14 & ageyears<=24,na.rm=T),
-            age_14t64 = sum(ageyears>14 & ageyears<65,na.rm=T),
+            age_lt6 = sum(ageyears <=5, na.rm=T),
+            age_6t14 = sum(ageyears>5 & ageyears<=14,na.rm=T),
+            age_15t24 = sum(ageyears>14 & ageyears<=24,na.rm=T),
+            age_15t64 = sum(ageyears>14 & ageyears<65,na.rm=T),
             age_18t64 = sum(ageyears>=18 & ageyears<65,na.rm=T),
             age_gt65 = sum(ageyears >65, na.rm=T),
             age_gt80 = sum(ageyears >80, na.rm=T),
@@ -503,10 +503,10 @@ data_summarized_month <- data2 %>%
             
             # Creating counts for ages <1, <5, 5-21,, >65, >80
             age_lt1 = sum(ageyears <1, na.rm=T),
-            age_lt5 = sum(ageyears <=5, na.rm=T),
-            age_5t14 = sum(ageyears>5 & ageyears<=14,na.rm=T),
-            age_14t24 = sum(ageyears>14 & ageyears<=24,na.rm=T),
-            age_14t64 = sum(ageyears>14 & ageyears<65,na.rm=T),
+            age_lt6 = sum(ageyears <=5, na.rm=T),
+            age_6t14 = sum(ageyears>5 & ageyears<=14,na.rm=T),
+            age_15t24 = sum(ageyears>14 & ageyears<=24,na.rm=T),
+            age_15t64 = sum(ageyears>14 & ageyears<65,na.rm=T),
             age_18t64 = sum(ageyears>=18 & ageyears<65,na.rm=T),
             age_gt65 = sum(ageyears >65, na.rm=T),
             age_gt80 = sum(ageyears >80, na.rm=T),
