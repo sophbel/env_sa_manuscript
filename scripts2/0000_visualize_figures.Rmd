@@ -763,14 +763,14 @@ dev.off()
 data_unscaled <- fread("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
 # Filter for high PM2.5 weeks and count per province and year
 weeks_over_50_by_dist_year <- data_unscaled %>%
-  filter(pm2p5_lag0 >= 50) %>%
-  group_by(NAME_1, year) %>%
+  filter(pm2p5_lag0 >= 100) %>%
+  group_by(district, NAME_1, year) %>%
   summarise(weeks_over_50 = n(), .groups = "drop") %>%
-  arrange(NAME_1,year) 
+  arrange(NAME_1, district,year) 
 # View results
 color_labels = c("Eastern_Cape" = "#008080", "Free_State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
                      "Limpopo" = "#228B22", "Mpumalanga" = "#FFC000", "North_West" = "#8B5A2B", "Northern_Cape" = "#606060", "Western_Cape" = "#1A2D6D" )
-weeksover <- ggplot(weeks_over_50_by_dist_year, aes(x = year, y = weeks_over_50, color = NAME_1)) +
+weeksover <- ggplot(weeks_over_50_by_dist_year, aes(x = year, y = weeks_over_50, color = NAME_1, group = district)) +
   geom_line(size = 1, alpha = 0.7) +
   # geom_point(alpha = 0.7) +
   scale_color_manual(values=color_labels)+
@@ -785,6 +785,7 @@ weeksover <- ggplot(weeks_over_50_by_dist_year, aes(x = year, y = weeks_over_50,
   )+
   theme(legend.position = "none")
 
+weeks_over_50_by_dist_year[which(weeks_over_50_by_dist_year$weeks_over_50>10),]
 ####### tasmax vs relative humidity
 data_unscaled <- fread("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
 color_labels = c("Eastern Cape" = "#008080", "Free State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
@@ -849,6 +850,37 @@ dev.off()
   patchwork::plot_annotation(tag_levels = 'a')
 ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/supplement/env_descriptions.png", width = 10,height=4)
 ```
+Threshold exceedance calculations
+```{r}
+# Count weeks ≥100 for each district-year
+weeks_over_100 <- data_unscaled %>%
+  group_by(district, NAME_1, year) %>%
+  summarise(weeks_over_100 = sum(pm2p5_lag0 >= 50), .groups = "drop")
+
+# Keep only district-years that had ≥1 exceedance
+districts_with_exceedance <- weeks_over_100 %>%
+  filter(weeks_over_100 > 0)
+
+# For each year: 
+#   - N of districts that exceeded
+#   - Avg # of exceedance weeks (among only those districts)
+summary_by_year <- districts_with_exceedance %>%
+  group_by(year) %>%
+  summarise(
+    districts_exceeding = n(),
+    avg_weeks_exceeding = mean(weeks_over_100),
+    .groups = "drop"
+  )
+
+summary_by_year
+mean(summary_by_year[which(summary_by_year$year<=2010),]$avg_weeks_exceeding,na.rm=T)
+mean(summary_by_year[which(summary_by_year$year>2010&summary_by_year$year<=2923),]$avg_weeks_exceeding,na.rm=T)
+mean(summary_by_year[which(summary_by_year$year>2015&summary_by_year$year<=2023),]$avg_weeks_exceeding,na.rm=T)
+
+
+```
+
+
 #### FIGURE 3 AND FIGURE S3 AND S4 AND S5
 #### Bivariable and Univariable Plots Data
 Load Data. The cumulative and lagged effects of top univariable and additive effect models across South Africa. 
