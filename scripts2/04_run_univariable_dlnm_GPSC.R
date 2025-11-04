@@ -18,12 +18,12 @@ install.packages(path_to_package ,
 library(ghrmodel)
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 ### set if interaction is true or not
-interaction = FALSE
+interaction = TRUE
 ### set resolution
 time = "weekly"
 space = "adm1"
 precov = TRUE
-
+permute = TRUE
 ## load spatial data
 if(space == "adm1"){
   shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
@@ -119,6 +119,9 @@ if(precov==TRUE){
 }
 
 
+### permute PM2.5 for a placebo test ### this will not converge
+# df$pm2p5permute_lag0 <- sample(df$pm2p5_lag0)
+
 ### add environmental covariates
 all <- colnames(df)
 all_gpscs <- all
@@ -126,11 +129,14 @@ all <- grep("lag0",all, value = TRUE)
 if(interaction == TRUE){
   # cov_names <- grep("tasmax|hurs|absh|pm2p5|pm10|o3|so2", all, value = TRUE)
   cov_names <- grep("hurs|pm2p5|pm10", all, value = TRUE)
+  
 }else{
 cov_names <- grep("tasmax|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|pm2p5|pm10|o3|so2|spei3|spei6|spi3|spi6", all, value = TRUE)
 # cov_names <- grep("hurs|pm2p5|pm10", all, value = TRUE)
 }
 cov_names_labels <- gsub("_lag0", "", cov_names)
+
+
 
 ### select some serotypes to include
 data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
@@ -557,11 +563,14 @@ for(gp in 1:length(gpsc_vec_sub)){
           mod_sum_all <- rbind(mod_sum_all,mod_sum2)
         }
         
+        if(permute == TRUE){
+          
+        }else{
         ############## SAVE FILES ##############################################
         saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
         # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"_",endyear,".rds"))
         write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-
+}
   } ### end of loop through gpscs
 
 

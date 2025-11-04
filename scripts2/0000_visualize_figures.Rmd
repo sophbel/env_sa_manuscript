@@ -54,6 +54,7 @@ summary_table[order(-summary_table$count), ]
 
 ```
 
+
 #### FIGURE 1A
 #### visualize hospital locations
 ```{r}
@@ -2792,6 +2793,9 @@ ggplot()+
 ```{r}
 df <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
 df <- data.frame(df)
+df <- df %>%
+  group_by(week, NAME_1) %>%
+  mutate(week_seq_prov = sum(sequenced), .groups = 'drop') 
 # Step 1: Calculate total and proportions
 df$total <- df$nvt + df$pcv7 + df$pcv13
 df$nvt_prop <- df$nvt / df$total
@@ -2800,37 +2804,104 @@ df$pcv13_prop <- df$pcv13 / df$total
 
 lag_cols <- grep("^pm2p5_lag\\d+$", names(df), value = TRUE)
 
-# Compute correlation per province
-cor_by_province <- df %>%
+# Compute correlation per province on RAW CONCENTRATIONS
+            cor_by_province <- df %>%
+              group_by(NAME_1) %>%
+              summarise(across(all_of(lag_cols), ~ cor(nvt_prop, ., use = "complete.obs"), .names = "NVT_{.col}"),
+                        across(all_of(lag_cols), ~ cor(pcv7_prop, ., use = "complete.obs"), .names = "PCV7_{.col}"),
+                        across(all_of(lag_cols), ~ cor(pcv13_prop, ., use = "complete.obs"), .names = "PCV13_{.col}")) %>%
+              pivot_longer(
+                cols = -NAME_1,
+                names_to = c("Type", "Lag"),
+                names_sep = "_pm2p5_lag",
+                values_to = "Correlation"
+              ) %>%
+              mutate(Lag = as.numeric(Lag))
+            
+            # # Plot
+            # corr_conc <- ggplot(cor_by_province, aes(x = Lag, y = Correlation, color = Type)) +
+            #     geom_hline(yintercept = 0, linetype = "dashed", color = "black")+
+            #   geom_line(size = 1.2) +
+            #   geom_point(size = 2) +
+            #   facet_wrap(~ NAME_1) +
+            #   theme_minimal() +
+            #   labs(title = "PM2.5 Lag vs Vaccine Type Proportion Correlations by Province",
+            #        x = "Lag (weeks)",
+            #        y = "Correlation",
+            #        color = "Pneumococcal Group")
+
+### COMPUTE CORRELATION ON SPIKES
+# function to flag spikes based on peak detection
+detect_spikes <- function(x, threshold = 40) {
+  x <- as.numeric(x)
+
+  # Replace NAs to avoid errors
+  x[is.na(x)] <- median(x, na.rm = TRUE)
+
+  peaks <- findpeaks(x, threshold = threshold)
+
+  spike_flag <- rep(0, length(x))
+  if (!is.null(peaks)) {
+    idx <- peaks[,2]  # center index of peaks
+    spike_flag[idx] <- 1
+  }
+  
+  return(spike_flag)
+}
+
+### assign spikes
+for (col in lag_cols) {
+  df[[paste0(col, "_spike")]] <- detect_spikes(df[[col]])
+}
+
+
+### correlation by spikes
+spike_cols <- grep("_spike$", names(df), value = TRUE)
+cor_by_province_spikes <- df %>%
   group_by(NAME_1) %>%
-  summarise(across(all_of(lag_cols), ~ cor(nvt_prop, ., use = "complete.obs"), .names = "NVT_{.col}"),
-            across(all_of(lag_cols), ~ cor(pcv7_prop, ., use = "complete.obs"), .names = "PCV7_{.col}"),
-            across(all_of(lag_cols), ~ cor(pcv13_prop, ., use = "complete.obs"), .names = "PCV13_{.col}")) %>%
+  summarise(
+    across(all_of(spike_cols), ~ cor(nvt_prop, ., use = "complete.obs"), .names = "NVT_{.col}"),
+    across(all_of(spike_cols), ~ cor(pcv7_prop, ., use = "complete.obs"), .names = "PCV7_{.col}"),
+    across(all_of(spike_cols), ~ cor(pcv13_prop, ., use = "complete.obs"), .names = "PCV13_{.col}"),
+    across(all_of(spike_cols), ~ cor(GPSC21_count/week_seq_prov, ., use = "complete.obs"), .names = "GPSC21_{.col}")
+  ) %>%
   pivot_longer(
     cols = -NAME_1,
     names_to = c("Type", "Lag"),
     names_sep = "_pm2p5_lag",
     values_to = "Correlation"
   ) %>%
-  mutate(Lag = as.numeric(Lag))
+  mutate(Lag = as.numeric(gsub("_spike", "", Lag)))
 
-# Plot
-ggplot(cor_by_province, aes(x = Lag, y = Correlation, color = Type)) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = "black")+
-  geom_line(size = 1.2) +
-  geom_point(size = 2) +
-  facet_wrap(~ NAME_1) +
-  theme_minimal() +
-  labs(title = "PM2.5 Lag vs Vaccine Type Proportion Correlations by Province",
-       x = "Lag (weeks)",
-       y = "Correlation",
-       color = "Pneumococcal Group")
+corr_spike <- ggplot(cor_by_province_spikes, aes(x = Lag, y = Correlation, color = Type)) +
+                geom_hline(yintercept = 0, linetype = "dashed", color = "black")+
+              geom_line(size = 1.2) +
+              geom_point(size = 2) +
+              facet_wrap(~ NAME_1) +
+              theme_minimal() +
+              labs(title = "PM2.5 Lag vs Vaccine Type Proportion Correlations by Province",
+                   x = "Lag (weeks)",
+                   y = "Correlation",
+                   color = "Pneumococcal Group")
+
+corr_spike
+```
 
 
+#### deconvolute pm and find peaks
+```{r}
+library(data.table)
+library(dplyr)
+library(pracma)
+
+df <- fread("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
+df <- data.frame(df)
+
+# get PM2.5 columns
+lag_cols <- grep("^pm2p5_lag\\d+$", names(df), value = TRUE)
 
 
 ```
-
 
 
 
