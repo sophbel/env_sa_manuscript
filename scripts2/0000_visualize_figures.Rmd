@@ -153,6 +153,59 @@ pdf(file=paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure2/res_w
 print(spat+m+y)
 dev.off()
 ```
+
+#### plot fixed effects from baseline model
+```{r}
+###### plot vaccination period and population_density
+fixedeffs <- basemod$summary.fixed
+colnames(fixedeffs) <- c("mean","sd","lowerCI","median","upperCI","mode","kld")
+fixedeffs$covs <- c("int","postPCV7","postPCV13","population_density")
+
+## adjust mean effect
+fixedeffs$mean_all <- fixedeffs$mean
+fixedeffs$mean_all[which(fixedeffs$covs=="postPCV7")] <- fixedeffs$mean[which(fixedeffs$covs=="postPCV7")] + fixedeffs$mean[which(fixedeffs$covs=="int")] 
+fixedeffs$mean_all[which(fixedeffs$covs=="postPCV13")] <- fixedeffs$mean[which(fixedeffs$covs=="postPCV13")] + fixedeffs$mean[which(fixedeffs$covs=="int")] 
+
+## adjust lower CI
+fixedeffs$lowerCI_all <- fixedeffs$lowerCI
+fixedeffs$lowerCI_all[which(fixedeffs$covs=="postPCV7")] <- fixedeffs$lowerCI[which(fixedeffs$covs=="postPCV7")] + fixedeffs$lowerCI[which(fixedeffs$covs=="int")] 
+fixedeffs$lowerCI_all[which(fixedeffs$covs=="postPCV13")] <- fixedeffs$lowerCI[which(fixedeffs$covs=="postPCV13")] + fixedeffs$lowerCI[which(fixedeffs$covs=="int")] 
+
+## adjust upper CI
+fixedeffs$upperCI_all <- fixedeffs$upperCI
+fixedeffs$upperCI_all[which(fixedeffs$covs=="postPCV7")] <- fixedeffs$upperCI[which(fixedeffs$covs=="postPCV7")] + fixedeffs$upperCI[which(fixedeffs$covs=="int")] 
+fixedeffs$upperCI_all[which(fixedeffs$covs=="postPCV13")] <- fixedeffs$upperCI[which(fixedeffs$covs=="postPCV13")] + fixedeffs$upperCI[which(fixedeffs$covs=="int")] 
+
+## change to factors
+fixedeffs$covs <- factor(fixedeffs$covs, levels = c("int","postPCV7","postPCV13","population_density"),
+                         labels = c("prePCV","postPCV7","postPCV13","population density"))
+
+fixedeffs$OR <- exp(fixedeffs$mean_all)
+fixedeffs$OR_lower <- exp(fixedeffs$lowerCI_all)
+fixedeffs$OR_upper <- exp(fixedeffs$upperCI_all)
+fixedeffs$type <- ifelse(fixedeffs$covs=="population density","population","vaccine")
+## plot these effects for different periods
+vax_colors <- c("prePCV" = "steelblue", "postPCV7"= "#FFC000", "postPCV13" = "darkorange", "population density" = "grey20")
+fixedplot <- ggplot(fixedeffs) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "red",alpha = 0.5) + 
+  geom_pointrange(aes(x=covs, y = mean_all, ymin = lowerCI_all, ymax = upperCI_all, group = type, color = covs))+
+  theme_bw()+
+  ylim(-3.5,0)+
+  scale_color_manual(values = vax_colors) +
+  xlab("Covariate") +
+  ylab("Fixed Effect") +
+  theme(legend.title = element_blank(), axis.text = element_text(size =11), axis.title = element_text(size=13),
+        axis.text.x = element_text(angle=45, hjust =1))
+
+
+pdf(file=paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure2/res_weekly_adm2_",endyear,"_fixedeffects.pdf"), width = 4,height=4)
+print(fixedplot)
+dev.off()
+
+```
+
+
+
 #### TABLE S1
 #### report random effects by space and month
 ```{r}
