@@ -1152,10 +1152,12 @@ disease_data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/di
 climate_data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/climate/env_adm1_monthly.csv")
 colnames(climate_data)[colnames(climate_data)=="year_month"]<-"date"
 table(climate_data$date%in%disease_data$date)
+table(disease_data$date%in%climate_data$date)
+
 ## merge climate and disease data
 sa_adm1_monthly<-left_join(climate_data,disease_data,by=c("date","GID_1","year","month"))
 if("date"%notin%colnames(sa_adm1_monthly)){
-  print("Change monthh to date")
+  print("Change month to date")
   df <- sa_adm1_monthly
   df <- df %>%
     mutate(date = as.Date(month)) }else{

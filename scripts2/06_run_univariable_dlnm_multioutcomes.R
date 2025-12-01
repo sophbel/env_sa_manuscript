@@ -18,7 +18,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 ### set resolution
 time = "weekly"
 space = "adm2"
-outcome_type = "province" ## options are "serotype" "demographic" "province"
+outcome_type = "demographic" ## options are "serotype" "demographic" "province"
 precov = TRUE
 
 ## load spatial data
@@ -122,7 +122,7 @@ cov_names <- grep("hurs|pm2p5|pm10|so2", all, value = TRUE)
 cov_names_labels <- gsub("_lag0", "", cov_names)
 
 mod_all <- dlnm_results <- NULL
-outcomes_demo <- c("mening_count","bact_count","other_count","female_count","age_lt6","age_15t64","age_18t64", "age_gt65","pcv13","pcv7","nvt")
+outcomes_demo <- c("mening_count","bact_count","other_count","female_count","age_lt6","age_6t14","age_15t64","age_18t64", "age_gt65","pcv13","pcv7","nvt")
 ## seros with >2000
 data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 dtsero <- data.table(table(data2$serotype))[data.table(table(data2$serotype))$N>2000]$V1

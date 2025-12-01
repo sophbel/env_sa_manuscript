@@ -30,7 +30,7 @@ sa_adm1_weekly2019 <- sa_adm1_weekly[which(sa_adm1_weekly$year<2020),]
 sum(sa_adm2_weekly$other_count)/sum(sa_adm2_weekly$disease)
 sum(c(sa_adm2_weekly$other_count,sa_adm2_weekly$bact_count,sa_adm2_weekly$mening_count))
 data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-dattot <- data2[which(data2$year>2004 & data2$year<2020)]
+dattot <- data2[which(data2$year>2004 & data2$year<2020  )]
 
 ### grids per district
 shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
@@ -51,6 +51,11 @@ summary_table <- data.frame(
   count = colSums(sa_adm1_weekly2019[ , ..columns_of_interest], na.rm = TRUE)
 )
 summary_table[order(-summary_table$count), ]
+
+sum(sa_adm1_weekly2019$disease)
+sum(sa_adm1_weekly2019$mening_count)+sum(sa_adm1_weekly2019$bact_count) + sum(sa_adm1_weekly2019$other_count)
+
+sum(sa_adm1_weekly2019$ag)+sum(sa_adm1_weekly2019$bact_count) + sum(sa_adm1_weekly2019$other_count)
 
 ```
 
@@ -197,6 +202,21 @@ fixedplot <- ggplot(fixedeffs) +
   theme(legend.title = element_blank(), axis.text = element_text(size =11), axis.title = element_text(size=13),
         axis.text.x = element_text(angle=45, hjust =1))
 
+scaleFUN <- function(x) sprintf("%.4f", x)
+popinset <- ggplot(fixedeffs[which(fixedeffs$type=="population"),]) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "red",alpha = 0.5) + 
+  geom_pointrange(aes(x=covs, y = mean_all, ymin = lowerCI_all, ymax = upperCI_all, group = type, color = covs))+
+  theme_classic()+
+  # ylim(-3.5,0)+
+  scale_color_manual(values = vax_colors) +
+  scale_y_continuous(labels=scaleFUN) +
+  xlab("") +
+  ylab("Fixed Effect") +
+  theme(legend.title = element_blank(), axis.text = element_text(size =10), axis.title = element_text(size=10),
+        axis.text.x = element_blank(), legend.position = "none")
+pdf(file=paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure2/population_densityinset_",endyear,"_fixedeffects.pdf"), width = 1.5,height=1.5)
+print(popinset)
+dev.off()
 
 pdf(file=paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure2/res_weekly_adm2_",endyear,"_fixedeffects.pdf"), width = 4,height=4)
 print(fixedplot)
@@ -1537,7 +1557,7 @@ dev.off()
 #### SUBSET BY MULTIPLE OUTCOME MODELS
 ```{r}
 ## multiple outcomes
-    dlnm_multiout_demog <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/demographic/dlnm_subsetoutcomes_results_fits_weekly_adm2_demographic_2019.csv")
+    dlnm_multiout_demog <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/dlnm_subsetoutcomes_results_fits_weekly_adm2_demographic_2019.csv")
     dlnm_multiout_sero <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/serotypes/dlnm_subsetoutcomes_results_fits_weekly_adm2_serotype_2019.csv")
     dlnm_multiout <- rbind(dlnm_multiout_demog, dlnm_multiout_sero)
     dlnm_multiout$cov <- gsub("_lag0","",dlnm_multiout$covariate)
@@ -1593,7 +1613,7 @@ dev.off()
     fits_sero <- subset(fits, fits$GPSC%in%outcomes & fits$lag_num%in%seq(0,max_lag,1))
     fits_pcv_type <- subset(fits, fits$GPSC%in%c("pcv7","pcv13","nvt")& fits$lag_num%in%seq(0,max_lag,1))
     fits_distypes <- subset(fits, fits$GPSC%in%c("bact_count","mening_count","other_count")& fits$lag_num%in%seq(0,max_lag,1))
-    fits_age <- subset(fits, fits$GPSC%in%c("age_gt65","age_lt6","age_15t64","female_count")& fits$lag_num%in%seq(0,max_lag,1))
+    fits_age <- subset(fits, fits$GPSC%in%c("age_gt65","age_lt6","age_6t14","age_15t64","female_count")& fits$lag_num%in%seq(0,max_lag,1))
     
     ## label group
     pcv13_vec <- paste0("Sero",c( "1", "3", "5", "6A", "7F", "19A"),"_count")
@@ -1609,7 +1629,7 @@ dev.off()
 #### age distributions
 ```{r}
   fits_age_cum <- fits_age[which(fits_age$lag_num==3),]
-  fits_age_cum$GPSC <- factor(fits_age_cum$GPSC, levels = c("age_lt6","age_15t64","age_gt65", "age_gt80","female_count"))
+  fits_age_cum$GPSC <- factor(fits_age_cum$GPSC, levels = c("age_lt6","age_6t14","age_15t64","age_gt65", "age_gt80","female_count"))
   plot_age <- ggplot(fits_age_cum)+
           geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7, linetype = "dashed")+
       geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
@@ -1636,7 +1656,7 @@ dev.off()
 
 #### across lags
      fits_age_lag <- fits_age[which(fits_age$lag_num<9),]
-     fits_age_lag$GPSC <- factor(fits_age_lag$GPSC, levels = c("age_lt6","age_15t64","age_gt65", "age_gt80","female_count"))
+     fits_age_lag$GPSC <- factor(fits_age_lag$GPSC, levels = c("age_lt6","age_6t14","age_15t64","age_gt65", "age_gt80","female_count"))
      
      ## limit to plot
      fits_age_lag$upperCI[((fits_age_lag$upperCI>0.18))]<- 0.18
@@ -1998,6 +2018,28 @@ table(data2[which(data2$serotype=="4")]$GPSC)
 
 ```
 
+
+#### plot GPSC21 19F and pull numbers for manuscript
+```{r}
+time = "weekly"
+space = "adm1"
+gpsc_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_8_2019.csv"))
+nointer <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_",time,"_",space,"_8_2019.csv"))
+gpsc_results <- rbind(gpsc_results,nointer)
+gpsc21 <- gpsc_results[which(gpsc_results$GPSC%in%c("GPSC21") & gpsc_results$interaction_level%in%c("high","none") & gpsc_results$covariate=="pm2p5_lag0")]
+nointer <- gpsc_results[which(gpsc_results$GPSC%in%c("no_interaction") & gpsc_results$interaction_level%in%c("high","none") & gpsc_results$covariate=="pm2p5_lag0")]
+ggplot(gpsc21) + 
+  geom_line(aes(x=var, y = fit, group = interaction(lag_num)))+
+  geom_ribbon(aes(x = var, ymin =lowerCI, ymax=upperCI, group = lag_num), alpha = 0.3)+ 
+  geom_line(data= nointer, aes(x=var, y = fit, group = lag_num), color = "blue") + 
+  facet_grid(. ~lag_num, scales = "free")
+
+gpsc21[which(gpsc21$lag_num==0 & gpsc21$var==50),]
+exp(gpsc21[which(gpsc21$lag_num==1 & gpsc21$var==50),c("fit","lowerCI","upperCI")])
+exp(nointer[which(nointer$lag_num==1 & nointer$var==50),c("fit","lowerCI","upperCI")])
+
+```
+
 #### Proportion of GPSC 21 over space and time
 ```{r}
 data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
@@ -2050,6 +2092,14 @@ dev.off()
 
 ```
 
+##### numbers for meningitis vs bacteremia cumulative ###
+```{r}
+dlnm_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/demographic/dlnm_subsetoutcomes_results_fits_weekly_adm2_demographic_2019.csv"))
+dlnmmenbact <- dlnm_results[which(dlnm_results$GPSC%in%c("mening_count","bact_count")  & dlnm_results$covariate=="pm2p5_lag0" & dlnm_results$lag_num == 0 & 
+                                    dlnm_results$var==50),]
+cbind(dlnmmenbact[,c("GPSC")],exp(dlnmmenbact[,c("cumulative_fit","cum_lowerCI","cum_upperCI")]))
+
+```
 
 
 
