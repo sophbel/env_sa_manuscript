@@ -1126,6 +1126,8 @@ plot_so2 <- ggplot(tmpso2)+
 # dev.off()
 ```
 
+
+
 ### TEXT SECTION 2
 ### Print the numbers I need from the above figure
 ```{r}
@@ -1358,6 +1360,113 @@ plot_temp_cum <- ggplot(tmptemp)+
         legend.position = "right",legend.title = element_blank())
 plot_temp_cum
 ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_temperature_maxmin_weekly_adm2.png", width = 7, height = 5)
+```
+
+#### FIGURE 2 ATTRIBUTABLE FRACTION
+
+```{r}
+data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag_sc.csv")
+data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
+## subset by Johnannesburg
+dataG <- subset(data, data$adm2_name == "City of Cape Town")
+df <- dataG %>%
+  group_by(year)%>%
+  summarise(pm2p5 = mean(pm2p5_lag0))
+ggplot(dataG) + 
+  geom_line(aes(x=date, y = pm2p5_lag0))
+modlist <- readRDS("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_weekly_adm2_dlnm_none_bivariable_8_2019.rds")
+mod <- modlist[[3]][[2]]
+idx <- which(mod$cp$predvar == 50)
+# sum across lag columns (assumes columns are lag0..lag8)
+L <- sum(mod$cp$matfit[idx, ])   # cumulative log-RR
+RR <- exp(L)
+AF <- (RR - 1) / RR
+
+#### calculate number of cases above threshold of 40ug/m3 per province
+dataG <- subset(data, data$year==2019)
+target_munic <- "City of Johannesburg"
+target_prov <- "ZAF.3_1"
+obs <- dataG[dataG$GID_1 == target_prov, ]
+obs <- obs %>%
+  group_by(date) %>%
+  summarise(pm2p5 = mean(pm2p5_lag3, na.rm=T),
+            disease = sum(disease))
+# obs <- dataG
+### numbers from model
+predvar <- mod$cp$predvar
+matfit <- mod$cp$matfit
+logRR <- matfit[,4]
+# interpolate log-RR so we can evaluate at observed PM
+Lfun <- approxfun(predvar, logRR, rule = 2)
+# AF for any observed PM
+AF <- function(x) {
+  RR <- exp(Lfun(x))
+  (RR - 1) / RR
+}
+
+# national weekly AF and attributable cases
+obs$AF  = AF(obs$pm2p5)
+obs$attr_cases = obs$disease * obs$AF
+total_cases  = sum(obs$disease)
+total_attr   = sum(obs$attr_cases)
+national_PAF = total_attr / total_cases
+cat(national_PAF, total_attr)
+
+##### plot all together
+pm_scaled <- with(obs, 
+                  (pm2p5 - min(pm2p5)) / (max(pm2p5) - min(pm2p5)) *
+                  (max(disease) - min(disease)) + min(disease)
+)
+scale_factor <- max(obs$disease)/max(obs$pm2p5)
+pm25attr <- ggplot(obs) +
+  geom_line(aes(x=date, y = pm2p5 * scale_factor, color = "PM2.5", linetype = "PM2.5")) +
+  geom_line(aes(x=date, y = disease, color = "IPD cases", linetype = "IPD cases")) +
+  geom_line(aes(x=date, y = attr_cases, color = "Attributable cases", linetype = "Attributable cases")) +
+  scale_y_continuous(sec.axis = sec_axis(~ . / scale_factor,
+                        name = "PM2.5 (µg/m³) 3-week lag") ) +
+  ylab("IPD Cases") +
+  xlab("Date") +
+  theme_bw()+
+    scale_color_manual(name = "",values = c("IPD cases" = "black","Attributable cases" = "black","PM2.5" = "red")) +
+    scale_linetype_manual(name = "",
+    values = c("IPD cases" = "solid","Attributable cases" = "dashed","PM2.5" = "solid")) +
+    guides(color = guide_legend(override.aes = list(linetype = c("solid","dashed","solid"))),linetype = "none") +
+  theme_minimal() +
+  theme(
+    axis.title.y.left   = element_text(color = "black"),
+    axis.title.y.right  = element_text(color = "black"),
+    legend.position     = "bottom",
+    legend.box          = "horizontal"
+  )
+
+
+#### if we got the average down to 30ug/m3 these are the number of cases avoided 
+### AF with counterfactual
+AF_cf <- function(x) {
+  RR <- exp(Lfun(x))
+  RR_cf <- exp(Lfun(40))
+  (RR - RR_cf) / RR
+}
+
+# counterfactual target
+PM_cf <- 15
+# RR at observed and counterfactual
+RR_obs <- exp(Lfun(obs$pm2p5))
+RR_cf  <- exp(Lfun(PM_cf))
+# AF relative to counterfactual
+obs$AF_target <- (RR_obs - RR_cf) / RR_obs
+
+# Attributable cases relative to target
+obs$attr_cases_target <- obs$disease * obs$AF_target
+
+# National summary
+total_cases <- sum(obs$disease)
+total_attr_cases_target <- sum(obs$attr_cases_target)
+PAF_target <- total_attr_cases_target / total_cases
+
+cat(sprintf("If PM2.5 reduced to <= %g ug/m3, %.1f cases (~%.2f%%) could be prevented\n",
+            PM_cf, total_attr_cases_target, 100*PAF_target))
+
 ```
 
 #### FIGURE S3 AND S4
