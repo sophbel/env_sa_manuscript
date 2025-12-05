@@ -39,3 +39,9 @@ This script stratifies the interaction model with each GPSC to run only on 2005-
 
 This script allows the outcome to be modified given demographic, or serotype variables specified in a vector. Includes space time modifications and only including 2005-2019 or including all of 2005-2023. 
 
+## Visualization ##
+
+*0000_visualize_figures.Rmd*
+
+This is a markdown script which includes the code for the figures throughout the manuscript. 
+
