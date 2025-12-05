@@ -744,7 +744,7 @@ dev.off()
 
 ```
 
-### FIGURE SXX 
+### FIGURE SXX never used
 ### number of different serotypes in different time periods
 ```{r}
 data2<- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
@@ -1962,27 +1962,6 @@ print(plot_sero_week)
 ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/serotype_pm2p5_weekly.png", width = 15,height=12)
 dev.off()
 
-
-### waic across all serotype models
-# mod_gof1<-fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/serotypes/mod_gof_dlnm_alloutcomes_weekly_adm2_serotype_2019.csv")
-# mod_gof2<-fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/demographic/mod_gof_dlnm_alloutcomes_weekly_adm2_demographic_2019.csv")
-# mod_gof <- rbind(mod_gof1,mod_gof2)
-# mod_gofpm2 <- mod_gof[which(mod_gof$cov=="pm2p5"),]
-# mod_gof_long <- mod_gofpm2 %>%
-#   pivot_longer(
-#     cols = c(waic, mae, cpo),     # columns to pivot
-#     names_to = "metric",          # name for the new variable column
-#     values_to = "value"           # name for the new value column
-#   )
-# metrics_out <- ggplot(mod_gof_long)+
-#   geom_point(aes(x=outcome,y=value,group=metric))+
-#   theme_bw()+
-#   theme(axis.text.x = element_text(angle=90, size=13), axis.text = element_text(size=13), axis.title = element_text(size=13), strip.text = element_text(size=13))+
-#   facet_grid(metric~.,scales = "free")+
-#   xlab("Outcome")+
-#   ylab("Value")
-# metrics_out
-# ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/suboutcome_models/model_performances.png")
 ```
 #### vt vs nvt distributions
 ```{r}
@@ -2214,76 +2193,6 @@ cbind(dlnmmenbact[,c("GPSC")],exp(dlnmmenbact[,c("cumulative_fit","cum_lowerCI",
 
 
 
-
-
- Altered Risk Serotype 14
-```{r}
- plot_1 <- ggplot(fits_sero[which(fits_sero$GPSC=="Sero14"),])+
-      geom_line(aes(x=predvar,y=rr,group=interaction(lag_week,GPSC), color=pcv_type),alpha=0.7)+
-      geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-      geom_ribbon(aes(x=predvar, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,GPSC), fill = pcv_type),alpha=0.1)+
-      geom_line(aes(x=predvar,y=exp(fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7)+
-      geom_ribbon(aes(x=predvar, ymin=exp(lowerCI_dis),ymax=exp(upperCI_dis), group=interaction(lag_week,GPSC)), fill = "black" ,alpha=0.1)+
-      theme_bw()+
-      xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-      ylab("Relative Risk")+
-      # scale_y_continuous(trans="log10", limits = c(0.8,1.1), breaks = c(0.8, 1, 1.1))+
-      ggtitle("Serotype 14")+
-      facet_wrap(.~lag_week, ncol=13)+
-      labs(color="Vaccine Type",fill="Vaccine Type")+
-      theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-   plot_1 
-   
-plot_2 <- ggplot(fits_age[which(fits_age$GPSC=="age_gt65"),])+
-      geom_line(aes(x=predvar,y=rr,group=interaction(lag_week,GPSC), color="age>65"),color ="blue",alpha=0.7)+
-      geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-      geom_ribbon(aes(x=predvar, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,GPSC), fill = "age>65"),fill="blue",alpha=0.1)+
-      geom_line(aes(x=predvar,y=exp(fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7)+
-      geom_ribbon(aes(x=predvar, ymin=exp(lowerCI_dis),ymax=exp(upperCI_dis), group=interaction(lag_week,GPSC)), fill = "black" ,alpha=0.1)+
-      theme_bw()+
-      xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-      ylab("Relative Risk")+
-      # scale_y_continuous(trans="log10", limits = c(0.8,1.1), breaks = c(0.8, 1, 1.1))+
-      ggtitle("Age > 65")+
-      facet_wrap(.~lag_week, ncol=13)+
-      labs(color="Vaccine Type",fill="Vaccine Type")+
-      theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-   plot_2 
-   
-   
-   plot_3 <- ggplot(fits_age[which(fits_age$GPSC=="age_18t64"),])+
-      geom_line(aes(x=predvar,y=rr,group=interaction(lag_week,GPSC), color="age18t64"),color ="blue",alpha=0.7)+
-      geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-      geom_ribbon(aes(x=predvar, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,GPSC), fill = "age18t64"),fill="blue",alpha=0.1)+
-      geom_line(aes(x=predvar,y=exp(fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7)+
-      geom_ribbon(aes(x=predvar, ymin=exp(lowerCI_dis),ymax=exp(upperCI_dis), group=interaction(lag_week,GPSC)), fill = "black" ,alpha=0.1)+
-      theme_bw()+
-      xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-      ylab("Relative Risk")+
-      # scale_y_continuous(trans="log10", limits = c(0.8,1.1), breaks = c(0.8, 1, 1.1))+
-      ggtitle("Age 18-64")+
-      facet_wrap(.~lag_week, ncol=13)+
-      labs(color="Vaccine Type",fill="Vaccine Type")+
-      theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-   plot_3 
-   
-   plot_6 <- ggplot(fits_age[which(fits_age$GPSC=="age_lt5"),])+
-      geom_line(aes(x=predvar,y=rr,group=interaction(lag_week,GPSC), color="age18t64"),color ="blue",alpha=0.7)+
-      geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-      geom_ribbon(aes(x=predvar, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,GPSC), fill = "age18t64"),fill="blue",alpha=0.1)+
-      geom_line(aes(x=predvar,y=exp(fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7)+
-      geom_ribbon(aes(x=predvar, ymin=exp(lowerCI_dis),ymax=exp(upperCI_dis), group=interaction(lag_week,GPSC)), fill = "black" ,alpha=0.1)+
-      theme_bw()+
-      xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-      ylab("Relative Risk")+
-      # scale_y_continuous(trans="log10", limits = c(0.8,1.1), breaks = c(0.8, 1, 1.1))+
-      ggtitle("Age 18-64")+
-      facet_wrap(.~lag_week, ncol=13)+
-      labs(color="Vaccine Type",fill="Vaccine Type")+
-      theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-   plot_6 
-
-```
 
 
 ############ interaction effect plots ##########
@@ -2619,7 +2528,6 @@ overall <- df %>%
     GPSC21_prev = GPSC21_count / disease
   )
 
-library(ggplot2)
 
 ggplot(overall, aes(x = year)) +
   geom_line(aes(y = GPSC1_prev, colour = "GPSC1"), size = 1.2) +
@@ -2780,43 +2688,6 @@ p12
 # pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/interaction/cumulative_effect__select_pm2p5.pdf", width = 6,height=6)
 # print(p12)
 # dev.off()
-
-```
-#### sensitivity analysis for pre and post pcv
-```{r}
-time_vec_label <- c("prePCV","postPCV")
-premod <- fread(file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/sensitivity_gpscInteraction/gpsc_results_fits_weekly_adm1_allGPSCs_propprov_6week_mixeddf_prePCV.csv"))
-premod$type <- "prePCV"
-postmod <- fread(file=paste0("/home/sbelman/Documents/BRD/SouthAfrica/models/outputs/dlnms/sensitivity_gpscInteraction/gpsc_results_fits_weekly_adm1_allGPSCs_propprov_6week_mixeddf_postPCV.csv"))
-postmod$type <- "postPCV"
-## bind the sets
-sensmods <- rbind(premod,postmod)
-sensmods$cov <- gsub("_lag0","",sensmods$covariate)
-tmps <- subset(sensmods, sensmods$cov== "pm2p5" & sensmods$interaction_level %in% c("low","high","none") & sensmods$lag_num==3)
-tmps$type <- factor(tmps$type, levels = c("prePCV","postPCV"))
-tmps$GPSC <- factor(tmps$GPSC, levels = c("GPSC21","GPSC1","GPSC26","GPSC56","GPSC13","GPSC41"))
-tmpssub <- tmps[which(tmps$GPSC%notin%c("GPSC26","GPSC56")),]
-p14 <- ggplot(tmpssub)+
-  geom_line(aes(x=var,y=exp(cumulative_fit), group=interaction(cov, GPSC, interaction_level,lag, type),  color=interaction_level))+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(cov, GPSC, interaction_level,lag), fill=interaction_level),alpha=0.2)+
-  scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
-  scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
-  # ylim(0,3)+
-  # xlab(cov_names_labels[c])+
-  theme_bw()+
-  ylab("Effect")+
-  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-  facet_grid(GPSC~type,scales="free")+
-  labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13),
-        strip.text.y = element_text(angle=0))
-
-# pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/interaction/cumulative_effect_prepostsensitivity_select_pm2p5.pdf", width = 6,height=6)
-# print(p14)
-# dev.off()
-# p14
-# ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/interaction/cumulative_effect_prepostsensitivity_select_pm2p5.png", width = 8,height=6)
 
 ```
 
@@ -2980,173 +2851,5 @@ hursp <- ggplot(hursplot2)+
 # print(pm2p5) 
 # dev.off()
 ```
-
-
-
-
-
-
-###### Diversity indices
-```{r}
-library(vegan)
-library(tidyr)
-data2<- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-data2 <- subset(data2, !is.na(data2$GPSC) & data2$GPSC!="_" & data2$GPSC!="")
-df <- data2 %>%
-  mutate(month = floor_date(date, "month"))
-
-gpsc_counts <- df %>%
-  group_by(province, month, GPSC) %>%
-  summarise(count = n(), .groups = "drop")
-community_matrix <- gpsc_counts %>%
-  pivot_wider(names_from = GPSC, values_from = count, values_fill = 0)
-total_sequenced <- df %>%
-  group_by(province, month) %>%
-  summarise(n_sequenced = sum(sequenced), .groups = "drop")
-# Calculate diversity indices
-gpsc_only <- community_matrix %>% 
-  dplyr::select(-province, -month)
-
-shannon <- diversity(gpsc_only, index = "shannon")
-simpson <- diversity(gpsc_only, index = "simpson")
-
-diversity_indices <- community_matrix %>%
-  dplyr::select(province, month) %>%
-  mutate(
-    shannon = shannon,
-    simpson = simpson
-  ) %>%
-  left_join(total_sequenced, by = c("province", "month")) %>%
-  mutate(
-    shannon_norm = shannon / n_sequenced,
-    simpson_norm = simpson / n_sequenced
-  )
-
-ggplot(diversity_indices) +
-  geom_line(aes(x=month, y=simpson, color =province))
-
-ggplot()+
-  geom_point(data=diversity_indices,aes(x=simpson,y=shannon))
-```
-
-
-
-#################EXTRA
-
-#### plot the interactin between each proportion of serotypes and pm2p5
-```{r}
-df <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
-df <- data.frame(df)
-df <- df %>%
-  group_by(week, NAME_1) %>%
-  mutate(week_seq_prov = sum(sequenced), .groups = 'drop') 
-# Step 1: Calculate total and proportions
-df$total <- df$nvt + df$pcv7 + df$pcv13
-df$nvt_prop <- df$nvt / df$total
-df$pcv7_prop <- df$pcv7 / df$total
-df$pcv13_prop <- df$pcv13 / df$total
-
-lag_cols <- grep("^pm2p5_lag\\d+$", names(df), value = TRUE)
-
-# Compute correlation per province on RAW CONCENTRATIONS
-            cor_by_province <- df %>%
-              group_by(NAME_1) %>%
-              summarise(across(all_of(lag_cols), ~ cor(nvt_prop, ., use = "complete.obs"), .names = "NVT_{.col}"),
-                        across(all_of(lag_cols), ~ cor(pcv7_prop, ., use = "complete.obs"), .names = "PCV7_{.col}"),
-                        across(all_of(lag_cols), ~ cor(pcv13_prop, ., use = "complete.obs"), .names = "PCV13_{.col}")) %>%
-              pivot_longer(
-                cols = -NAME_1,
-                names_to = c("Type", "Lag"),
-                names_sep = "_pm2p5_lag",
-                values_to = "Correlation"
-              ) %>%
-              mutate(Lag = as.numeric(Lag))
-            
-            # # Plot
-            # corr_conc <- ggplot(cor_by_province, aes(x = Lag, y = Correlation, color = Type)) +
-            #     geom_hline(yintercept = 0, linetype = "dashed", color = "black")+
-            #   geom_line(size = 1.2) +
-            #   geom_point(size = 2) +
-            #   facet_wrap(~ NAME_1) +
-            #   theme_minimal() +
-            #   labs(title = "PM2.5 Lag vs Vaccine Type Proportion Correlations by Province",
-            #        x = "Lag (weeks)",
-            #        y = "Correlation",
-            #        color = "Pneumococcal Group")
-
-### COMPUTE CORRELATION ON SPIKES
-# function to flag spikes based on peak detection
-detect_spikes <- function(x, threshold = 40) {
-  x <- as.numeric(x)
-
-  # Replace NAs to avoid errors
-  x[is.na(x)] <- median(x, na.rm = TRUE)
-
-  peaks <- findpeaks(x, threshold = threshold)
-
-  spike_flag <- rep(0, length(x))
-  if (!is.null(peaks)) {
-    idx <- peaks[,2]  # center index of peaks
-    spike_flag[idx] <- 1
-  }
-  
-  return(spike_flag)
-}
-
-### assign spikes
-for (col in lag_cols) {
-  df[[paste0(col, "_spike")]] <- detect_spikes(df[[col]])
-}
-
-
-### correlation by spikes
-spike_cols <- grep("_spike$", names(df), value = TRUE)
-cor_by_province_spikes <- df %>%
-  group_by(NAME_1) %>%
-  summarise(
-    across(all_of(spike_cols), ~ cor(nvt_prop, ., use = "complete.obs"), .names = "NVT_{.col}"),
-    across(all_of(spike_cols), ~ cor(pcv7_prop, ., use = "complete.obs"), .names = "PCV7_{.col}"),
-    across(all_of(spike_cols), ~ cor(pcv13_prop, ., use = "complete.obs"), .names = "PCV13_{.col}"),
-    across(all_of(spike_cols), ~ cor(GPSC21_count/week_seq_prov, ., use = "complete.obs"), .names = "GPSC21_{.col}")
-  ) %>%
-  pivot_longer(
-    cols = -NAME_1,
-    names_to = c("Type", "Lag"),
-    names_sep = "_pm2p5_lag",
-    values_to = "Correlation"
-  ) %>%
-  mutate(Lag = as.numeric(gsub("_spike", "", Lag)))
-
-corr_spike <- ggplot(cor_by_province_spikes, aes(x = Lag, y = Correlation, color = Type)) +
-                geom_hline(yintercept = 0, linetype = "dashed", color = "black")+
-              geom_line(size = 1.2) +
-              geom_point(size = 2) +
-              facet_wrap(~ NAME_1) +
-              theme_minimal() +
-              labs(title = "PM2.5 Lag vs Vaccine Type Proportion Correlations by Province",
-                   x = "Lag (weeks)",
-                   y = "Correlation",
-                   color = "Pneumococcal Group")
-
-corr_spike
-```
-
-
-#### deconvolute pm and find peaks
-```{r}
-library(data.table)
-library(dplyr)
-library(pracma)
-
-df <- fread("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
-df <- data.frame(df)
-
-# get PM2.5 columns
-lag_cols <- grep("^pm2p5_lag\\d+$", names(df), value = TRUE)
-
-
-```
-
-
 
 
