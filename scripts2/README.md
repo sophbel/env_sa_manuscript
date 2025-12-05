@@ -27,4 +27,11 @@ Both scripts allow modifications to run models including invasive disease cases 
 
 *04.1_run_bivariable_dlnm_GPSC.R* This script allows inclusion of two environmental factors. Some exploratory plots are included.
 ## Running Models with Sensitivity Modifications ##
+*06.1_run_univariable_dlnm_GPSC_singleprovinces.R*
+
+This is the same as the above run_univariable_dlnm_GPSC script but allows a subset by just the Gauteng province or Western Cape province either at adm1 (province) or adm2 (district) level.
+
+*06.3_run_univariable_dlnm_GPSC_PCVSensitivity.R*
+
+This script stratifies the interaction model with each GPSC to run only on 2005-2008 (prePCV) and 2009-2019 or 2009-2023 to determine whether the exposure response curves are a result of the vaccine intervention or something that persists across both periods for the GPSCs or serotypes.
 
