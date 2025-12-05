@@ -13,11 +13,7 @@
 ## districts within Gauteng.
 
 ####LOAD DATA & LIBRARIES #####################################################
-path_to_package <- "/home/sbelman/Documents/Extra_Projects/IDExtremes/GHRmodel/ghrmodel_0.0.0.9000.tar.gz"
 
-install.packages(path_to_package , 
-                 repos = NULL, type = "source", INSTALL_opts = c("--no-multiarch", "--no-test-load"))
-library(ghrmodel)
 library(spdep)
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 ### set if interaction is true or not

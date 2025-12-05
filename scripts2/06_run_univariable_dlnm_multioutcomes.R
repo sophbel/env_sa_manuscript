@@ -1,24 +1,20 @@
 
-####LOAD DATA & LIBRARIES #####################################################
-path_to_package <- "/home/sbelman/Documents/Extra_Projects/IDExtremes/GHRmodel/ghrmodel_0.0.0.9000.tar.gz"
 ################################################################################
 #### PURPOSE ##########
 ################################################################################
-## THIS SCRIPT REPLACES 05_1_ WITHOUT INTERACTIONS BUT RUNNING SEPARATE MODELS 
 ## FOR SEPARATE OUTCOMES WITH PM2.5, PM10, AND HURS. 
 ## IT INCLUDES THE BASE SCRIPT WHEREBY A DLNM IS RUN FOR EACH VARIABLE INDEPENDENTLY 
 ## NOT RUNNING THIS WITH INTERACTIONS BUT JUST SIMPLE OUTCOMES
+## allows subset models by different outcomes including the same row number and environmental exposures
+## but only include invasive disease within each sub-outcome.
 
-install.packages(path_to_package , 
-                 repos = NULL, type = "source", INSTALL_opts = c("--no-multiarch", "--no-test-load"))
-
-library(ghrmodel)
+####LOAD DATA & LIBRARIES #####################################################
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 
 ### set resolution
 time = "weekly"
 space = "adm2"
-outcome_type = "demographic" ## options are "serotype" "demographic" "province"
+outcome_type = "demographic" ## options are "serotype" "demographic"
 precov = TRUE
 
 ## load spatial data
