@@ -9,6 +9,8 @@
 ## We are running this at weekly administrative region 1 WITH THE INTERACTION to
 ## maximize the power of the temporal effect but not reducing the power too much.
 
+## allows models from 2005-2019 and 2005-2023
+## also can run with and without the interaction of the GPSC and at all spatial and temporal levels
 
 ####LOAD DATA & LIBRARIES #####################################################
 path_to_package <- "/home/sbelman/Documents/Extra_Projects/IDExtremes/GHRmodel/ghrmodel_0.0.0.9000.tar.gz"
