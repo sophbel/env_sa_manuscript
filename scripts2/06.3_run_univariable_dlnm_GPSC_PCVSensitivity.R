@@ -1,13 +1,15 @@
 ################################################################################
 #### PURPOSE ##########
 ################################################################################
-## THIS SCRIPT REPLACES 05_1_ FOR THE GPSC INTERACTIONS AT A WEEKLY ADMIN 1 OR ADMIN 2LEVEL
 ## IT INCLUDES THE BASE SCRIPT WHEREBY A DLNM IS RUN FOR EACH VARIABLE INDEPENDENTLY 
 ## AND THEN ITERATIVELY INCLUDING EACH GPSC TO DETERMINE IF THE GPSC HAS A MODIFYING 
 ## EFFECT ON THE ENVIRONMENTAL VARIABLE. INCLUDING THE GPSC PROPORTIONS VIA A BINOMIAL
 ## PROBABILITY MODEL. 
 ## We are running this at weekly administrative region 1 WITH THE INTERACTION to
 ## maximize the power of the temporal effect but not reducing the power too much.
+
+## allows stratification by the prePCV and postPCV period to determine whether the effects
+## are a response to the interventions or more intrinsic.
 
 
 ####LOAD DATA & LIBRARIES #####################################################
