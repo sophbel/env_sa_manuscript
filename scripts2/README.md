@@ -34,4 +34,8 @@ This is the same as the above run_univariable_dlnm_GPSC script but allows a subs
 *06.3_run_univariable_dlnm_GPSC_PCVSensitivity.R*
 
 This script stratifies the interaction model with each GPSC to run only on 2005-2008 (prePCV) and 2009-2019 or 2009-2023 to determine whether the exposure response curves are a result of the vaccine intervention or something that persists across both periods for the GPSCs or serotypes. This script includes summary plots of the pre-PCV and post-PCV periods.
+## Running Models with outcome specific disease types ##
+*06_run_univariable_dlnm_multioutcomes.R*
+
+This script allows the outcome to be modified given demographic, or serotype variables specified in a vector. Includes space time modifications and only including 2005-2019 or including all of 2005-2023. 
 
