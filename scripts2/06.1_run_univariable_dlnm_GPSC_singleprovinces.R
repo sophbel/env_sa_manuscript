@@ -1,7 +1,6 @@
 ################################################################################
 #### PURPOSE ##########
 ################################################################################
-## THIS SCRIPT REPLACES 05_1_ FOR THE GPSC INTERACTIONS AT A WEEKLY ADMIN 1 
 ## IT INCLUDES THE BASE SCRIPT WHEREBY A DLNM IS RUN FOR EACH VARIABLE INDEPENDENTLY 
 ## AND THEN ITERATIVELY INCLUDING EACH GPSC TO DETERMINE IF THE GPSC HAS A MODIFYING 
 ## EFFECT ON THE ENVIRONMENTAL VARIABLE. INCLUDING THE GPSC PROPORTIONS VIA A BINOMIAL
@@ -9,6 +8,9 @@
 ## We are running this at weekly administrative region 1 WITH THE INTERACTION to
 ## maximize the power of the temporal effect but not reducing the power too much.
 
+### includes a modification to run on either Gauteng or Western Cape. Convergence with Western Cape is difficult. 
+## it can be run with adm1 whereby there is no spatial component, or adm2 where it includes the spatial effect contributed by the 
+## districts within Gauteng.
 
 ####LOAD DATA & LIBRARIES #####################################################
 path_to_package <- "/home/sbelman/Documents/Extra_Projects/IDExtremes/GHRmodel/ghrmodel_0.0.0.9000.tar.gz"
