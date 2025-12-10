@@ -13,3 +13,6 @@
 ```./dataframes/``` add the harmonized datasets from Zenodo to this folders (e.g. sa_adm2_weekly_lag.csv)
 
 ```./input_datasets/shps/``` add the shapefiles from Zenodo to this folders (e.g. gadm41_ZAF_xx.shx)
+
+## Genomic Data Accession Numbers ##
+The microbial genomic data used in this study were previously published in Lekhuleni et al., 2024 (doi: https://doi.org/10.1038/s41467-024-52459-3) and the accession numbers are included here in Supplementary Dataset 1. 
