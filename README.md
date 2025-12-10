@@ -6,5 +6,7 @@
 
  
 ## Folders ##
-./scripts2/ folder contains the scripts required for this code to run - including the data processing and models.
-./scripts2/environmental_processing: contains the scripts to process the climatic and air pollution datasets including comparisons of the observational and reanalysis air pollution datasets.
+```./scripts2/``` folder contains the scripts required for this code to run - including the data processing and models.
+```./scripts2/environmental_processing``` contains the scripts to process the climatic and air pollution datasets including comparisons of the observational and reanalysis air pollution datasets.
+```../dataframes/``` contains the harmonized datasets.
+```./input_datasets/shps/``` contains the shapefiles.
