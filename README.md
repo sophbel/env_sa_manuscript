@@ -14,5 +14,11 @@
 
 ```./input_datasets/shps/``` add the shapefiles from Zenodo to this folders (e.g. gadm41_ZAF_xx.shx)
 
-## Genomic Data Accession Numbers ##
+## Data Availability ##
+__Epidemiological and Environmental Data__
+
+Available on Zenodo at 10.5281/zenodo.17877255
+
+__Genomic Data__
+
 The microbial genomic data used in this study were previously published in Lekhuleni et al., 2024 (doi: https://doi.org/10.1038/s41467-024-52459-3) and the accession numbers are included here in Supplementary Dataset 1. 
