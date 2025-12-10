@@ -10,6 +10,6 @@
 
 ```./scripts2/environmental_processing``` contains the scripts to process the climatic and air pollution datasets including comparisons of the observational and reanalysis air pollution datasets.
 
-```./dataframes/``` contains the harmonized datasets.
+```./dataframes/``` add the harmonized datasets from Zenodo to this folders (e.g. sa_adm2_weekly_lag.csv)
 
-```./input_datasets/shps/``` contains the shapefiles.
+```./input_datasets/shps/``` add the shapefiles from Zenodo to this folders (e.g. gadm41_ZAF_xx.shx)
