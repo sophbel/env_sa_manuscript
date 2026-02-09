@@ -1016,8 +1016,8 @@ plot_hurs <- ggplot(tmphurs)+
   theme_bw()+
   xlab("Var")+
   ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  scale_y_continuous(trans="log10")+
+  # scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
   ggtitle("Relative Humidity")+
   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
   facet_wrap(.~lag_week, nrow = 1)+
@@ -1034,8 +1034,8 @@ plot_pm2p5 <- ggplot(tmppm2)+
   theme_bw()+
   xlab("Var")+
   ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  scale_y_continuous(trans="log10")+
+  # scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
   scale_color_manual(values = color_labels)+
   scale_fill_manual(values = color_labels)+
   scale_linetype_manual(values = linetype_labels)+

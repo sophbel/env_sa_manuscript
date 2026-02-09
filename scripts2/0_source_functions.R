@@ -1173,3 +1173,32 @@ extract_cp_gpsc_data <- function(cp, level_label, gpsc_name, cov_oi) {
   mat_cp_lag[,c(1:4,7,10:13)] <- sapply(mat_cp_lag[,c(1:4,7,10:13)],  as.numeric)
   return(mat_cp_lag)
 }
+
+
+
+# Create a function to extract predictions into a tidy format
+extract_cp_env_data <- function(cp, level_label, envint_name, cov_oi) {
+  
+  mat_cp_lag <- NULL
+  mat_cp <- matrix(nrow=c(nrow(cp$matfit)), ncol = 13)
+  for(k in 1:ncol(cp$matfit)){
+    mat_cp[,1] <- cp$matfit[,k]
+    mat_cp[,2] <- cp$matlow[,k]
+    mat_cp[,3] <- cp$mathigh[,k]
+    mat_cp[,4] <- rownames(cp$matfit)
+    mat_cp[,5] <- envint_name
+    mat_cp[,6] <- colnames(cp$matfit)[k]
+    mat_cp[,7] <- k-1
+    mat_cp[,8] <- level_label
+    mat_cp[,9] <- cov_oi
+    mat_cp[,10] <- cp$allfit
+    mat_cp[,11] <- cp$alllow
+    mat_cp[,12] <- cp$allhigh
+    mat_cp[,13] <- cp$predvar
+    mat_cp_lag <- rbind(mat_cp_lag, mat_cp)
+  }
+  mat_cp_lag <- as.data.frame(mat_cp_lag)
+  colnames(mat_cp_lag) <- c("fit","lowerCI","upperCI","var", "envmodifier" ,"lag", "lag_num", "interaction_level", "covariate", "cumulative_fit", "cum_lowerCI", "cum_upperCI","predvar")
+  mat_cp_lag[,c(1:4,7,10:13)] <- sapply(mat_cp_lag[,c(1:4,7,10:13)],  as.numeric)
+  return(mat_cp_lag)
+}
