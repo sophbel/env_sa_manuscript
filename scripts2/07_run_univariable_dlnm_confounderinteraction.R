@@ -16,7 +16,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 interaction = TRUE
 ### set resolution
 time = "weekly"
-space = "adm1"
+space = "adm2"
 precov = TRUE
 permute = FALSE
 ## load spatial data
@@ -108,6 +108,7 @@ df <- df %>%
 ## subset by only pre covid
 if(precov==TRUE){
   df <- subset(df,df$date < as.Date("2020-01-01"))
+  data_unscaled <- subset(data_unscaled,data_unscaled$date < as.Date("2020-01-01"))
   endyear = 2019
 }else{
   endyear = 2023
@@ -161,7 +162,7 @@ re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/
 
 ### initiate envint loop or loop through single "none" vector for no interaction
 # for(gp in 1:length(envint_vec_sub)){
-  for(gp in 2:length(envint_vec_sub)){
+  for(gp in 5:length(envint_vec_sub)){
     
   print(paste0("Running Models for: ", envint_vec_sub[gp]))
     ### set the interaction variable
@@ -227,32 +228,33 @@ re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/
             # }
             interactnums <- df_pre_bound[[interact_var]] 
             
-            # Create the interacted crossbasis
-            #### for gpsc interaction
-            # Step 1: scale only non-zero props
-            # prop_nonzero <- prop[prop > 0]
-            # scaled_nonzero <- scale(prop_nonzero, center = TRUE, scale = TRUE)
-            # 
-            # Step 2: put scaled values back into a vector matching full dataset length
-            # interact_var_scaled <- rep(0, length(prop))  # default to 0
-            # interact_var_scaled[prop > 0] <- scaled_nonzero
-
             ## for non gpsc interaction
-            # just scale and don't remove zeroes as we did with the GPSCs
-            scaled_interactnums <- scale(interactnums, center = TRUE, scale = FALSE)
-            interact_var_scaled <- as.numeric(scaled_interactnums)
+            if(grepl("^(hurs|absh|prlrsum|prlrmean|prlrmax)(_lag[0-8])?$", interact_var)){
+              scaled_interactnums <- scale(interactnums, center = TRUE, scale = FALSE)
+              interact_var_scaled <- as.numeric(scaled_interactnums)
+              sd_1 <- sd(data_unscaled[[interact_var]], na.rm = T)
+              mean_1 <- mean(data_unscaled[[interact_var]], na.rm=T)
+              # if scaling
+              # original_interactnums <- interact_var_scaled * sd_1 + mean_1
+              original_interactnums <- data_unscaled[[interact_var]]
+            }else{
+              # just scale and don't remove zeroes as we did with the GPSCs
+              scaled_interactnums <- scale(interactnums, center = TRUE, scale = TRUE)
+              interact_var_scaled <- as.numeric(scaled_interactnums)
+              sd_1 <- sd(data_unscaled[[interact_var]], na.rm = T)
+              mean_1 <- mean(data_unscaled[[interact_var]], na.rm=T)
+              # if only centering
+              original_interactnums <- interact_var_scaled*sd_1  + mean_1
+            }
+
+            ## define z given scaled interaction
+            z_low <- quantile(interact_var_scaled, 0.15, na.rm = T)
+            z_med <- quantile(interact_var_scaled, 0.5, na.rm = T)
+            z_high <- quantile(interact_var_scaled, 0.85, na.rm = T)
             
-            
-            sd_1 <- sd(data_unscaled[[interact_var]], na.rm = T)
-            mean_1 <- mean(data_unscaled[[interact_var]], na.rm=T)
-            # if scaling
-            # original_interactnums <- interact_var_scaled * sd_1 + mean_1
-            # if only centering
-            original_interactnums <- interact_var_scaled  + mean_1
-            
-            # center_val <- attr(scaled_interactnums, "scaled:center")
-            # scale_val  <- attr(scaled_interactnums, "scaled:scale")
-            # original_interactnums <- interact_var_scaled * scale_val + center_val
+            z_low_true <- quantile(original_interactnums , 0.15, na.rm = T)
+            z_med_true <- quantile(original_interactnums , 0.5, na.rm = T)
+            z_high_true <- quantile(original_interactnums , 0.85, na.rm = T)
             
             # Step 3: apply interaction as usual
             cbinteract <- cb * interact_var_scaled
@@ -364,14 +366,15 @@ re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/
             ## crosspred with interacting cross basis
             print("run crosspred for interaction")
             
+            ### MOVED THIS TO ABOVE
             ## define z given scaled interaction
-            z_low <- quantile(scaled_interactnums, 0.25)
-            z_med <- quantile(scaled_interactnums, 0.5)
-            z_high <- quantile(scaled_interactnums, 0.75)
-            
-            z_low_true <- quantile(original_interactnums , 0.2)
-            z_med_true <- quantile(original_interactnums , 0.5)
-            z_high_true <- quantile(original_interactnums , 0.75)
+            # z_low <- quantile(scaled_interactnums, 0.25)
+            # z_med <- quantile(scaled_interactnums, 0.5)
+            # z_high <- quantile(scaled_interactnums, 0.75)
+            # 
+            # z_low_true <- quantile(original_interactnums , 0.2)
+            # z_med_true <- quantile(original_interactnums , 0.5)
+            # z_high_true <- quantile(original_interactnums , 0.75)
             
             ## interaction crossprediciton
             coef_low <- original_coefs + z_low * original_coefs_interact
@@ -538,9 +541,9 @@ re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/
           
         }else{
         ############## SAVE FILES ##############################################
-        saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
+        # saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
         # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"_",endyear,".rds"))
-        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        # write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }
   } ### end of loop through modifier
 
@@ -551,8 +554,6 @@ write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/
 }else{
   write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_results_fits_",time,"_",space,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = ",")
 }
-
-
 
 ################################################################################
 ## PLOTS ##
@@ -566,7 +567,7 @@ outdf <- rbind(dlnm_results,envint_results)
 
 # outdf <- envint_results[which(envint_results$envmodifier%in%c("tasmin_lag0","tasmax_lag0","tas_lag0","so2_lag0","hurs_lag0","absh_lag0")),]
 
-ggplot(outdf) +
+ggplot(outdf[which(outdf$interaction_level%in%c("low","high"))]) +
   geom_line(aes(x=var, y=fit, group = interaction(interaction_level, envmodifier, lag_num), color = interaction_level)) +
   geom_ribbon(aes(x=var, ymin = lowerCI, ymax = upperCI, group = interaction(interaction_level, envmodifier, lag_num), fill = interaction_level), alpha = 0.2) +
   theme_bw() +
@@ -598,6 +599,17 @@ ggplot(outdfcum_rr) +
   facet_wrap(envmodifier ~ .) +
   ylab("relative risk") +
   xlab("pm2.5 concentration")
+
+
+
+outdf <- envint_results[which(envint_results$envmodifier%in%c("hurs_lag0","absh_lag0", "tasmax_lag0", "tasmin_lag0")),]
+
+ggplot(outdf) +
+  geom_line(aes(x=var, y=fit, group = interaction(interaction_level, envmodifier, lag_num), color = interaction_level)) +
+  geom_ribbon(aes(x=var, ymin = lowerCI, ymax = upperCI, group = interaction(interaction_level, envmodifier, lag_num), fill = interaction_level), alpha = 0.2) +
+  theme_bw() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red")+
+  facet_grid(envmodifier ~ lag_num)
 
 
 
