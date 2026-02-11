@@ -556,39 +556,89 @@ write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/
 }
 
 ################################################################################
+time = "weekly"
+space = "adm1"
+max_lag = 8
+endyear = 2019
 ## PLOTS ##
 ## pm2.5 effect with temperature variables (min and max)
 dlnm_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_results_fits_",time,"_",space,"_",max_lag,"_",endyear,".csv"))
 colnames(dlnm_results)[which(colnames(dlnm_results)=="GPSC")] <- "envmodifier"
 dlnm_results$envmodifier_val <- NA
 envint_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/envmod_results_fits_",time,"_",space,"_allmodifiers_propprov_",max_lag,"_",endyear,".csv"))
-envint_results <- envint_results[,-c("V1")]
+### bind them as if they're the same
 outdf <- rbind(dlnm_results,envint_results)
-
+### join them so I can plot on the same graph
+nointdt <- dlnm_results[,c("fit","lowerCI","upperCI","lag","lag_num","cumulative_fit","cum_lowerCI","cum_upperCI","predvar")]
+colnames(nointdt) <- c("fit_noint","lowerCI_noint","upperCI_noint","lag","lag_num","cumulative_fit_noint","cum_lowerCI_noint","cum_upperCI_noint","predvar")
+envint_none <- left_join(envint_results,nointdt, by = c("lag","lag_num","predvar"))
 # outdf <- envint_results[which(envint_results$envmodifier%in%c("tasmin_lag0","tasmax_lag0","tas_lag0","so2_lag0","hurs_lag0","absh_lag0")),]
+envint_none$interaction_level <- factor(envint_none$interaction_level, levels = c("low","med","high"), labels =  c("low","med","high"))
 
-ggplot(outdf[which(outdf$interaction_level%in%c("low","high"))]) +
+## modifier names
+mod_vec <- unique(envint_none$envmodifier)
+mod_vecname <- gsub("_lag0","",mod_vec)
+envint_none$envmodifier <- factor(envint_none$envmodifier, levels = mod_vec, labels = mod_vecname)
+mod_lagsplot <-ggplot(envint_none[which(envint_none$interaction_level%in%c("low","high"))]) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red")+
   geom_line(aes(x=var, y=fit, group = interaction(interaction_level, envmodifier, lag_num), color = interaction_level)) +
   geom_ribbon(aes(x=var, ymin = lowerCI, ymax = upperCI, group = interaction(interaction_level, envmodifier, lag_num), fill = interaction_level), alpha = 0.2) +
+  geom_line(aes(x=var, y=fit_noint, group = interaction(interaction_level, envmodifier, lag_num)), color = "black", linetype = "dashed") +
   theme_bw() +
+  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+  ylab("Effect") + 
+  labs(fill = "effect modifier\nproportion", color = "effect modifier\nproportion")+
+  theme(axis.text.x = element_text(angle=45, hjust =1))+
+  facet_grid(envmodifier ~ lag_num, scales ="free")
+
+
+
+outdfcum <- envint_none[which(envint_none$lag_num ==3),]
+cummod_plot <- ggplot(outdfcum) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red")+
-  facet_grid(envmodifier ~ lag_num)
-
-
-outdfcum <- outdf[which(outdf$lag_num ==3),]
-ggplot(outdfcum) +
   geom_line(aes(x=var, y=cumulative_fit, group = interaction(interaction_level, envmodifier), color = interaction_level)) +
   geom_ribbon(aes(x=var, ymin = cum_lowerCI, ymax = cum_upperCI, group = interaction(interaction_level, envmodifier), fill = interaction_level), alpha = 0.2) +
+  geom_line(aes(x=var, y=cumulative_fit_noint, group = interaction(interaction_level, envmodifier, lag_num)), color = "black", linetype = "dashed") +
   theme_bw() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red")+
+  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+  ylab("Effect") + 
+  labs(fill = "effect modifier\nproportion", color = "effect modifier\nproportion")+
   facet_wrap(envmodifier ~ .)
+
+
+envmodifier_table <- envint_none %>%
+  dplyr::select(envmodifier, interaction_level, envmodifier_val) %>%
+  distinct() %>%
+  arrange(envmodifier, interaction_level)
+envmodifier_table2 <- envmodifier_table %>%   # replace df with your object name
+  pivot_wider(
+    names_from = interaction_level,
+    values_from = envmodifier_val
+  ) %>%
+  mutate(across(c(low, med, high), ~ signif(.x, 2))) %>%
+  arrange(envmodifier)
+
+
+write.table(envmodifier_table2, file = "/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/modifier_proportions.csv", sep = ",",quote = FALSE, row.names = FALSE, col.names = TRUE)
+##### save sensitivity plots
+pdf("/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/cum_meteomodplot.pdf", width = 8, height =5)
+print(cummod_plot)
+ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/cum_meteomodplot.png", width = 8, height =5)
+dev.off()
+pdf("/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/weekly_meteomodplot.pdf", width = 10, height =6)
+print(mod_lagsplot)
+ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/weekly_meteomodplot.png", width = 10, height =6)
+dev.off()
 
 
 outdfcum_rr <- outdfcum |>
   dplyr::mutate(
     rr_fit   = exp(cumulative_fit),
     rr_low   = exp(cum_lowerCI),
-    rr_high  = exp(cum_upperCI)
+    rr_high  = exp(cum_upperCI),
+    rr_fit_noint   = exp(cumulative_fit_noint),
+    rr_low_noint  = exp(cum_lowerCI_noint),
+    rr_high_noint  = exp(cum_upperCI_noint)
   )
 
 ggplot(outdfcum_rr) +
@@ -602,14 +652,97 @@ ggplot(outdfcum_rr) +
 
 
 
-outdf <- envint_results[which(envint_results$envmodifier%in%c("hurs_lag0","absh_lag0", "tasmax_lag0", "tasmin_lag0")),]
+###### run simple linear interaction inla model ######
 
-ggplot(outdf) +
-  geom_line(aes(x=var, y=fit, group = interaction(interaction_level, envmodifier, lag_num), color = interaction_level)) +
-  geom_ribbon(aes(x=var, ymin = lowerCI, ymax = upperCI, group = interaction(interaction_level, envmodifier, lag_num), fill = interaction_level), alpha = 0.2) +
-  theme_bw() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red")+
-  facet_grid(envmodifier ~ lag_num)
+### humidity ###
+form<- list()
+form$formula <-
+  as.formula(
+    paste(
+      "disease ~",
+      "pm2p5_lag3*absh_lag0",  # Include all crossbasis variables
+      "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+      "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+      "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+      "+ vaccination_period",
+      "+ population_density"
+    )
+  )
+form$covs<-"pm2.5_hurs"
+mod <- INLA::inla(
+  formula = form$formula,
+  family = "nbinomial",  # One per outcome
+  offset=log(population_size/100000),
+  control.inla = list(strategy = 'adaptive'),
+  control.compute = list(dic = TRUE, waic=TRUE, cpo=TRUE, config = FALSE, return.marginals = TRUE),
+  control.predictor = list(link = 1, compute = TRUE),
+  # control.fixed = list(correlation.matrix = TRUE),
+  inla.setOption(num.threads = 4),
+  verbose = FALSE,
+  data = df)
+mod$cov <- "int"
+
+mod$summary.fixed
+beta_pm  <- mod$summary.fixed["pm2p5_lag3","mean"]
+beta_int <- mod$summary.fixed["pm2p5_lag3:absh_lag0","mean"]
+
+low_h  <- quantile(df$absh_lag0, 0.1)
+high_h <- quantile(df$absh_lag0, 0.9)
+
+effect_low  <- beta_pm + beta_int * low_h
+effect_high <- beta_pm + beta_int * high_h
+
+c(low = effect_low, high = effect_high)
+### %stronger effect at high humidity as compared to low humidity
+effect_high/effect_low
+
+
+
+### temperature ##
+form<- list()
+form$formula <-
+  as.formula(
+    paste(
+      "disease ~",
+      "pm2p5_lag3*tasmax_lag0",  # Include all crossbasis variables
+      "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+      "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+      "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+      "+ vaccination_period",
+      "+ population_density"
+    )
+  )
+form$covs<-"pm2.5_tasmin"
+
+
+print("running INLA")
+mod <- INLA::inla(
+  formula = form$formula,
+  family = "nbinomial",  # One per outcome
+  offset=log(population_size/100000),
+  control.inla = list(strategy = 'adaptive'),
+  control.compute = list(dic = TRUE, waic=TRUE, cpo=TRUE, config = FALSE, return.marginals = TRUE),
+  control.predictor = list(link = 1, compute = TRUE),
+  # control.fixed = list(correlation.matrix = TRUE),
+  inla.setOption(num.threads = 4),
+  verbose = FALSE,
+  data = df)
+mod$cov <- "int"
+
+mod$summary.fixed
+beta_pm  <- mod$summary.fixed["pm2p5_lag3","mean"]
+beta_int <- mod$summary.fixed["pm2p5_lag3:tasmax_lag0","mean"]
+
+low_h  <- quantile(df$tasmax_lag0, 0.1)
+high_h <- quantile(df$tasmax_lag0, 0.9)
+
+effect_low  <- beta_pm + beta_int * low_h
+effect_high <- beta_pm + beta_int * high_h
+
+c(low = effect_low, high = effect_high)
+
+### percent stronger effect of PM2.5 at higher temperatures as compared to lower ones
+effect_high/effect_low
 
 
 
