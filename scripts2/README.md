@@ -23,9 +23,9 @@ This runs more base models testing different integrations of the antiretroviral 
 These scripts include a base model with seasonal, spatial, interannual (province replicate) random effects, as well as vaccination period and population density covariates. They iteratively run across environmental factors of choice and save the goodness-of-fit metrics, summary of the model outputs, and the fits. The bivariable script includes an additional loop which allows the addition of a second environmental covariate.
 Both scripts allow modifications to run models including invasive disease cases from 2005-2019 and 2005-2023, district or province level, and weekly or monthly models.
 
-*04_run_univariable_dlnm_GPSC.R* This includes a single environmental factor.
+*04_run_univariable_dlnm_GPSC.R* This includes a DLNM of each environmental factor iteratively including the random effects (seasonal, spatial, and interannual) as well as vaccination period and population density.
 
-*04.1_run_bivariable_dlnm_GPSC.R* This script allows inclusion of two environmental factors. Some exploratory plots are included.
+*04.1_run_bivariable_dlnm_GPSC.R* This script allows inclusion of two environmental factors. One DLNM for the air pollutants and the best lag from the previous script to account for the confounding effects of temperature and absoulte humidity. Some exploratory plots are included.
 ## Running Models with Sensitivity Modifications ##
 *06.1_run_univariable_dlnm_GPSC_singleprovinces.R*
 
