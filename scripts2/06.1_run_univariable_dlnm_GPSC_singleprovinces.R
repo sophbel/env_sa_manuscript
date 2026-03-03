@@ -17,7 +17,7 @@
 library(spdep)
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 ### set if interaction is true or not
-interaction = TRUE
+interaction = FALSE
 ### set resolution
 time = "weekly"
 space = "adm1"
@@ -146,7 +146,7 @@ if(interaction == TRUE){
   cov_names <- grep("hurs|absh|pm2p5|pm10", all, value = TRUE)
 }else{
 # cov_names <- grep("tasmax|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|pm2p5|pm10|o3|so2|spei3|spei6|spi3|spi6", all, value = TRUE)
-cov_names <- grep("tasmax|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|pm2p5|pm10|o3|so2|spei3|spei6", all, value = TRUE)
+cov_names <- grep("tasmax|tasmin|tas|hurs|absh|prlrsum|prlrmean|sfcWind|pm2p5|pm10|o3|so2|spei3|spei6", all, value = TRUE)
 
 # cov_names <- grep("hurs|absh|tasmax|tasmin|o3|sfcWind|prlrsum|so2|pm2p5|pm10", all, value = TRUE)
 }
@@ -482,13 +482,13 @@ for(gp in 1:length(gpsc_vec_sub)){
               2 * z_high * original_vcov_cross
   
             ## crosspred for each low and high proportions
-            cp_low <- crosspred(basis = cbinteract, cen = cen,
+            cp_low <- crosspred(basis = cb, cen = cen,
                                 coef = coef_low,
                                 vcov = vcov_low)
-            cp_med <- crosspred(basis = cbinteract, cen = cen,
+            cp_med <- crosspred(basis = cb, cen = cen,
                                  coef = coef_med,
                                  vcov = vcov_med)
-            cp_high <- crosspred(basis = cbinteract, cen = cen,
+            cp_high <- crosspred(basis = cb, cen = cen,
                                  coef = coef_high,
                                  vcov = vcov_high)
             
@@ -652,36 +652,38 @@ write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/
 
 
 ############# CUMULATIVE EFFECT PLOTS ############
-# max_lag <- 8
-# noint <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_",endyear,"_",prov_name,".csv"))
-# noint$cov <- gsub("_lag0","",noint$covariate)
-# noint$prov <- "Gauteng"
-# 
-# ggplot(noint)+
-#   geom_hline(yintercept=1, linetype="dashed",color="red")+
-#   geom_line(aes(x = var, y = exp(cumulative_fit), group=cov))+
-#   geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=cov), alpha=0.5)+
-#   theme_bw()+
-#   ylab("Relative Risk")+
-#   # ylim(0.1,3)+
-#   xlab("Variable")+
-#   facet_wrap(cov~., scales="free")
-# 
-# ## WHOLE COUNTRY
-# m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm2_8_",endyear,".csv"))
-# m1$cov <- gsub("_lag0","",m1$covariate)
-# m1$prov <- "South_Africa"
-# # bind
-# nointall <- rbind(noint,m1)
-# ggplot(nointall)+
-#   geom_hline(yintercept=1, linetype="dashed",color="red")+
-#   geom_line(aes(x = var, y = exp(cumulative_fit), group=interaction(cov,prov),color=prov))+
-#   geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=interaction(cov,prov), fill=prov), alpha=0.5)+
-#   theme_bw()+
-#   ylab("Relative Risk")+
-#   # ylim(0.1,3)+
-#   xlab("Variable")+
-#   facet_wrap(cov~., scales="free")
+max_lag <- 8
+noint <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_",endyear,"_",prov_name,".csv"))
+noint$cov <- gsub("_lag0","",noint$covariate)
+noint$prov <- "Gauteng"
+
+ggplot(noint)+
+  geom_hline(yintercept=1, linetype="dashed",color="red")+
+  geom_line(aes(x = var, y = exp(cumulative_fit), group=cov))+
+  geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=cov), alpha=0.5)+
+  theme_bw()+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans = "log10")+
+  # ylim(0.1,3)+
+  xlab("Variable")+
+  facet_wrap(cov~., scales="free")
+
+## WHOLE COUNTRY
+m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm1_8_",endyear,".csv"))
+m1$cov <- gsub("_lag0","",m1$covariate)
+m1$prov <- "South_Africa"
+# bind
+nointall <- rbind(noint,m1)
+ggplot(nointall)+
+  geom_hline(yintercept=1, linetype="dashed",color="red")+
+  geom_line(aes(x = var, y = exp(cumulative_fit), group=interaction(cov,prov),color=prov))+
+  geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=interaction(cov,prov), fill=prov), alpha=0.5)+
+  theme_bw()+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans = "log10")+
+  # ylim(0.1,3)+
+  xlab("Variable")+
+  facet_wrap(cov~., scales="free")
 # 
 # ############# LAG EFFECT Plots ############
 # nointalltmp <- subset(nointall, nointall$cov%in%c("pm2p5","pm10","so2","hurs","absh","tasmin") & nointall$lag_num<7)
@@ -696,3 +698,6 @@ write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/
 #   facet_wrap(cov~lag, scales="free", ncol=7)
 # 
 
+ggplot(data)+
+  geom_line(aes(x=date, y = so2_lag0, group=province ))+
+  facet_grid(province ~.)

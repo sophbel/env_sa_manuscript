@@ -1027,7 +1027,7 @@ plot_tas <- ggplot(tmptas)+
   theme_bw()+
   xlab("Var")+
   ylab("Relative Risk")+
-  scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.7,1.2), breaks = c(0.8, 1, 1.2))+
   ggtitle("Temperature")+
   facet_wrap(.~lag_week, nrow = 1)+
   xlab("°C")+
@@ -1048,13 +1048,13 @@ plot_hurs <- ggplot(tmphurs)+
   theme_bw()+
   xlab("Var")+
   ylab("Relative Risk")+
-  scale_y_continuous(trans="log10")+
-  # scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  # scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
   ggtitle("Relative Humidity")+
   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
   facet_wrap(.~lag_week, nrow = 1)+
   xlab("Percent")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13), legend.position = "none")
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13), legend.position = "right")
 
 
 # ABSH
@@ -1076,7 +1076,7 @@ plot_absh <- ggplot(tmpabsh)+
   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
   facet_wrap(.~lag_week, nrow = 1)+
   xlab(expression(paste('Water (g/m'^3,')' )))+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13), legend.position = "none")
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13), legend.position = "right")
 
 
 ### pm2.5
@@ -1089,8 +1089,8 @@ plot_pm2p5 <- ggplot(tmppm2)+
   theme_bw()+
   xlab("Var")+
   ylab("Relative Risk")+
-  scale_y_continuous(trans="log10")+
-  # scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  # scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
   scale_color_manual(values = color_labels)+
   scale_fill_manual(values = color_labels)+
   scale_linetype_manual(values = linetype_labels)+
@@ -1147,7 +1147,7 @@ plot_so2 <- ggplot(tmpso2)+
 # plot_pm2p5/plot_pm10
 # plot_hurs/plot_absh
 space_time_str <- "weekly_adm2"
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm2p5pm10_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=4)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm2p5pm10_weeklags_additive_sa_",space_time_str,".pdf"),width = 10.5,height=4)
 (plot_pm2p5/ plot_pm10)
 dev.off()
 
@@ -1155,7 +1155,7 @@ pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/abshhurs_w
 (plot_hurs/plot_absh)
 dev.off()
 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/so2_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=2)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/so2_weeklags_additive_sa_",space_time_str,".pdf"),width = 10.5,height=2)
 (plot_so2)
 dev.off()
 
@@ -1234,12 +1234,13 @@ plot_temp_cum <- ggplot(tmp)+
   theme_bw()+
   xlab("Var")+
   ylab("Relative Risk")+
-  scale_y_continuous(trans="log10")+
+  # scale_y_continuous(trans="log10", limits = c(0.4,1.1), breaks = c(0.4, 1, 1.1))+
+    scale_y_continuous(trans="log10", limits = c(0.7,1.2), breaks = c(0.8, 1, 1.2))+
   ggtitle("Temperature")+
   xlab("°C")+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
+        legend.position = "none")
 
 # HURS
 tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
@@ -1309,7 +1310,7 @@ plot_pm2p5_cum <- ggplot(tmp)+
   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
+        legend.position = "none")
 # PM10
 tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
 tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag3","hurs_lag3 + tas_lag3","tas_lag3","tasmax_lag3","none"))
@@ -1332,7 +1333,7 @@ plot_pm10_cum <- ggplot(tmp)+
   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
+        legend.position = "none")
 
 # Sulfur Dioxide
 tmp <- subset(fit_list, fit_list$cov%in%c("so2") &  fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
@@ -1356,37 +1357,38 @@ plot_so2_cum <- ggplot(tmp)+
   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
+        legend.position = "none")
+
 
 ### save each individually
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm2p5_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm2p5_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_pm2p5_cum)
 dev.off()
 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/so2_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/so2_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_so2_cum)
 dev.off()
 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm10_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm10_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_pm10_cum)
 dev.off()
 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/absh_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/absh_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_absh_cum)
 dev.off()
 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/hurs_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/hurs_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_hurs_cum)
 dev.off()
 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/tas_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/tas_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_temp_cum)
 dev.off()
 
 ### save together
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/cumulative_additive_sa_",space_time_str,".pdf"),width  =9,height=7)
-(plot_pm2p5_cum + plot_pm10_cum)/
-  (plot_hurs_cum + plot_absh_cum)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/cumulative_additive_sa_",space_time_str,".pdf"),width  =10,height=7)
+(plot_pm2p5_cum + plot_pm10_cum + plot_so2_cum)/
+  (plot_hurs_cum + plot_absh_cum + plot_temp_cum)
 dev.off()
 # 
 # if(space_time_str=="weekly_adm2"){
@@ -1653,6 +1655,124 @@ plot_absh <- ggplot(tmpabsh)+
 # (plot_hurs+plot_absh)
 # ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_additive_gauteng_weekly_",space,".png"), width = 9, height = 7)
 ```
+
+##### CUMULATIVE PLOT FOR UNIMPORTANT VARIABLES (SPEI, O3, PRLR, SFCWIND)
+```{r}
+space_time_str <- "weekly_adm2"
+data_unscaled <- fread("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
+data_unscaled_aggregate <- data_unscaled %>%
+  group_by(district) %>%
+  summarise(spei3 = mean(spei3_lag0,na.rm=T),
+            spei6 = mean(spei6_lag0,na.rm=T),
+            o3 = mean(o3_lag0,na.rm=T),
+            sfcWind = mean(sfcWind_lag0,na.rm=T))
+# SPEI
+tmp <- subset(fit_list, fit_list$cov%in%c("spei3","spei6") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+plot_spei_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov), fill=cov),alpha=0.3)+
+    geom_rug(data= data_unscaled, aes(x = spei3_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  scale_color_manual(values = c("spei3" = "purple","spei6" ="darkred"))+
+  scale_fill_manual(values = c("spei3" = "purple", "spei6"="darkred"))+
+  # scale_linetype_manual(values = linetype_labels)+
+  labs(color = "SPEI", fill = "SPEI")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  # scale_y_continuous(trans="log10", limits = c(0.4,1.1), breaks = c(0.4, 1, 1.1))+
+    scale_y_continuous(trans="log10", limits = c(0.7,1.2), breaks = c(0.8, 1, 1.2))+
+  ggtitle("SPEI")+
+  xlab("SPEI")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+
+##### PRECIPITATION
+tmp <- subset(fit_list, fit_list$cov%in%c("prlrmean") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+plot_prlr_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov), fill=cov),alpha=0.3)+
+    geom_rug(data= data_unscaled, aes(x = prlrmean_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  scale_color_manual(values = c("prlrmean" = "blue"))+
+  scale_fill_manual(values = c("prlrmean" = "blue"))+
+  # scale_linetype_manual(values = linetype_labels)+
+  labs(color = "", fill = "")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  ggtitle("Precipitation (mean)")+
+  xlab("millimeters")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+
+
+##### WIND
+tmp <- subset(fit_list, fit_list$cov%in%c("sfcWind") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+plot_wind_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov)),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov)),alpha=0.3)+
+    geom_rug(data= data_unscaled, aes(x = sfcWind_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  labs(color = "", fill = "")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  ggtitle("Wind")+
+  xlab("km/hr")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+
+
+##### OZONE
+tmp <- subset(fit_list, fit_list$cov%in%c("o3") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+plot_o3_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov)),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov)),alpha=0.3)+
+    geom_rug(data= data_unscaled, aes(x = o3_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  # scale_color_manual(values = c("prlrmean" = "blue"))+
+  # scale_fill_manual(values = c("prlrmean" = "blue"))+
+  # scale_linetype_manual(values = linetype_labels)+
+  labs(color = "", fill = "")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  ggtitle("Ozone")+
+  xlab("Concentration")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+
+### save each individually
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/prlr_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_prlr_cum)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/spei_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_spei_cum)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/wind_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_wind_cum)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/o3_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_o3_cum)
+dev.off()
+
+```
+
 
 ##### FIGURE S3 AND S4
 ###### GAUTENG VS SOUTH AFRICA

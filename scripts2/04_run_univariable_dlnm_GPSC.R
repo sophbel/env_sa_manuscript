@@ -18,7 +18,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 interaction = FALSE
 ### set resolution
 time = "weekly"
-space = "adm2"
+space = "adm1"
 precov = TRUE
 permute = TRUE
 ## load spatial data
@@ -578,24 +578,24 @@ write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/
 
 
 ################################################################################
-
-ggplot(dlnm_results[which(dlnm_results$covariate=="tas_lag0"),]) +
-  geom_line(aes(x=var,y=fit,group=interaction(lag_num)),alpha=0.5)+
-  geom_hline(yintercept = 0, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=lowerCI,ymax=upperCI, group=interaction(lag_num)),alpha=0.04)+
-  # geom_rug(data= data_unscaled, aes(x = pm10_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  scale_y_continuous(trans="log10")+
-  # scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
-  # ggtitle("PM10")+
-  # labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  facet_wrap(covariate~lag_num, scales="free_x", nrow =1)+
-  # xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
-        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
-
+# 
+# ggplot(dlnm_results[which(dlnm_results$covariate=="tas_lag0"),]) +
+#   geom_line(aes(x=var,y=fit,group=interaction(lag_num)),alpha=0.5)+
+#   geom_hline(yintercept = 0, linetype = "dashed", color="red", alpha=0.6)+
+#   geom_ribbon(aes(x=var, ymin=lowerCI,ymax=upperCI, group=interaction(lag_num)),alpha=0.04)+
+#   # geom_rug(data= data_unscaled, aes(x = pm10_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+#   theme_bw()+
+#   xlab("Var")+
+#   ylab("Relative Risk")+
+#   scale_y_continuous(trans="log10")+
+#   # scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+#   # ggtitle("PM10")+
+#   # labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+#   facet_wrap(covariate~lag_num, scales="free_x", nrow =1)+
+#   # xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+#         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+#         legend.position = "right")
+# 
 
 
