@@ -1,9 +1,11 @@
 ################################################################################
 #### PURPOSE ##########
 ################################################################################
-## IT INCLUDES THE BASE SCRIPT WHEREBY A DLNM IS RUN FOR EACH VARIABLE INDEPENDENTLY 
+## IT INCLUDES THE BASE SCRIPT WHEREBY A DLNM IS RUN FOR EACH AIR POLLUTION VARIABLE (PM2.5, PM10, SO2)
+## INCLUDING THE CONFOUNDING EFFECT FOR EACH OF HURS+TASLAG3, ABSH+TASLAG3, TASMAXLAG3, TASLAG3 FOR ALL 3 OF THEM
+## 
 ## AND THEN ITERATIVELY INCLUDING EACH GPSC TO DETERMINE IF THE GPSC HAS A MODIFYING 
-## EFFECT ON THE ENVIRONMENTAL VARIABLE. INCLUDING THE GPSC PROPORTIONS VIA A BINOMIAL
+## EFFECT ON THE AIR POLLUTION VARIABLE. INCLUDING THE GPSC PROPORTIONS VIA A BINOMIAL
 ## PROBABILITY MODEL. 
 
 ## We are running this at weekly administrative region 2 to
@@ -13,7 +15,7 @@
 ## allows models from 2005-2019 and 2005-2023
 ## also can run with and without the interaction of the GPSC and at all spatial and temporal levels
 
-####LOAD DATA & LIBRARIES #####################################################
+####LOAD DATA & LIBRARIES ######################################################
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 ### set if interaction is true or not
 interaction = FALSE
@@ -121,17 +123,21 @@ all <- colnames(df)
 all_gpscs <- all
 all <- grep("lag0",all, value = TRUE)
 if(interaction == TRUE){
-  # cov_names <- grep("tasmax|hurs|absh|pm2p5|pm10|o3|so2", all, value = TRUE)
-  cov_names <- grep("hurs|absh|pm2p5|pm10|so2", all, value = TRUE)
-  cov_names2 <- grep("hurs|absh|tasmax|pm2p5|pm10|so2", all, value = TRUE)
+  cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
+  # cov_names2 <- grep("hurs|absh|tasmax|tas", all, value = TRUE)
+  cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
   
 }else{
   if(space == "adm2"){
-  cov_names <- grep("hurs|absh|pm2p5|pm10|so2", all, value = TRUE)
-  cov_names2 <- grep("hurs|absh|tasmax|pm2p5|pm10|so2", all, value = TRUE)
+  cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
+  # cov_names2 <- grep("hurs|absh|tasmax|tas", all, value = TRUE)
+  cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
+  
   }else{
-    cov_names <- grep("hurs|absh|pm2p5|pm10|so2", all, value = TRUE)
-    cov_names2 <- grep("hurs|absh|tasmax|pm2p5|pm10|so2", all, value = TRUE)
+    cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
+    # cov_names2 <- grep("hurs|absh|tasmax|tas", all, value = TRUE)
+    cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
+    
   }
   }
 cov_names_labels <- gsub("_lag0", "", cov_names)
@@ -147,9 +153,9 @@ dtsero[which(dtsero$V1%notin%pcv_vec)]
 
 ## make a group for humidity
 # Create grouped version
-hurs_grp <- inla.group(df$hurs_lag0, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
+hurs_grp <- inla.group(df$hurs_lag3, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
 df$hurs_grp <- hurs_grp
-absh_grp <- inla.group(df$absh_lag0, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
+absh_grp <- inla.group(df$absh_lag3, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
 df$absh_grp <- absh_grp
 
 
@@ -229,7 +235,7 @@ for(gp in 1:length(gpsc_vec_sub)){
             exp_knots <- quantile(df[[cov_oi]], probs = c(0.33, 0.66), na.rm = TRUE)
           }
           
-          if(cov_oi%in%c("hurs_lag0","absh_lag0")){
+          if(cov_oi%in%c("hurs_lag3","absh_lag3")){
             cb <- crossbasis(
               x = df[[cov_oi]],
               lag = max_lag,
@@ -289,7 +295,7 @@ for(gp in 1:length(gpsc_vec_sub)){
             }
         ###################### PREPARE FORMULA #########################################
           if(interaction==TRUE){
-            if(cov_names2[c2]%in%c("hurs_lag0")){
+            if(cov_names2[c2]%in%c("hurs_lag3")){
               # write formula for hurs
               cb_form<- list()
               cb_form$formula <-
@@ -308,11 +314,12 @@ for(gp in 1:length(gpsc_vec_sub)){
                     "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                     "+ vaccination_period",
                     "+ population_density",
+                    "+ tas_lag3",
                     paste0("+ f(hurs_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
                   )
                 )
             }
-            if(cov_names2[c2]%in%c("absh_lag0")){
+            if(cov_names2[c2]%in%c("absh_lag3")){
               # write formula
               cb_form<- list()
               cb_form$formula <-
@@ -331,11 +338,14 @@ for(gp in 1:length(gpsc_vec_sub)){
                     "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                     "+ vaccination_period",
                     "+ population_density",
+                    "+ tas_lag3",
                     paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
                   )
                 )
             }## end loop not hurs
-        if(cov_names2[c2]%notin%c("hurs_lag0","absh_lag0")){
+            
+            ## this is a model where I only account for temperature
+        if(cov_names2[c2]%notin%c("hurs_lag3","absh_lag3")){
           # write formula
           cb_form<- list()
           cb_form$formula <-
@@ -361,7 +371,7 @@ for(gp in 1:length(gpsc_vec_sub)){
             cb_form$covs<-paste0("crossbasis_", cov_oi, "_interaction_", gsub("_count","",interact_var),"_",cov_names2[c2])
             
         }else{
-          if(cov_names2[c2]=="hurs_lag0"){
+          if(cov_names2[c2]=="hurs_lag3"){
             # write formula for hurs          
           cb_form<- list()
           cb_form$formula <-
@@ -375,11 +385,12 @@ for(gp in 1:length(gpsc_vec_sub)){
                 "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ vaccination_period",
                 "+ population_density",
+                "+ tas_lag3",
                 paste0("+ f(hurs_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
               )
             )
           }
-          if(cov_names2[c2]=="absh_lag0"){
+          if(cov_names2[c2]=="absh_lag3"){
             # write formula for hurs          
             cb_form<- list()
             cb_form$formula <-
@@ -393,11 +404,12 @@ for(gp in 1:length(gpsc_vec_sub)){
                   "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                   "+ vaccination_period",
                   "+ population_density",
+                  "+ tas_lag3",
                   paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
                 )
               )
           }
-          if(cov_names2[c2]%notin%c("hurs_lag0","absh_lag0")){
+          if(cov_names2[c2]%notin%c("hurs_lag3","absh_lag3")){
             cb_form<- list()
             cb_form$formula <-
               as.formula(
@@ -491,13 +503,13 @@ for(gp in 1:length(gpsc_vec_sub)){
               2 * z_high * original_vcov_cross
   
             ## crosspred for each low and high proportions
-            cp_low <- crosspred(basis = cbinteract, cen = cen,
+            cp_low <- crosspred(basis = cb, cen = cen,
                                 coef = coef_low,
                                 vcov = vcov_low)
-            cp_med <- crosspred(basis = cbinteract, cen = cen,
+            cp_med <- crosspred(basis = cb, cen = cen,
                                  coef = coef_med,
                                  vcov = vcov_med)
-            cp_high <- crosspred(basis = cbinteract, cen = cen,
+            cp_high <- crosspred(basis = cb, cen = cen,
                                  coef = coef_high,
                                  vcov = vcov_high)
             
@@ -638,7 +650,8 @@ for(gp in 1:length(gpsc_vec_sub)){
             }
             }
         } ### end of the loop through covariates
-        } ## end of second covariate bivariable interaction loop
+        
+          } ## end of second covariate bivariable interaction loop
         
         ############## SUMMARY OF COVARIATES ###################################
         mod_sum <- do.call(rbind, lapply(model_out, function(lvl1) {
@@ -689,18 +702,20 @@ for(s in 1:length(st_vec)){
 }
 fit_list_biv <- rbindlist(stlist)
 fit_list_biv$cov <- gsub("_lag0","",fit_list_biv$covariate)
-fit_list_biv$cov2 <- gsub("_lag0","",fit_list_biv$cov2)
+fit_list_biv$cov2 <- gsub("_lag3","",fit_list_biv$cov2)
 
 ### read in univariable
 stlist <- list()
 for(s in 1:length(st_vec)){
-  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_",max_lag,"_",endyear,".csv"))
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_",st_vec[s],"_",max_lag,"_",endyear,".csv"))
   m1$space_time <- st_vec[s]
   stlist[[s]] <- m1
 }
 fit_list <- rbindlist(stlist)
-fit_list$cov <- gsub("_lag0","",fit_list$covariate)
+fit_list$cov <- gsub("_lag0","",fit_list$cov)
+fit_list$cov <- gsub("_lag3","",fit_list$cov)
 fit_list$cov2 <- "none"
+
 fit_list <- rbind(fit_list, fit_list_biv)
 fit_list$lag_week <- paste0("Week",fit_list$lag_num)
 fit_list$lag_week <- factor(fit_list$lag_week, levels = paste0("Week",seq(0,12,1)), labels = paste0("Week",seq(0,12,1)))
@@ -713,10 +728,11 @@ fit_list$cumlowerCI_rr <- exp(fit_list$cum_lowerCI)
 fit_list$cumupperCI_rr <- exp(fit_list$cum_upperCI)
 
 ### Relative humidity with pm10 and pm2.5 and without any ----------------------
-tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+# tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
 tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","tasmin","none"))
-color_labels <- c("pm2p5" = "red", "pm10" = "orange","so2"= "pink", "hurs" = "darkblue","tasmax" = "purple","tasmin" = "brown", "none" = "darkgreen")
-linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid", "hurs" = "solid","tasmax" = "solid", "tasmin" = "solid", "none" = "longdash")
+color_labels <- c("pm2p5" = "red", "pm10" = "orange","so2"= "pink", "hurs" = "darkblue","tasmax" = "purple","tas" = "brown", "none" = "darkgreen")
+linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid", "hurs" = "solid","tasmax" = "solid", "tas" = "solid", "none" = "longdash")
 plot_hurs <- ggplot(tmp)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -736,8 +752,9 @@ plot_hurs <- ggplot(tmp)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 plot_hurs
 
-tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","so2","tasmax","tasmin","none")& fit_list$space_time=="weekly_adm2" & fit_list$lag_num==2)
-tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","tasmin","none"))
+# tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","so2","tasmax","tasmin","none")& fit_list$space_time=="weekly_adm2" & fit_list$lag_num==2)
+tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","tasmin","none"))
 plot_hurs_l2 <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -758,9 +775,9 @@ plot_hurs_l2 <- ggplot(tmp)+
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
         legend.position = "none")
 
-### Relative humidity with pm10 and pm2.5 and without any ----------------------
-tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","tasmax","tasmin","none"))
+###  pm2.5 and without any ----------------------
+tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","absh","tasmax","tas","none"))
 plot_pm2p5 <- ggplot(tmp)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -779,8 +796,8 @@ plot_pm2p5 <- ggplot(tmp)+
   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 
-tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2" & fit_list$lag_num==2)
-tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","tasmax","tasmin","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("hurs","absh","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2" & fit_list$lag_num==2)
+tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","absh","tasmax","tas","none"))
 plot_pm2p5_l2 <- ggplot(tmp)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -802,8 +819,8 @@ plot_pm2p5_l2 <- ggplot(tmp)+
         legend.position = "none")
 
 ### Relative humidity with pm10 and pm2.5 and without any ----------------------
-tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","tasmax","tasmin","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","tas","none"))
 plot_pm10 <- ggplot(tmp)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype=cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -821,8 +838,8 @@ plot_pm10 <- ggplot(tmp)+
   facet_wrap(.~lag_week, nrow = 1)+
   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2" & fit_list$lag_num == 2)
-tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","tasmax","tasmin","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2" & fit_list$lag_num == 2)
+tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","tas","none"))
 plot_pm10_l2 <- ggplot(tmp)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype=cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+

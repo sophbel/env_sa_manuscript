@@ -15,10 +15,10 @@
 ####LOAD DATA & LIBRARIES #####################################################
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 ### set if interaction is true or not
-interaction = TRUE
+interaction = FALSE
 ### set resolution
 time = "weekly"
-space = "adm1"
+space = "adm2"
 precov = TRUE
 permute = TRUE
 ## load spatial data
@@ -124,11 +124,10 @@ all <- colnames(df)
 all_gpscs <- all
 all <- grep("lag0",all, value = TRUE)
 if(interaction == TRUE){
-  # cov_names <- grep("tasmax|hurs|absh|pm2p5|pm10|o3|so2", all, value = TRUE)
-  cov_names <- grep("hurs|pm2p5|pm10", all, value = TRUE)
+  cov_names <- grep("pm2p5|pm10", all, value = TRUE)
   
 }else{
-cov_names <- grep("tasmax|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|pm2p5|pm10|o3|so2|spei3|spei6|spi3|spi6", all, value = TRUE)
+cov_names <- grep("tasmax|tas|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|spei3|spei6|pm2p5|pm10|o3|so2", all, value = TRUE)
 # cov_names <- grep("hurs|pm2p5|pm10", all, value = TRUE)
 }
 cov_names_labels <- gsub("_lag0", "", cov_names)
@@ -414,13 +413,13 @@ for(gp in 1:length(gpsc_vec_sub)){
               2 * z_high * original_vcov_cross
   
             ## crosspred for each low and high proportions
-            cp_low <- crosspred(basis = cbinteract, cen = cen,
+            cp_low <- crosspred(basis = cb, cen = cen,
                                 coef = coef_low,
                                 vcov = vcov_low)
-            cp_med <- crosspred(basis = cbinteract, cen = cen,
+            cp_med <- crosspred(basis = cb, cen = cen,
                                  coef = coef_med,
                                  vcov = vcov_med)
-            cp_high <- crosspred(basis = cbinteract, cen = cen,
+            cp_high <- crosspred(basis = cb, cen = cen,
                                  coef = coef_high,
                                  vcov = vcov_high)
             
@@ -560,14 +559,12 @@ for(gp in 1:length(gpsc_vec_sub)){
           mod_sum_all <- rbind(mod_sum_all,mod_sum2)
         }
         
-        if(permute == TRUE){
-          
-        }else{
+ 
         ############## SAVE FILES ##############################################
         saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
         # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"_",endyear,".rds"))
         write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-}
+
   } ### end of loop through gpscs
 
 
@@ -582,7 +579,23 @@ write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/
 
 ################################################################################
 
-
+ggplot(dlnm_results[which(dlnm_results$covariate=="tas_lag0"),]) +
+  geom_line(aes(x=var,y=fit,group=interaction(lag_num)),alpha=0.5)+
+  geom_hline(yintercept = 0, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=lowerCI,ymax=upperCI, group=interaction(lag_num)),alpha=0.04)+
+  # geom_rug(data= data_unscaled, aes(x = pm10_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  # scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+  # ggtitle("PM10")+
+  # labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+  facet_wrap(covariate~lag_num, scales="free_x", nrow =1)+
+  # xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
 
 
 

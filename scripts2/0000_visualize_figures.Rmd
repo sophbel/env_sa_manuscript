@@ -368,18 +368,19 @@ env_data <- sa_adm2_weekly %>%
     age_gt65 = sum(age_gt65, na.rm = T),
     pm2p5 = mean(pm2p5, na.rm = TRUE),
     tasmax = mean(tasmax,na.rm = TRUE),
+    tas = mean(tas,na.rm = TRUE),
     hurs = mean(hurs,na.rm = TRUE),
     absh = mean(absh,na.rm = TRUE),
     .groups = "drop"
   ) %>%
   pivot_longer(
-    cols = c(disease, age_gt65, pm2p5, tasmax, hurs, absh),
+    cols = c(disease, age_gt65, pm2p5, tasmax,"tas", hurs, absh),
     names_to = "variable",
     values_to = "value"
   )
 color_labels = c("Eastern_Cape" = "#008080", "Free_State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
                      "Limpopo" = "#228B22", "Mpumalanga" = "#FFC000", "North_West" = "#8B5A2B", "Northern_Cape" = "#606060", "Western_Cape" = "#1A2D6D" )
-env_data$variable <- factor(env_data$variable, levels = c("disease","age_gt65","pm2p5","tasmax","hurs","absh"))
+env_data$variable <- factor(env_data$variable, levels = c("disease","age_gt65","pm2p5","tasmax","tas","hurs","absh"))
 
 envs <- ggplot(env_data)+
   geom_line(aes(x=date,y=value, group=interaction(variable,NAME_1), color=NAME_1),alpha=0.8)+
@@ -972,7 +973,7 @@ for(s in 1:length(st_vec)){
 }
 fit_list_biv <- rbindlist(stlist)
 fit_list_biv$cov <- gsub("_lag0","",fit_list_biv$covariate)
-fit_list_biv$cov2 <- gsub("_lag0","",fit_list_biv$cov2)
+# fit_list_biv$cov2 <- gsub("_lag3","",fit_list_biv$cov2)
 
 ### read in univariable
 stlist <- list()
@@ -995,21 +996,52 @@ fit_list$cumrr <- exp(fit_list$cumulative_fit)
 fit_list$cumlowerCI_rr <- exp(fit_list$cum_lowerCI)
 fit_list$cumupperCI_rr <- exp(fit_list$cum_upperCI)
 
-# set labels
-color_labels <- c("pm2p5" = "red", "pm10" = "orange","so2"= "pink","absh"="lightblue", "hurs" = "darkblue","tasmax" = "purple","tasmin" = "brown", "none" = "darkgreen")
-linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid","absh"="solid", "hurs" = "solid","tasmax" = "solid", "tasmin" = "solid", "none" = "longdash")
+# add in what these actually are
+fit_list$cov2[which(fit_list$cov2 == "absh_lag3")] <- "absh_lag3 + tas_lag3"
+fit_list$cov2[which(fit_list$cov2 == "hurs_lag3")] <- "hurs_lag3 + tas_lag3"
+
+# set labels 
+color_labels <- c("absh_lag3 + tas_lag3"="lightblue", "hurs_lag3 + tas_lag3" = "darkblue","tasmax_lag3" = "brown","tas_lag3" = "orange", "none" = "black")
+linetype_labels <- c("absh_lag3 + tas_lag3"="solid", "hurs_lag3 + tas_lag3" = "solid","tasmax_lag3" = "solid","tas_lag3" = "solid", "none" = "solid")
+
+# 
+# color_labels <- c("pm2p5" = "red", "pm10" = "orange","so2"= "pink","absh"="lightblue", "hurs" = "darkblue","tasmax" = "purple","tasmin" = "brown","tas" = "orange", "none" = "darkgreen")
+# linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid","absh"="solid", "hurs" = "solid","tasmax" = "solid", "tas" = "solid", "tasmin" = "solid", "none" = "longdash")
 
 ```
 ### FIGURE S5
 ### Plot with lags across 8 weeks
 ```{r}
+# Temperature
+tmptas <- subset(fit_list, fit_list$cov%in%c("tasmin","tas","tasmax") & fit_list$lag_num %in% c(0:8) & fit_list$space_time=="weekly_adm2")
+
+# tmphurs$cov2 <- factor(tmphurs$cov2, levels = c("pm2p5","pm10","so2","absh","tasmax","none"))
+plot_tas <- ggplot(tmptas)+
+  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.7)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov), fill=cov),alpha=0.3)+
+  scale_color_manual(values = c("tasmin" = "lightblue","tas" = "#BA8E23", "tasmax"="darkred"))+
+  scale_fill_manual(values = c("tasmin" = "lightblue","tas" = "#BA8E23", "tasmax"="darkred"))+
+  # scale_linetype_manual(values = linetype_labels)+
+  labs(color = "Temperature Metric", fill = "Temperature Metric")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  ggtitle("Temperature")+
+  facet_wrap(.~lag_week, nrow = 1)+
+  xlab("°C")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13), legend.position = "right")
+
+
 # Relative humidity
-tmphurs <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","absh","tasmax","so2","none") & fit_list$lag_num %in% c(0:8) & fit_list$space_time=="weekly_adm2")
-tmphurs$cov2 <- factor(tmphurs$cov2, levels = c("pm2p5","pm10","so2","absh","tasmax","none"))
+tmphurs <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$lag_num %in% c(0:8) & fit_list$space_time=="weekly_adm2")
+
+# tmphurs$cov2 <- factor(tmphurs$cov2, levels = c("pm2p5","pm10","so2","absh","tasmax","none"))
 plot_hurs <- ggplot(tmphurs)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
+  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.3)+
   scale_color_manual(values = color_labels)+
   scale_fill_manual(values = color_labels)+
   scale_linetype_manual(values = linetype_labels)+
@@ -1022,11 +1054,34 @@ plot_hurs <- ggplot(tmphurs)+
   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
   facet_wrap(.~lag_week, nrow = 1)+
   xlab("Percent")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13), legend.position = "none")
+
+
+# ABSH
+tmpabsh <- subset(fit_list, fit_list$cov%in%c("absh") &  fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+# tmpabsh$cov2 <- factor(tmpabsh$cov2, levels = c("pm2p5","pm10","so2","hurs","tasmax","none"))
+plot_absh <- ggplot(tmpabsh)+
+  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.3)+
+  scale_color_manual(values = color_labels)+
+  scale_fill_manual(values = color_labels)+
+  scale_linetype_manual(values = linetype_labels)+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  # scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  ggtitle("Absolute Humidity")+
+  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+  facet_wrap(.~lag_week, nrow = 1)+
+  xlab(expression(paste('Water (g/m'^3,')' )))+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13), legend.position = "none")
+
 
 ### pm2.5
-tmppm2 <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","so2","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmppm2$cov2 <- factor(tmppm2$cov2, levels = c("absh","hurs","tasmax","so2","none"))
+tmppm2 <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmppm2$cov2 <- factor(tmppm2$cov2, levels = c("absh_lag3 + tas_lag3","hurs_lag3 + tas_lag3","tas_lag3","tasmax_lag3","none"))
 plot_pm2p5 <- ggplot(tmppm2)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1047,8 +1102,8 @@ plot_pm2p5 <- ggplot(tmppm2)+
 
 
 ### PM10
-tmppm1 <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","so2","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmppm1$cov2 <- factor(tmppm1$cov2, levels = c("absh","hurs","tasmax","so2","none"))
+tmppm1 <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmppm1$cov2 <- factor(tmppm1$cov2, levels = c("absh_lag3 + tas_lag3","hurs_lag3 + tas_lag3","tas_lag3","tasmax_lag3","none"))
 plot_pm10 <- ggplot(tmppm1)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype=cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1067,31 +1122,10 @@ plot_pm10 <- ggplot(tmppm1)+
   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 
-# ABSH
-tmpabsh <- subset(fit_list, fit_list$cov%in%c("absh") & fit_list$cov2%in%c("hurs","pm2p5","pm10","tasmax","so2","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmpabsh$cov2 <- factor(tmpabsh$cov2, levels = c("pm2p5","pm10","so2","hurs","tasmax","none"))
-plot_absh <- ggplot(tmpabsh)+
-  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
-  scale_color_manual(values = color_labels)+
-  scale_fill_manual(values = color_labels)+
-  scale_linetype_manual(values = linetype_labels)+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
-  ggtitle("Absolute Humidity")+
-  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  facet_wrap(.~lag_week, nrow = 1)+
-  xlab(expression(paste('Water (g/m'^3,')' )))+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-
-
 # SO2
-tmpso2 <- subset(fit_list, fit_list$cov%in%c("so2") & fit_list$cov2%in%c("hurs","absh","pm2p5","pm10","tasmax","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmpso2$cov2 <- factor(tmpso2$cov2, levels = c("pm2p5","pm10","absh","hurs","tasmax","none"))
+tmpso2 <- subset(fit_list, fit_list$cov%in%c("so2")  & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+tmpso2$cov2 <- factor(tmpso2$cov2, levels = c("absh_lag3 + tas_lag3","hurs_lag3 + tas_lag3","tas_lag3","tasmax_lag3","none"))
+
 plot_so2 <- ggplot(tmpso2)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1112,18 +1146,22 @@ plot_so2 <- ggplot(tmpso2)+
 # plot_so2
 # plot_pm2p5/plot_pm10
 # plot_hurs/plot_absh
-# space_time_str <- "weekly_adm2"
-# pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm2p5pm10_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=4)
-# (plot_pm2p5/ plot_pm10)
-# dev.off()
-# 
-# pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/abshhurs_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=4)
-# (plot_hurs/plot_absh)
-# dev.off()
-# 
-# pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/so2_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=2)
-# (plot_so2)
-# dev.off()
+space_time_str <- "weekly_adm2"
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pm2p5pm10_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=4)
+(plot_pm2p5/ plot_pm10)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/abshhurs_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=4)
+(plot_hurs/plot_absh)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/so2_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=2)
+(plot_so2)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/tas_weeklags_additive_sa_",space_time_str,".pdf"),width = 10,height=2)
+(plot_tas)
+dev.off()
 ```
 
 
@@ -1179,10 +1217,79 @@ data_unscaled_aggregate <- data_unscaled %>%
             pm10 = mean(pm10_lag0,na.rm=T),
             hurs = mean(hurs_lag0,na.rm=T),
             absh = mean(absh_lag0,na.rm=T),
+            tas = mean(tas_lag0,na.rm=T),
             so2 = mean(so2_lag0, na.rm=T))
+# TEMPERATURE
+tmp <- subset(fit_list, fit_list$cov%in%c("tas","tasmax","tasmin") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+plot_temp_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov), fill=cov),alpha=0.3)+
+    geom_rug(data= data_unscaled, aes(x = tas_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  scale_color_manual(values = c("tasmin" = "lightblue","tas" = "#BA8E23", "tasmax"="darkred"))+
+  scale_fill_manual(values = c("tasmin" = "lightblue","tas" = "#BA8E23", "tasmax"="darkred"))+
+  # scale_linetype_manual(values = linetype_labels)+
+  labs(color = "Temperature Metric", fill = "Temperature Metric")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  ggtitle("Temperature")+
+  xlab("°C")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+
+# HURS
+tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+plot_hurs_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.3)+
+    geom_rug(data= data_unscaled, aes(x = hurs_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  scale_color_manual(values = color_labels)+
+  scale_fill_manual(values = color_labels)+
+  scale_linetype_manual(values = linetype_labels)+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  # scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.6,1.35), breaks = c(0.6, 1, 1.3))+
+  ggtitle("Relative Humidity")+
+  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+  # facet_wrap(.~lag_week, nrow = 1)+
+  xlab("Percent")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "none")
+# ABSH
+tmp <- subset(fit_list, fit_list$cov%in%c("absh") &  fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+plot_absh_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.3)+
+  geom_rug(data= data_unscaled, aes(x = absh_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  scale_color_manual(values = color_labels)+
+  scale_fill_manual(values = color_labels)+
+  scale_linetype_manual(values = linetype_labels)+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  # scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.6,1.35), breaks = c(0.6, 1, 1.3))+
+  ggtitle("Absolute Humidity")+
+  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+  # facet_wrap(.~lag_week, nrow = 1)+
+  xlab(expression(paste('Water (g/m'^3,')' )))+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "none")
 # PM2.5
-tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","so2","none") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
-tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","so2","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag3","hurs_lag3 + tas_lag3","tas_lag3","tasmax_lag3","none"))
 plot_pm2p5_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1204,8 +1311,8 @@ plot_pm2p5_cum <- ggplot(tmp)+
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
         legend.position = "right")
 # PM10
-tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","so2","none") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
-tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","so2","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag3","hurs_lag3 + tas_lag3","tas_lag3","tasmax_lag3","none"))
 plot_pm10_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1226,56 +1333,10 @@ plot_pm10_cum <- ggplot(tmp)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
         legend.position = "right")
-# HURS
-tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","so2","none") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
-tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
-plot_hurs_cum <- ggplot(tmp)+
-  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
-    geom_rug(data= data_unscaled, aes(x = hurs_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
-  scale_color_manual(values = color_labels)+
-  scale_fill_manual(values = color_labels)+
-  scale_linetype_manual(values = linetype_labels)+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.6,1.35), breaks = c(0.6, 1, 1.3))+
-  ggtitle("Relative Humidity")+
-  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  # facet_wrap(.~lag_week, nrow = 1)+
-  xlab("Percent")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
-        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
-# ABSH
-tmp <- subset(fit_list, fit_list$cov%in%c("absh") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","so2","none") & fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
-tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
-plot_absh_cum <- ggplot(tmp)+
-  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
-  geom_rug(data= data_unscaled, aes(x = absh_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
-  scale_color_manual(values = color_labels)+
-  scale_fill_manual(values = color_labels)+
-  scale_linetype_manual(values = linetype_labels)+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.6,1.35), breaks = c(0.6, 1, 1.3))+
-  ggtitle("Absolute Humidity")+
-  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  # facet_wrap(.~lag_week, nrow = 1)+
-  xlab(expression(paste('Water (g/m'^3,')' )))+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
-        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
 
 # Sulfur Dioxide
-tmp <- subset(fit_list, fit_list$cov%in%c("so2") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","absh","none") & fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
-tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","absh","none"))
+tmp <- subset(fit_list, fit_list$cov%in%c("so2") &  fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
+tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag3","hurs_lag3 + tas_lag3","tas_lag3","tasmax_lag3","none"))
 plot_so2_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1316,6 +1377,10 @@ dev.off()
 
 pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/hurs_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
 print(plot_hurs_cum)
+dev.off()
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/tas_cumulative_additive_sa_",space_time_str,".pdf"),width  =4.5,height=3.5)
+print(plot_temp_cum)
 dev.off()
 
 ### save together
