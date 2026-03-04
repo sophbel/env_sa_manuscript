@@ -1,11 +1,9 @@
 ################################################################################
 #### PURPOSE ##########
 ################################################################################
-## THIS SCRIPT ENVIRONMENTAL FACTOR MODIFYING INTERACTIONS AT A WEEKLY ADMIN 1 OR ADMIN 2 LEVEL
-## IT INCLUDES THE BASE SCRIPT WHEREBY A DLNM IS RUN FOR EACH VARIABLE INDEPENDENTLY 
-## AND THEN ITERATIVELY INCLUDING EACH modifying environmental TO DETERMINE IF THE GPSC HAS A MODIFYING 
-## We are running this at weekly administrative region 1 WITH THE INTERACTION to
-## maximize the power of the temporal effect but not reducing the power too much.
+## THIS SCRIPT IS TESTING THE INCORPORATING OF A CONFOUNDING INTERACTION WITH TEMPERATURE AND PM2.5
+## WE ALSO MANUALLY SUBSTITUTE INCLUDING HURS AND ABSH (5 CUTS SPECIFICED AS ABSH_GRP AND HURS_GRP)
+## ADDITIONALLY, TESTING INCORPORATING TEMPERATURE AS AN ADDITIONAL CROSS BASIS. ## 
 
 ## allows models from 2005-2019 and 2005-2023
 ## also can run with and without the interaction of the environmental effects and at all spatial and temporal levels
@@ -114,8 +112,13 @@ if(precov==TRUE){
   endyear = 2023
 }
 
-### permute PM2.5 for a placebo test ### this will not converge
-# df$pm2p5permute_lag0 <- sample(df$pm2p5_lag0)
+## make a group for humidity
+# Create grouped version
+hurs_grp <- inla.group(df$hurs_lag3, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
+df$hurs_grp <- hurs_grp
+absh_grp <- inla.group(df$absh_lag3, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
+df$absh_grp <- absh_grp
+
 
 ### add environmental covariates
 all <- colnames(df)
@@ -123,12 +126,10 @@ all_gpscs <- all
 all <- grep("lag0",all, value = TRUE)
 if(interaction == TRUE){
   # cov_names <- grep("tasmax|hurs|absh|pm2p5|pm10|o3|so2", all, value = TRUE)
-  cov_names <- grep("pm2p5", all, value = TRUE)
-  
+  cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
 }else{
 # cov_names <- grep("hurs|pm2p5|pm10", all, value = TRUE)
-cov_names <- grep("pm2p5", all, value = TRUE)
-
+cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
 }
 cov_names_labels <- gsub("_lag0", "", cov_names)
 
@@ -143,8 +144,8 @@ cov_names_labels <- gsub("_lag0", "", cov_names)
 # dtgpsc <- data.table(table(data2$GPSC))[which(data.table(table(data2$GPSC))$N>100 | data.table(table(data2$GPSC))$V1%in%c("8","41"))]
 # dtgpsc[order(-N)]$V1
 # gpsc_vec <- paste0("GPSC",dtgpsc$V1,"_count")
-envint_vec <- c("tasmax","tasmin","tas","hurs", "absh","so2")
-envint_vec <- paste0(envint_vec,"_lag0")
+envint_vec <- c("tas")
+envint_vec <- paste0(envint_vec,"_lag3")
 
 ##### LOAD INTERCEPT MODELS FOR R2 CALCULATION ##################################
 int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
@@ -161,9 +162,8 @@ re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/
     }
 
 ### initiate envint loop or loop through single "none" vector for no interaction
-# for(gp in 1:length(envint_vec_sub)){
-  for(gp in 5:length(envint_vec_sub)){
-    
+for(gp in 1:length(envint_vec_sub)){
+
   print(paste0("Running Models for: ", envint_vec_sub[gp]))
     ### set the interaction variable
     interact_var = envint_vec_sub[gp]
@@ -290,7 +290,8 @@ re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/
                 "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ vaccination_period",
-                "+ population_density"
+                "+ population_density",
+                paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
               )
             )
           cb_form$covs<-paste0("crossbasis_", cov_oi, "_interaction_", gsub("_count","",interact_var))
@@ -307,7 +308,8 @@ re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/
                 "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ vaccination_period",
-                "+ population_density"
+                "+ population_density",
+                paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
               )
             )
           cb_form$covs<-paste0("crossbasis_", cov_oi, "_none")
@@ -543,7 +545,7 @@ re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/
         ############## SAVE FILES ##############################################
         # saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
         # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"_",endyear,".rds"))
-        # write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }
   } ### end of loop through modifier
 
