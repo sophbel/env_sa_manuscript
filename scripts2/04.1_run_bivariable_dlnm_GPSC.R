@@ -190,7 +190,6 @@ df$absh_grp <- absh_grp
 int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
 re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
 
-
 ##### SET UP LOOPS FOR MODELS    ###############################################
 
 ## define loop length

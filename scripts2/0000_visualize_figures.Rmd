@@ -1164,36 +1164,35 @@ pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/tas_weekla
 dev.off()
 ```
 
-
-
 ### TEXT SECTION 2
 ### Print the numbers I need from the above figure
 ```{r}
 ### particulate matter numbers PM2.5
-cumspms2 <- tmppm2[which( tmppm2$lag=="lag3" & tmppm2$cov == "pm2p5"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
-cumspms2$perc_increase_above40 <- (cumspms2$cumrr / cumspms2$cumrr[(cumspms2$var == 40 & cumspms2$cov2 == "none")] - 1) * 100
+cumspms2 <- tmppm2[which( tmppm2$lag=="lag3" & tmppm2$cov == "pm2p5" & tmppm2$cov2 == "absh_lag3 + tas_lag3"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+cumspms2$perc_increase_above40 <- (cumspms2$cumrr / cumspms2$cumrr[(cumspms2$var == 40 & cumspms2$cov2 == "absh_lag3 + tas_lag3")] - 1) * 100
 cumspms2[which(cumspms2$cov2=="none"),]
-cumspms2[which(cumspms2$cov2=="hurs"),]
+cumspms2[which(cumspms2$cov2=="cumspms2"),]
 ## which model reduces the effect the most
 cumspms2[which(cumspms2$var=="50"),]
 
 ### particulate matter numbers PM10
 cumspms10 <- tmppm1[which( tmppm1$lag=="lag3" & tmppm1$cov == "pm10"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
-cumspms10$perc_increase_above75 <- (cumspms10$cumrr / cumspms10$cumrr[(cumspms10$var == 75 & cumspms10$cov2 == "none")] - 1) * 100
+cumspms10$perc_increase_above75 <- (cumspms10$cumrr / cumspms10$cumrr[(cumspms10$var == 75 & cumspms10$cov2 == "absh_lag3 + tas_lag3")] - 1) * 100
 cumspms10[which(cumspms10$cov2=="none"),]
 cumspms10[which(cumspms10$var=="100"),]
 
-### particulate matter numbers PM10
+### particulate matter numbers SO2
 cumsso2 <- tmpso2[which( tmpso2$lag=="lag3" & tmpso2$cov == "so2"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
-cumsso2$perc_increase_above125 <- (cumsso2$cumrr / cumsso2$cumrr[(cumsso2$var == 130 & cumsso2$cov2 == "none")] - 1) * 100
+cumsso2$perc_increase_above125 <- (cumsso2$cumrr / cumsso2$cumrr[(cumsso2$var == 130 & cumsso2$cov2 == "absh_lag3 + tas_lag3")] - 1) * 100
 cumsso2[which(cumsso2$cov2=="none"),]
 cumsso2[which(cumsso2$var=="150"),]
 
 ### humidity numbers
 ## low humidity
-highhursrisk <- tmphurs[which(tmphurs$cumlowerCI_rr>1 & tmphurs$cov2%in%c("none","pm2p5")),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+tmphurs[which(tmphurs$rr==max(tmphurs$rr))]
+highhursrisk <- tmphurs[which(tmphurs$cumlowerCI_rr>1 & tmphurs$cov2%in%c("none","pm2p5")),c("lag","cov2","var","rr","lowerCI_rr","upperCI_rr","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 highhursrisk[highhursrisk$var>35&highhursrisk$var<40]
-tmphurs[which(tmphurs$var>39&tmphurs$var<40 & tmphurs$lag=="lag3"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+tmphurs[which(tmphurs$var>39&tmphurs$var<40 & tmphurs$lag=="lag3"),c("lag","cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 tmphurs[which(tmphurs$cumlowerCI_rr>1 & tmphurs$lag=="lag3"),c("var")]
 ### high humidity
 tmphurs[which(tmphurs$var>74& tmphurs$var<76 & tmphurs$lag=="lag3"),c("cov2","var","lag","cumrr","cumlowerCI_rr","cumupperCI_rr")]
@@ -1201,7 +1200,7 @@ tmphurs[which(tmphurs$cumlowerCI_rr<1 &tmphurs$var>74 & tmphurs$lag=="lag3"),c("
 
 
 ### absolute humidity numbers
- tmpabsh[which(max(tmpabsh$cumulative_fit)==tmpabsh$cumulative_fit & tmpabsh$lag=="lag3"),]
+tmpabsh[which(max(tmpabsh$cumulative_fit)==tmpabsh$cumulative_fit & tmpabsh$lag=="lag3"),]
 ## low humidity
 tmpabsh[which(tmpabsh$var>5.7&tmpabsh$var<5.8 & tmpabsh$lag=="lag3"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 ```
@@ -1401,9 +1400,6 @@ dev.off()
 # 
 #   }
 
-
-
-
 # Maximum temperature
 space_time_str <- "weekly_adm2"
 tmptemp <- subset(fit_list, fit_list$cov%in%c("tasmin","tasmax") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
@@ -1429,8 +1425,72 @@ plot_temp_cum
 ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_temperature_maxmin_weekly_adm2.png", width = 7, height = 5)
 ```
 
-#### FIGURE 2 ATTRIBUTABLE FRACTION
+#### FIGURE 3 SENSTIIVITY ANALYSIS FOR PM2.5 ABSH+TEMP COVARIATES, PM2.5 ABSH + CBTEMP
+```{r}
+##### compare CBpm2p5 + CBtas + absh model TO CBpm2p5 + tas + absh model
+dfth <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019.csv")
+dfth <- subset(dfth , dfth$covariate == "pm2p5_lag0" & dfth$cov2 == "absh_lag3")
+dfthC <- subset(dfth , dfth$lag_num == 3)
+dfthC$cumrr <- exp(dfthC$cumulative_fit)
+dfthC$cumlowerCI_rr <- exp(dfthC$cum_lowerCI)
+dfthC$cumupperCI_rr <- exp(dfthC$cum_upperCI)
 
+## read in double cross basis
+dfCB2 <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_dlnm2x_results_fits_weekly_adm2_tasabsh_8_2019.csv")
+dfCB2 <- subset(dfCB2 , dfCB2$covariate == "pm2p5" )
+dfCB2C <- subset(dfCB2 , dfCB2$covariate == "pm2p5" & dfCB2$lag_num == 3)
+dfCB2C$cumrr <- exp(dfCB2C$cumulative_fit)
+dfCB2C$cumlowerCI_rr <- exp(dfCB2C$cum_lowerCI)
+dfCB2C$cumupperCI_rr <- exp(dfCB2C$cum_upperCI)
+
+## interaction version
+dfint <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/envmod_results_fits_weekly_adm2_allmodifiers_propprov_8_2019.csv")
+dfint <- subset(dfint , dfint$covariate == "pm2p5_lag0" &  dfint$interaction_level =="med")
+dfintC <- subset(dfint , dfint$lag_num == 3 )
+dfintC$cumrr <- exp(dfintC$cumulative_fit)
+dfintC$cumlowerCI_rr <- exp(dfintC$cum_lowerCI)
+dfintC$cumupperCI_rr <- exp(dfintC$cum_upperCI)
+
+## no covariates
+dfnone <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm2_8_2019.csv")
+dfnone <- subset(dfnone, dfnone$covariate=="pm2p5_lag0"& dfnone$lag == "lag3")
+dfnone$cumrr <- exp(dfnone$cumulative_fit)
+dfnone$cumlowerCI_rr <- exp(dfnone$cum_lowerCI)
+dfnone$cumupperCI_rr <- exp(dfnone$cum_upperCI)
+
+ggplot() +
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_line(data = dfthC, aes(x=predvar, y = cumrr), color = "darkgreen") +
+  geom_ribbon(data=dfthC, aes(x=predvar, ymin = cumlowerCI_rr, ymax = cumupperCI_rr), fill = "darkgreen", alpha = 0.2) +
+  geom_line(data = dfCB2C, aes(x=predvar, y = cumrr), color = "darkblue") +
+  geom_ribbon(data=dfCB2C, aes(x=predvar, ymin = cumlowerCI_rr, ymax = cumupperCI_rr), fill = "darkblue", alpha = 0.2) +
+  theme_bw()+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+  # facet_wrap(.~lag_week, nrow = 1)+
+  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+  
+  geom_line(data = dfnone, aes(x=predvar, y = cumrr), color = "black", linetype = "dashed") +
+  geom_ribbon(data=dfnone, aes(x=predvar, ymin = cumlowerCI_rr, ymax = cumupperCI_rr), fill = "black",linetype = "dashed", alpha = 0.2) +
+  theme_bw()+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right",legend.title = element_blank())
+
+dfnone$type <- dfthC$type <- dfCB2C$type <- dfintC$type <- NULL
+dfthC$type <- "CBpm2.5 + tas_lag3+absh_lag3"
+dfCB2C$type <- "CBpm2.5 + CBtas + absh_lag3"
+dfintC$type <- "CBpm2.5*tas_lag3 + absh_lag3"
+dfnone$type <- "CBpm2.5"
+
+
+rbind(
+  dfnone[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")],
+dfthC[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")],
+dfCB2C[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")],
+dfintC[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")])
+```
+
+#### FIGURE 2 ATTRIBUTABLE FRACTION
 ```{r}
 data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag_sc.csv")
 data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
@@ -1537,17 +1597,20 @@ cat(sprintf("If PM2.5 reduced to <= %g ug/m3, %.1f cases (~%.2f%%) could be prev
 ```
 
 #### FIGURE S3 AND S4
-#### Gauteng Alone Particulate Matter Lags
+#### Gauteng Alone Compared to South Africa Sensitivity
+#### Combine Univariable results for each for meteorological covariates and then only include the South Africa model with tas+absh for PM
 ```{r}
 time = "weekly"
-space = "adm1"
+space = "adm2"
 max_lag = 8
 prov_name = "Gauteng"
+## meteorological only
 noint <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_2019_",prov_name,".csv"))
 noint$cov2 <- "none"
+noint <- subset(noint, noint$covariate%notin%c("pm2p5_lag0","pm10_lag0","so2_lag0"))
+## pollution only
 biv_noint <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_bivariable_8week_2019_",prov_name,".csv"))
 fit_list <- rbind(biv_noint,noint)
-fit_list <- noint
 fit_list$lag_week <- paste0("Week",fit_list$lag_num)
 fit_list$cov <- gsub("_lag0","",fit_list$covariate)
 fit_list$cov2 <- gsub("_lag0","",fit_list$cov2)
@@ -1560,14 +1623,21 @@ fit_list$cumrr <- exp(fit_list$cumulative_fit)
 fit_list$cumlowerCI_rr <- exp(fit_list$cum_lowerCI)
 fit_list$cumupperCI_rr <- exp(fit_list$cum_upperCI)
 
-# set labels
-color_labels <- c("pm2p5" = "red", "pm10" = "orange","so2"= "pink","absh"="lightblue", "hurs" = "darkblue","tasmax" = "purple","tasmin" = "brown", "none" = "darkgreen")
-linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid","absh"="solid", "hurs" = "solid","tasmax" = "solid", "tasmin" = "solid", "none" = "longdash")
+# # set labels
+# color_labels <- c("pm2p5" = "red", "pm10" = "orange","so2"= "pink","absh"="lightblue", "hurs" = "darkblue","tasmax" = "purple","tasmin" = "brown", "none" = "darkgreen")
+# linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid","absh"="solid", "hurs" = "solid","tasmax" = "solid", "tasmin" = "solid", "none" = "longdash")
+# add in what these actually are
+fit_list$cov2[which(fit_list$cov2 == "absh_lag3")] <- "absh_lag3 + tas_lag3"
+fit_list$cov2[which(fit_list$cov2 == "hurs_lag3")] <- "hurs_lag3 + tas_lag3"
+
+# set labels 
+color_labels <- c("absh_lag3 + tas_lag3"="lightblue", "hurs_lag3 + tas_lag3" = "darkblue","tasmax_lag3" = "brown","tas_lag3" = "orange", "none" = "black")
+linetype_labels <- c("absh_lag3 + tas_lag3"="solid", "hurs_lag3 + tas_lag3" = "solid","tasmax_lag3" = "solid","tas_lag3" = "solid", "none" = "solid")
 
 
 # Relative humidity
-tmphurs <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","absh","tasmax","tasmin","none") & fit_list$lag_num %in% c(3))
-tmphurs$cov2 <- factor(tmphurs$cov2, levels = c("pm2p5","pm10","so2","absh","tasmax","tasmin","none"))
+tmphurs <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$lag_num %in% c(3))
+# tmphurs$cov2 <- factor(tmphurs$cov2, levels = c("pm2p5","pm10","so2","absh","tasmax","tasmin","none"))
 plot_hurs <- ggplot(tmphurs)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1587,8 +1657,8 @@ plot_hurs <- ggplot(tmphurs)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 
 ### pm2.5
-tmppm2 <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(3))
-tmppm2$cov2 <- factor(tmppm2$cov2, levels = c("absh","hurs","tasmax","tasmin","none"))
+tmppm2 <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$lag_num %in% c(3))
+# tmppm2$cov2 <- factor(tmppm2$cov2, levels = c("absh","hurs","tasmax","tasmin","none"))
 plot_pm2p5 <- ggplot(tmppm2)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1609,8 +1679,8 @@ plot_pm2p5 <- ggplot(tmppm2)+
 
 
 ### PM10
-tmppm1 <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","tasmin","none") & fit_list$lag_num %in% c(3))
-tmppm1$cov2 <- factor(tmppm1$cov2, levels = c("absh","hurs","tasmax","tasmin","none"))
+tmppm1 <- subset(fit_list, fit_list$cov%in%c("pm10")  & fit_list$lag_num %in% c(3))
+# tmppm1$cov2 <- factor(tmppm1$cov2, levels = c("absh","hurs","tasmax","tasmin","none"))
 plot_pm10 <- ggplot(tmppm1)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week, cov2), color=cov2, linetype=cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1630,8 +1700,8 @@ plot_pm10 <- ggplot(tmppm1)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 
 # ABSH
-tmpabsh <- subset(fit_list, fit_list$cov%in%c("absh") & fit_list$cov2%in%c("hurs","pm2p5","pm10","tasmax","tasmin","none") & fit_list$lag_num %in% c(3))
-tmpabsh$cov2 <- factor(tmpabsh$cov2, levels = c("pm2p5","pm10","so2","hurs","tasmax","tasmin","none"))
+tmpabsh <- subset(fit_list, fit_list$cov%in%c("absh")  & fit_list$lag_num %in% c(3))
+# tmpabsh$cov2 <- factor(tmpabsh$cov2, levels = c("pm2p5","pm10","so2","hurs","tasmax","tasmin","none"))
 plot_absh <- ggplot(tmpabsh)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1651,8 +1721,8 @@ plot_absh <- ggplot(tmpabsh)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 
 
-# (plot_pm2p5+plot_pm10) /
-# (plot_hurs+plot_absh)
+(plot_pm2p5+plot_pm10) /
+(plot_hurs+plot_absh)
 # ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_additive_gauteng_weekly_",space,".png"), width = 9, height = 7)
 ```
 
@@ -1788,7 +1858,7 @@ noint$cov <- gsub("_lag0","",noint$covariate)
 noint$prov <- "Gauteng"
 
 ## WHOLE COUNTRY
-m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm1_8_2019.csv"))
+m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm2_8_2019.csv"))
 m1$cov <- gsub("_lag0","",m1$covariate)
 m1$prov <- "South_Africa"
 # bind
@@ -1799,9 +1869,9 @@ cumgaut <- ggplot(nointall[which(nointall$cov%notin%c("spi3","spi6")),])+
   geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=interaction(cov,prov), fill=prov), alpha=0.5)+
   theme_bw()+
   scale_y_continuous(trans = "log10")+
-  scale_color_manual(values = color_labels2)+
-  scale_fill_manual(values = color_labels2)+
-  scale_linetype_manual(values = linetype_labels2) +
+  # scale_color_manual(values = color_labels2)+
+  # scale_fill_manual(values = color_labels2)+
+  # scale_linetype_manual(values = linetype_labels2) +
   theme(legend.title = element_blank(), legend.text = element_text(size=13))+
   theme(axis.text = element_text(size = 13), axis.title = element_text(size =13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45, hjust =1) )+
   ylab("Relative Risk")+

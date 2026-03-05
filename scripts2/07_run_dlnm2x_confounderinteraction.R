@@ -244,47 +244,55 @@ write.table(df_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/model
 
 
 
-##### compare CBpm2p5 + CBtas + absh model TO CBpm2p5 + tas + absh model
-dfth <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019.csv")
-dfth <- subset(dfth , dfth$covariate == "pm2p5_lag0" & dfth$cov2 == "absh_lag3")
-## read in double cross basis
-dfCB2 <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_dlnm2x_results_fits_weekly_adm2_tasabsh_8_2019.csv")
-
-ggplot() +
-  geom_line(data = dfth, aes(x=predvar, y = cumulative_fit), color = "darkgreen") +
-  geom_ribbon(data=dfth, aes(x=predvar, ymin = cum_lowerCI, ymax = cum_upperCI), fill = "darkgreen", alpha = 0.2) +
-  geom_line(data = dfCB2, aes(x=predvar, y = cumulative_fit), color = "darkblue") +
-  geom_ribbon(data=dfCB2, aes(x=predvar, ymin = cum_lowerCI, ymax = cum_upperCI), fill = "darkblue", alpha = 0.2) +
-  theme_bw()
-
-
-#### assess colinearity 
-temp_lag3 <- df$tas_lag3
-
-# extract crossbasis matrix only
-cb_temp_mat <- as.matrix(cb_temp)
-
-# correlation between lag3 and each CB column
-cors <- apply(cb_temp_mat, 2, function(x)
-  cor(x, temp_lag3, use = "complete.obs")
-)
-round(cors, 3)
-lm_test <- lm(temp_lag3 ~ cb_temp_mat)
-summary(lm_test)$r.squared 
-
-ggplot() +
-  geom_ribbon(data = dfth,
-              aes(x = predvar,ymin = lowerCI,ymax = upperCI, group = lag_num),fill = "darkgreen",alpha = 0.2) +
-  geom_line(data = dfth,
-            aes(x = predvar,y = fit, group = lag_num),color = "darkgreen") +
-  geom_ribbon(data = dfCB2,
-              aes(x = predvar,ymin = lowerCI,ymax = upperCI, group = lag_num),fill = "darkblue",alpha = 0.2) +
-  geom_line(data = dfCB2,
-            aes(x = predvar,y = fit, group = lag_num),color = "darkblue") +
-  labs(x = "PM2.5",
-       y = "Effect (log RR)",
-       title = "") +
-  theme_bw() +
-  facet_grid(.~lag_num)+
-  theme(plot.title = element_text(hjust = 0.5))
+# ##### compare CBpm2p5 + CBtas + absh model TO CBpm2p5 + tas + absh model
+# dfth <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019.csv")
+# dfth <- subset(dfth , dfth$covariate == "pm2p5_lag0" & dfth$cov2 == "absh_lag3")
+# dfthC <- subset(dfth , dfth$lag_num == 3)
+# ## read in double cross basis
+# dfCB2 <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_dlnm2x_results_fits_weekly_adm2_tasabsh_8_2019.csv")
+# dfCB2 <- subset(dfCB2 , dfCB2$covariate == "pm2p5" )
+# dfCB2C <- subset(dfCB2 , dfCB2$covariate == "pm2p5" & dfCB2$lag_num == 3)
+# 
+# ## interaction version
+# dfint <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/envmod_results_fits_weekly_adm2_allmodifiers_propprov_8_2019.csv")
+# dfint <- subset(dfint , dfint$covariate == "pm2p5_lag0" &  dfint$interaction_level =="med")
+# dfintC <- subset(dfint , dfint$lag_num == 3 )
+# 
+# ggplot() +
+#   geom_line(data = dfthC, aes(x=predvar, y = cumulative_fit), color = "darkgreen") +
+#   geom_ribbon(data=dfthC, aes(x=predvar, ymin = cum_lowerCI, ymax = cum_upperCI), fill = "darkgreen", alpha = 0.2) +
+#   geom_line(data = dfCB2C, aes(x=predvar, y = cumulative_fit), color = "darkblue") +
+#   geom_ribbon(data=dfCB2C, aes(x=predvar, ymin = cum_lowerCI, ymax = cum_upperCI), fill = "darkblue", alpha = 0.2) +
+#   # geom_line(data = dfintC, aes(x=predvar, y = cumulative_fit), color = "red") +
+#   # geom_ribbon(data=dfintC, aes(x=predvar, ymin = cum_lowerCI, ymax = cum_upperCI), fill = "red", alpha = 0.2) +
+#   theme_bw()
+# 
+# 
+# #### assess colinearity 
+# temp_lag3 <- df$tas_lag3
+# 
+# # extract crossbasis matrix only
+# cb_temp_mat <- as.matrix(cb_temp)
+# 
+# # correlation between lag3 and each CB column
+# cors <- apply(cb_temp_mat, 2, function(x)
+#   cor(x, temp_lag3, use = "complete.obs")
+# )
+# round(cors, 3)
+# lm_test <- lm(temp_lag3 ~ cb_temp_mat)
+# summary(lm_test)$r.squared 
+# 
+# ggplot() +
+#   geom_ribbon(data = dfth,aes(x = predvar,ymin = lowerCI,ymax = upperCI, group = lag_num),fill = "darkgreen",alpha = 0.2) +
+#   geom_line(data = dfth,aes(x = predvar,y = fit, group = lag_num),color = "darkgreen") +
+#   geom_ribbon(data = dfCB2,aes(x = predvar,ymin = lowerCI,ymax = upperCI, group = lag_num),fill = "darkblue",alpha = 0.2) +
+#   geom_line(data = dfCB2,aes(x = predvar,y = fit, group = lag_num),color = "darkblue") +
+#   geom_line(data = dfint, aes(x=predvar, y = fit, group = lag_num), color = "red") +
+#   geom_ribbon(data=dfint, aes(x=predvar, ymin = lowerCI, ymax = upperCI, group = lag_num), fill = "red", alpha = 0.2) +
+#   labs(x = "PM2.5",
+#        y = "Effect (log RR)",
+#        title = "") +
+#   theme_bw() +
+#   facet_grid(.~lag_num)+
+#   theme(plot.title = element_text(hjust = 0.5))
 

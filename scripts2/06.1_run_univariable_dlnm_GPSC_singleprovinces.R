@@ -20,7 +20,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 interaction = FALSE
 ### set resolution
 time = "weekly"
-space = "adm1"
+space = "adm2"
 prov_name = "Gauteng" ### this should either be "Gauteng" or "Western Cape"
 precov = TRUE
 ## load spatial data
@@ -669,7 +669,7 @@ ggplot(noint)+
   facet_wrap(cov~., scales="free")
 
 ## WHOLE COUNTRY
-m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm1_8_",endyear,".csv"))
+m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm2_8_",endyear,".csv"))
 m1$cov <- gsub("_lag0","",m1$covariate)
 m1$prov <- "South_Africa"
 # bind
