@@ -1428,13 +1428,19 @@ ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_temperature
 #### FIGURE 3 SENSTIIVITY ANALYSIS FOR PM2.5 ABSH+TEMP COVARIATES, PM2.5 ABSH + CBTEMP
 ```{r}
 ##### compare CBpm2p5 + CBtas + absh model TO CBpm2p5 + tas + absh model
-dfth <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019.csv")
+dfth1 <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019.csv")
 dfth <- subset(dfth , dfth$covariate == "pm2p5_lag0" & dfth$cov2 == "absh_lag3")
 dfthC <- subset(dfth , dfth$lag_num == 3)
 dfthC$cumrr <- exp(dfthC$cumulative_fit)
 dfthC$cumlowerCI_rr <- exp(dfthC$cum_lowerCI)
 dfthC$cumupperCI_rr <- exp(dfthC$cum_upperCI)
 
+#### temperature alone
+dft <- subset(dfth1 , dfth1$covariate == "pm2p5_lag0" & dfth1$cov2 == "tas_lag3")
+dftC <- subset(dft , dft$lag_num == 3)
+dftC$cumrr <- exp(dftC$cumulative_fit)
+dftC$cumlowerCI_rr <- exp(dftC$cum_lowerCI)
+dftC$cumupperCI_rr <- exp(dftC$cum_upperCI)
 ## read in double cross basis
 dfCB2 <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_dlnm2x_results_fits_weekly_adm2_tasabsh_8_2019.csv")
 dfCB2 <- subset(dfCB2 , dfCB2$covariate == "pm2p5" )
@@ -1476,15 +1482,19 @@ ggplot() +
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
         legend.position = "right",legend.title = element_blank())
 
-dfnone$type <- dfthC$type <- dfCB2C$type <- dfintC$type <- NULL
+
+
+dftC$type <- dfnone$type <- dfthC$type <- dfCB2C$type <- dfintC$type <- NULL
 dfthC$type <- "CBpm2.5 + tas_lag3+absh_lag3"
 dfCB2C$type <- "CBpm2.5 + CBtas + absh_lag3"
 dfintC$type <- "CBpm2.5*tas_lag3 + absh_lag3"
+dftC$type <- "CBpm2.5 + CBtas"
 dfnone$type <- "CBpm2.5"
 
 
 rbind(
-  dfnone[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")],
+  dfnone[which(dfnone$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")],
+  dftC[which(dftC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")],
 dfthC[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")],
 dfCB2C[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")],
 dfintC[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")])

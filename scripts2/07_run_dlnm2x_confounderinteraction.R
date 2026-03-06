@@ -268,7 +268,7 @@ write.table(df_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/model
 #   theme_bw()
 # 
 # 
-# #### assess colinearity 
+# #### assess colinearity
 # temp_lag3 <- df$tas_lag3
 # 
 # # extract crossbasis matrix only
@@ -280,8 +280,8 @@ write.table(df_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/model
 # )
 # round(cors, 3)
 # lm_test <- lm(temp_lag3 ~ cb_temp_mat)
-# summary(lm_test)$r.squared 
-# 
+# summary(lm_test)$r.squared
+
 # ggplot() +
 #   geom_ribbon(data = dfth,aes(x = predvar,ymin = lowerCI,ymax = upperCI, group = lag_num),fill = "darkgreen",alpha = 0.2) +
 #   geom_line(data = dfth,aes(x = predvar,y = fit, group = lag_num),color = "darkgreen") +

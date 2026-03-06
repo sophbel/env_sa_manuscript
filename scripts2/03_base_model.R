@@ -12,8 +12,8 @@
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 # weekly=FALSE
 precov=TRUE ### set whether the run ends in 2020 or 2023
-time = "monthly"
-space="adm1"
+time = "weekly"
+space="adm2"
 threads = 4
       ## load disease data
   data<-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_",space,"_",time,"_lag_sc.csv"))
@@ -125,16 +125,28 @@ if(precov==TRUE){
       mod_out <- mod_out[,c("num","base","waic","mae","cpo","rsq","cov")]
 
      #### read and save the base model
-#    saveRDS(base_mod_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_list_weekly_",endyear,".rds"))
+   # saveRDS(base_mod_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_list_weekly_",endyear,".rds"))
 
      write.table(mod_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_summary_statisics_",time,"_",space,"_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE, sep =",")
-     # saveRDS(base_mod_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_list_",time,"_",space,"_",endyear,".rds"))
      saveRDS(base_mod_list[[1]],file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
-   
-#     
+  
+     
+     
+     #### testing population and not population
+     # mainnopop <-base_mod_list[[11]]
+     # main <-base_mod_list[[15]]
+     # library(patchwork)
+     # plot_spatial_effects(main,shp,52, "pop", structured = FALSE) + 
+     # plot_spatial_effects(mainnopop,shp,52, "nopop", structured = FALSE)
+     # 
+     # plot_spatial_effects_diff(main,mainnopop,shp,52,title_a = "pop", title_b = "nopop")
+     # mod_out[c(11,15),]
+     
 ##########################################################################################
 ####### TEST MIXED BASE MODELS WITH SOCIODEMOGRAPHIC VARS ##################      
 ########################################################################################## 
+     # base_mod_list <- fread(paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_list_",time,"_",space,"_",endyear,".rds"))
+                            
     # ## load intercept
     # int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
     #   base_test_list <- list()

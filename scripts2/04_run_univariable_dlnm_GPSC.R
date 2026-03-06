@@ -17,7 +17,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 ### set if interaction is true or not
 interaction = FALSE
 ### set resolution
-time = "weekly"
+time = "monthly"
 space = "adm2"
 precov = TRUE
 permute = TRUE
