@@ -1168,24 +1168,53 @@ dev.off()
 ### Print the numbers I need from the above figure
 ```{r}
 ### particulate matter numbers PM2.5
+tmppm2[which(tmppm2$var==50&tmppm2$lag=="lag3"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+
 cumspms2 <- tmppm2[which( tmppm2$lag=="lag3" & tmppm2$cov == "pm2p5" & tmppm2$cov2 == "absh_lag3 + tas_lag3"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 cumspms2$perc_increase_above40 <- (cumspms2$cumrr / cumspms2$cumrr[(cumspms2$var == 40 & cumspms2$cov2 == "absh_lag3 + tas_lag3")] - 1) * 100
 cumspms2[which(cumspms2$cov2=="none"),]
 cumspms2[which(cumspms2$cov2=="cumspms2"),]
-## which model reduces the effect the most
+## effect size at key concentrations
 cumspms2[which(cumspms2$var=="50"),]
+cumspms2[which(cumspms2$var=="100"),]
+## maximum effect size
+tmppm250 <- tmppm2[which(tmppm2$var==50 & tmppm2$cov2=="absh_lag3 + tas_lag3")]
+
+testplot <- ggplot(tmppm2[which(tmppm2$cov2=="absh_lag3 + tas_lag3"),])+
+  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2)),alpha=0.7)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2)),alpha=0.5)+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  # scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  ggtitle("PM 2.5")+
+  facet_wrap(.~lag_week, nrow = 1)+
+  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
+
+tmppm25 <- tmppm2[tmppm2$cov2 == "absh_lag3 + tas_lag3" & tmppm2$lag_num<5, ]
+max_rr_row <- tmppm25[which.max(tmppm25$lowerCI), ]
+cat("Lag week with maximum relative risk:", max_rr_row$lag_week, "\n")
+cat("Concentration at peak:", max_rr_row$var, "\n")
+cat("Maximum relative risk:", max_rr_row$fit, "\n")
+tmppm2[which(tmppm2$cov == "pm2p5"& tmppm2$cov2=="absh_lag3 + tas_lag3" & tmppm2$var==100),c("cov2","lag","var","rr","lowerCI_rr","upperCI_rr")]
+
 
 ### particulate matter numbers PM10
-cumspms10 <- tmppm1[which( tmppm1$lag=="lag3" & tmppm1$cov == "pm10"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+cumspms10 <- tmppm1[which( tmppm1$lag=="lag3" & tmppm1$cov == "pm10") &tmppm1$cov2=="absh_lag3 + tas_lag3",c("cov","cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 cumspms10$perc_increase_above75 <- (cumspms10$cumrr / cumspms10$cumrr[(cumspms10$var == 75 & cumspms10$cov2 == "absh_lag3 + tas_lag3")] - 1) * 100
 cumspms10[which(cumspms10$cov2=="none"),]
 cumspms10[which(cumspms10$var=="100"),]
+tmppm1[which(tmppm1$cov == "pm10"& tmppm1$cov2=="absh_lag3 + tas_lag3" & tmppm1$var==100),c("cov2","lag","var","rr","lowerCI_rr","upperCI_rr")]
 
 ### particulate matter numbers SO2
-cumsso2 <- tmpso2[which( tmpso2$lag=="lag3" & tmpso2$cov == "so2"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+cumsso2 <- tmpso2[which( tmpso2$lag=="lag3" & tmpso2$cov == "so2"& tmppm1$cov2=="absh_lag3 + tas_lag3"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 cumsso2$perc_increase_above125 <- (cumsso2$cumrr / cumsso2$cumrr[(cumsso2$var == 130 & cumsso2$cov2 == "absh_lag3 + tas_lag3")] - 1) * 100
 cumsso2[which(cumsso2$cov2=="none"),]
-cumsso2[which(cumsso2$var=="150"),]
+cumsso2[which(cumsso2$var=="100"),]
+ tmpso2[which(tmpso2$cov == "so2"& tmppm1$cov2=="absh_lag3 + tas_lag3" & tmpso2$var==150),c("cov2","lag","var","rr","lowerCI_rr","upperCI_rr")]
 
 ### humidity numbers
 ## low humidity
@@ -1512,7 +1541,8 @@ df <- dataG %>%
 ggplot(dataG) + 
   geom_line(aes(x=date, y = pm2p5_lag0))
 modlist <- readRDS("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_weekly_adm2_dlnm_none_bivariable_8_2019.rds")
-mod <- modlist[[3]][[2]]
+ modlist[[1]][[2]]$data$cov2
+mod <- modlist[[1]][[2]]
 idx <- which(mod$cp$predvar == 50)
 # sum across lag columns (assumes columns are lag0..lag8)
 L <- sum(mod$cp$matfit[idx, ])   # cumulative log-RR
@@ -1567,7 +1597,7 @@ pm25attr <- ggplot(obs) +
     scale_color_manual(name = "",values = c("IPD cases" = "black","Attributable cases" = "black","PM2.5" = "red")) +
     scale_linetype_manual(name = "",
     values = c("IPD cases" = "solid","Attributable cases" = "dashed","PM2.5" = "solid")) +
-    guides(color = guide_legend(override.aes = list(linetype = c("solid","dashed","solid"))),linetype = "none") +
+    guides(color = guide_legend(override.aes = list(linetype = c("dashed","solid","solid"))),linetype = "none") +
   theme_minimal() +
   theme(
     axis.title.y.left   = element_text(color = "black"),
@@ -1577,7 +1607,7 @@ pm25attr <- ggplot(obs) +
   )
 
 
-#### if we got the average down to 30ug/m3 these are the number of cases avoided 
+#### if we got the average down to 15ug/m3 these are the number of cases avoided 
 ### AF with counterfactual
 AF_cf <- function(x) {
   RR <- exp(Lfun(x))
