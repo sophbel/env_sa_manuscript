@@ -2,7 +2,7 @@
 ################################################################################
 #### PURPOSE ##########
 ################################################################################
-## FOR SEPARATE OUTCOMES WITH PM2.5, PM10, AND HURS. 
+## FOR SEPARATE OUTCOMES WITH PM2.5, PM10
 ## IT INCLUDES THE BASE SCRIPT WHEREBY A DLNM IS RUN FOR EACH VARIABLE INDEPENDENTLY 
 ## NOT RUNNING THIS WITH INTERACTIONS BUT JUST SIMPLE OUTCOMES
 ## allows subset models by different outcomes including the same row number and environmental exposures
@@ -109,12 +109,13 @@ if(precov==TRUE){
 
 hurs_grp <- inla.group(df$hurs_lag0, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
 df$hurs_grp <- hurs_grp
-
+absh_grp <- inla.group(df$absh_lag3, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
+df$absh_grp <- absh_grp
 ### add environmental covariates
 all <- colnames(df)
 all_gpscs <- all
 all <- grep("lag0",all, value = TRUE)
-cov_names <- grep("hurs|pm2p5|pm10|so2", all, value = TRUE)
+cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
 cov_names_labels <- gsub("_lag0", "", cov_names)
 
 mod_all <- dlnm_results <- NULL
@@ -234,7 +235,10 @@ for(c in 1:length(cov_names)) {
         "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
         "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
         "+ vaccination_period",
-        "+ population_density"
+        "+ population_density",
+        "+ tas_lag3",
+        paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
+        
       )
     )
   cb_form$covs<-paste0("crossbasis_", cov_oi, "_none")
