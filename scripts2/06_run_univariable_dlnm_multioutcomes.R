@@ -14,7 +14,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 ### set resolution
 time = "weekly"
 space = "adm2"
-outcome_type = "demographic" ## options are "serotype" "demographic"
+outcome_type = "serotype" ## options are "serotype" "demographic"
 precov = TRUE
 
 ## load spatial data
@@ -119,7 +119,7 @@ cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
 cov_names_labels <- gsub("_lag0", "", cov_names)
 
 mod_all <- dlnm_results <- NULL
-outcomes_demo <- c("mening_count","bact_count","other_count","female_count","age_lt6","age_6t14","age_15t64","age_18t64", "age_gt65","pcv13","pcv7","nvt")
+outcomes_demo <- c("mening_count","bact_count","other_count","female_count","age_lt6","age_6t14","age_15t64","age_18t64", "age_gt65","pcv13","pcv7","nvt","WGS_PEN_SIR_Meningitis_R_count")
 ## seros with >2000
 data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 dtsero <- data.table(table(data2$serotype))[data.table(table(data2$serotype))$N>2000]$V1
@@ -142,7 +142,7 @@ if(space=="adm2"){
 }
 }
 ############################### RESULTS WITH DIFFERENT OUTCOMES  ###############
-for(o in 1:length(outcomes)){
+for(o in 10:length(outcomes)){
   print(outcomes[o])
   print(paste0("outcome: ", o,"/",length(outcomes)))
   df$outcome <- NULL
@@ -163,8 +163,7 @@ for(o in 1:length(outcomes)){
                                      'f(id_u, model = "bym2", graph = g, hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01)))) + ',  # Spatial effect per outcome
                                      'f(id_m, model = "rw2", cyclic = TRUE, scale.model = TRUE, constr = TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01)))) + ',# seasonal effect per outcome
                                      'f(id_y, model = "iid",replicate = id_prov,  hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01)))) +', #interannual effect per outcome
-                                     'vaccination_period +', 'population_density'
-                                     ))
+                                     'vaccination_period +', 'population_density' ))
   forms$cov <- 're'
   re_mod <- inla.mod(form = forms, fam = "nbinomial", df, nthreads = 4, config = FALSE)
   
@@ -236,7 +235,7 @@ for(c in 1:length(cov_names)) {
         "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
         "+ vaccination_period",
         "+ population_density",
-        "+ tas_lag3",
+        "+ tas_lag0",
         paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
         
       )
@@ -354,22 +353,39 @@ write.table(mod_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/mode
 # ################################################################################
 # ####### NO INTERACTION EFFECT PLOTS (spatiotemporal resolutions) ############
 # ################################################################################
+# 
+# tmp <-dlnm_results
+# tmp$rr <- exp(tmp$fit)
+# tmp$lowerCI_rr <- exp(tmp$lowerCI)
+# tmp$upperCI_rr <- exp(tmp$upperCI)
+# ggplot(tmp[which(tmp$covariate=="pm2p5_lag0" & tmp$lag=="lag3"),]) + 
+#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+#   geom_line(aes(x=predvar, y = rr, group =GPSC)) +
+#   geom_ribbon(aes(x=predvar, ymin=lowerCI_rr,ymax=upperCI_rr, group=GPSC),alpha=0.3)+
+#   theme_bw() + 
+#   facet_wrap(GPSC~.) +
+#   scale_y_continuous(trans = "log10")+
+#   theme(strip.text.y = element_text(angle = 0))
 # cov_names <- unique(dlnm_results$cov)
-# cov_names <- c("tasmax","hurs","absh","pm2p5","pm10")
-# ax_labs <- c("Max. Temperature","Relative Humidity (%)","Absolute Humidity", 
-#              expression(paste('Concentration (', mu, 'g/m'^3, ')')),
+# # cov_names <- c("tasmax","hurs","absh","pm2p5","pm10")
+# # ax_labs <- c("Max. Temperature","Relative Humidity (%)","Absolute Humidity",
+# #              expression(paste('Concentration (', mu, 'g/m'^3, ')')),
+# #              expression(paste('Concentration (', mu, 'g/m'^3, ')')))
+# cov_names <- c("pm2p5","pm10")
+# ax_labs <- c(expression(paste('Concentration (', mu, 'g/m'^3, ')')),
 #              expression(paste('Concentration (', mu, 'g/m'^3, ')')))
 # dlnm_results$cov <- gsub("_lag0","",dlnm_results$covariate)
 # ## select vectors
 # dis_vec <- c("mening_count","bact_count")
 # age_vec <- c("age_lt5","age_gt65","age_gt80","female_count")
-# sero_vec <- grep("Sero",unique(dlnm_results$GPSC),value=TRUE)
+# # sero_vec <- grep("Sero",unique(dlnm_results$GPSC),value=TRUE)
 # pcv_vec <- c("pcv13","pcv7","nvt")
+# amr_vec <- c("WGS_PEN_SIR_Meningitis_R_count")
 # ### plot all covs and 6 weeks of lags
 # dlnm_results_sub <- subset(dlnm_results, dlnm_results$cov=="pm2p5")
 # plotcov_list <- list()
 # # for(c in 1:length(cov_names)){
-#   tmp <- subset(dlnm_results_sub, dlnm_results_sub$cov%in%cov_names[c] & dlnm_results_sub$lag_num %in% c(0:6) & dlnm_results_sub$GPSC%in%sero_vec )
+#   tmp <- subset(dlnm_results_sub, dlnm_results_sub$cov%in%cov_names[c] & dlnm_results_sub$lag_num %in% c(0:6) & dlnm_results_sub$GPSC%in%amr_vec )
 #   tmp$rr <- exp(tmp$fit)
 #   tmp$lowerCI_rr <- exp(tmp$lowerCI)
 #   tmp$upperCI_rr <- exp(tmp$upperCI)
@@ -391,7 +407,10 @@ write.table(mod_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/mode
 #     xlab(ax_labs[c])+
 #     theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 #   plotcov_list[[c]] <- plotcov
-# # }
+#   
+#   
+
+# }
 # 
 # 
 # plotcov_list[[1]]

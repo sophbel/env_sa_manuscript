@@ -124,19 +124,19 @@ all_gpscs <- all
 all <- grep("lag0",all, value = TRUE)
 if(interaction == TRUE){
   cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
-  # cov_names2 <- grep("hurs|absh|tasmax|tas", all, value = TRUE)
-  cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
+  # cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
+  cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag0","tas_lag0")
   
 }else{
   if(space == "adm2"){
   cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
-  # cov_names2 <- grep("hurs|absh|tasmax|tas", all, value = TRUE)
-  cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
+  # cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
+  cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag0","tas_lag0")
   
   }else{
     cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
-    # cov_names2 <- grep("hurs|absh|tasmax|tas", all, value = TRUE)
-    cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
+    # cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
+    cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag0","tas_lag0")
     
   }
   }
@@ -313,7 +313,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                     "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                     "+ vaccination_period",
                     "+ population_density",
-                    "+ tas_lag3",
+                    "+ tas_lag0",
                     paste0("+ f(hurs_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
                   )
                 )
@@ -337,7 +337,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                     "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                     "+ vaccination_period",
                     "+ population_density",
-                    "+ tas_lag3",
+                    "+ tas_lag0",
                     paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
                   )
                 )
@@ -384,7 +384,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                 "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ vaccination_period",
                 "+ population_density",
-                "+ tas_lag3",
+                "+ tas_lag0",
                 paste0("+ f(hurs_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
               )
             )
@@ -403,7 +403,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                   "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                   "+ vaccination_period",
                   "+ population_density",
-                  "+ tas_lag3",
+                  "+ tas_lag0",
                   paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
                 )
               )
@@ -671,195 +671,196 @@ for(gp in 1:length(gpsc_vec_sub)){
         }
         
         ############## SAVE FILES ##############################################
-        saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,".rds"))
+        saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.rds"))
         # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,".rds"))
-        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
   } ### end of loop through gpscs
 
 
 if(interaction==TRUE){
-write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }else{
-  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",time,"_",space,"_bivariable_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",time,"_",space,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }
+
+
  
+# # ################################################################################
+# mod_sum2[order(mod_sum2$waic),]
+# # ##  VISUALIZE BIVARIABLE OUTPUTS 
+# st_vec <- c("weekly_adm1","weekly_adm2")
 # 
-# ################################################################################
-mod_sum2[order(mod_sum2$waic),]
-# ##  VISUALIZE BIVARIABLE OUTPUTS 
-st_vec <- c("weekly_adm1","weekly_adm2")
-
-### read in bivariable
-stlist <- list()
-for(s in 1:length(st_vec)){
-  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_",max_lag,"_",endyear,".csv"))
-  m1$space_time <- st_vec[s]
-  stlist[[s]] <- m1
-}
-fit_list_biv <- rbindlist(stlist)
-fit_list_biv$cov <- gsub("_lag0","",fit_list_biv$covariate)
-fit_list_biv$cov2 <- gsub("_lag3","",fit_list_biv$cov2)
-
-### read in univariable
-stlist <- list()
-for(s in 1:length(st_vec)){
-  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_",st_vec[s],"_",max_lag,"_",endyear,".csv"))
-  m1$space_time <- st_vec[s]
-  stlist[[s]] <- m1
-}
-fit_list <- rbindlist(stlist)
-fit_list$cov <- gsub("_lag0","",fit_list$cov)
-fit_list$cov <- gsub("_lag3","",fit_list$cov)
-fit_list$cov2 <- "none"
-
-fit_list <- rbind(fit_list, fit_list_biv)
-fit_list$lag_week <- paste0("Week",fit_list$lag_num)
-fit_list$lag_week <- factor(fit_list$lag_week, levels = paste0("Week",seq(0,12,1)), labels = paste0("Week",seq(0,12,1)))
-# convert to relative risks
-fit_list$rr <- exp(fit_list$fit)
-fit_list$lowerCI_rr <- exp(fit_list$lowerCI)
-fit_list$upperCI_rr <- exp(fit_list$upperCI)
-fit_list$cumrr <- exp(fit_list$cumulative_fit)
-fit_list$cumlowerCI_rr <- exp(fit_list$cum_lowerCI)
-fit_list$cumupperCI_rr <- exp(fit_list$cum_upperCI)
-
-### Relative humidity with pm10 and pm2.5 and without any ----------------------
-# tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","tasmin","none"))
-color_labels <- c("pm2p5" = "red", "pm10" = "orange","so2"= "pink", "hurs" = "darkblue","tasmax" = "purple","tas" = "brown", "none" = "darkgreen")
-linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid", "hurs" = "solid","tasmax" = "solid", "tas" = "solid", "none" = "longdash")
-plot_hurs <- ggplot(tmp)+
-  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
-  scale_color_manual(values = color_labels)+
-  scale_fill_manual(values = color_labels)+
-  scale_linetype_manual(values = linetype_labels)+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
-  ggtitle("Relative Humidity")+
-  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  facet_wrap(.~lag_week, nrow = 1)+
-  xlab("Percent")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-plot_hurs
-
-# tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","so2","tasmax","tasmin","none")& fit_list$space_time=="weekly_adm2" & fit_list$lag_num==2)
-tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+# ### read in bivariable
+# stlist <- list()
+# for(s in 1:length(st_vec)){
+#   m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_",max_lag,"_",endyear,".csv"))
+#   m1$space_time <- st_vec[s]
+#   stlist[[s]] <- m1
+# }
+# fit_list_biv <- rbindlist(stlist)
+# fit_list_biv$cov <- gsub("_lag0","",fit_list_biv$covariate)
+# fit_list_biv$cov2 <- gsub("_lag3","",fit_list_biv$cov2)
+# 
+# ### read in univariable
+# stlist <- list()
+# for(s in 1:length(st_vec)){
+#   m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_",st_vec[s],"_",max_lag,"_",endyear,".csv"))
+#   m1$space_time <- st_vec[s]
+#   stlist[[s]] <- m1
+# }
+# fit_list <- rbindlist(stlist)
+# fit_list$cov <- gsub("_lag0","",fit_list$cov)
+# fit_list$cov <- gsub("_lag3","",fit_list$cov)
+# fit_list$cov2 <- "none"
+# 
+# fit_list <- rbind(fit_list, fit_list_biv)
+# fit_list$lag_week <- paste0("Week",fit_list$lag_num)
+# fit_list$lag_week <- factor(fit_list$lag_week, levels = paste0("Week",seq(0,12,1)), labels = paste0("Week",seq(0,12,1)))
+# # convert to relative risks
+# fit_list$rr <- exp(fit_list$fit)
+# fit_list$lowerCI_rr <- exp(fit_list$lowerCI)
+# fit_list$upperCI_rr <- exp(fit_list$upperCI)
+# fit_list$cumrr <- exp(fit_list$cumulative_fit)
+# fit_list$cumlowerCI_rr <- exp(fit_list$cum_lowerCI)
+# fit_list$cumupperCI_rr <- exp(fit_list$cum_upperCI)
+# 
+# ### Relative humidity with pm10 and pm2.5 and without any ----------------------
+# # tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","tasmax","tasmin","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+# tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
 # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","tasmin","none"))
-plot_hurs_l2 <- ggplot(tmp)+
-  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
-  scale_color_manual(values = color_labels)+
-  scale_fill_manual(values = color_labels)+
-  scale_linetype_manual(values = linetype_labels)+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  # scale_y_continuous(trans="log10", limits = c(0.9,1.1), breaks = c(0.9, 1, 1.1))+
-  ggtitle("Relative Humidity")+
-  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  # facet_wrap(.~lag_week, nrow = 1)+
-  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
-        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "none")
-
-###  pm2.5 and without any ----------------------
-tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","absh","tasmax","tas","none"))
-plot_pm2p5 <- ggplot(tmp)+
-  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.05)+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
-  scale_color_manual(values = color_labels)+
-  scale_fill_manual(values = color_labels)+
-  scale_linetype_manual(values = linetype_labels)+
-  ggtitle("PM 2.5")+
-  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  facet_wrap(.~lag_week, nrow = 1)+
-  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-
-tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("hurs","absh","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2" & fit_list$lag_num==2)
-tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","absh","tasmax","tas","none"))
-plot_pm2p5_l2 <- ggplot(tmp)+
-  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.05)+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.9,1.1), breaks = c(0.9, 1, 1.1))+
-  scale_color_manual(values = color_labels)+
-  scale_fill_manual(values = color_labels)+
-  scale_linetype_manual(values = linetype_labels)+
-  ggtitle("PM 2.5")+
-  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  # facet_wrap(.~lag_week, nrow = 1)+
-  # xlab(ax_labs[c])+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
-        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "none")
-
-### Relative humidity with pm10 and pm2.5 and without any ----------------------
-tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
-tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","tas","none"))
-plot_pm10 <- ggplot(tmp)+
-  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype=cov2),alpha=0.7)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.05)+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
-  scale_color_manual(values = color_labels)+
-  scale_fill_manual(values = color_labels)+
-  scale_linetype_manual(values = linetype_labels)+
-  ggtitle("PM 10")+
-  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  facet_wrap(.~lag_week, nrow = 1)+
-  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2" & fit_list$lag_num == 2)
-tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","tas","none"))
-plot_pm10_l2 <- ggplot(tmp)+
-  geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype=cov2),alpha=0.7)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.05)+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.9,1.1), breaks = c(0.9, 1, 1.1))+
-  scale_color_manual(values = color_labels)+
-  scale_fill_manual(values = color_labels)+
-  scale_linetype_manual(values = linetype_labels)+
-  ggtitle("PM 10")+
-  labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
-  # facet_wrap(.~lag_week, nrow = 1)+
-  # xlab(ax_labs[c])+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
-        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "none")
-
-plot_hurs/plot_pm2p5/plot_pm10
-
-plot_hurs_l2 + plot_pm2p5_l2 + plot_pm10_l2
+# color_labels <- c("pm2p5" = "red", "pm10" = "orange","so2"= "pink", "hurs" = "darkblue","tasmax" = "purple","tas" = "brown", "none" = "darkgreen")
+# linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid", "hurs" = "solid","tasmax" = "solid", "tas" = "solid", "none" = "longdash")
+# plot_hurs <- ggplot(tmp)+
+#   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
+#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+#   geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
+#   scale_color_manual(values = color_labels)+
+#   scale_fill_manual(values = color_labels)+
+#   scale_linetype_manual(values = linetype_labels)+
+#   theme_bw()+
+#   xlab("Var")+
+#   ylab("Relative Risk")+
+#   # scale_y_continuous(trans="log10")+
+#   scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+#   ggtitle("Relative Humidity")+
+#   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+#   facet_wrap(.~lag_week, nrow = 1)+
+#   xlab("Percent")+
+#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
+# plot_hurs
+# 
+# # tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("pm2p5","pm10","so2","tasmax","tasmin","none")& fit_list$space_time=="weekly_adm2" & fit_list$lag_num==2)
+# tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$cov2%in%c("none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+# # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","tasmin","none"))
+# plot_hurs_l2 <- ggplot(tmp)+
+#   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
+#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+#   geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.04)+
+#   scale_color_manual(values = color_labels)+
+#   scale_fill_manual(values = color_labels)+
+#   scale_linetype_manual(values = linetype_labels)+
+#   theme_bw()+
+#   xlab("Var")+
+#   ylab("Relative Risk")+
+#   # scale_y_continuous(trans="log10")+
+#   # scale_y_continuous(trans="log10", limits = c(0.9,1.1), breaks = c(0.9, 1, 1.1))+
+#   ggtitle("Relative Humidity")+
+#   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+#   # facet_wrap(.~lag_week, nrow = 1)+
+#   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+#         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+#         legend.position = "none")
+# 
+# ###  pm2.5 and without any ----------------------
+# tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("absh","hurs","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+# tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","absh","tasmax","tas","none"))
+# plot_pm2p5 <- ggplot(tmp)+
+#   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
+#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+#   geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.05)+
+#   theme_bw()+
+#   xlab("Var")+
+#   ylab("Relative Risk")+
+#   # scale_y_continuous(trans="log10")+
+#   scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+#   scale_color_manual(values = color_labels)+
+#   scale_fill_manual(values = color_labels)+
+#   scale_linetype_manual(values = linetype_labels)+
+#   ggtitle("PM 2.5")+
+#   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+#   facet_wrap(.~lag_week, nrow = 1)+
+#   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
+# 
+# tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$cov2%in%c("hurs","absh","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2" & fit_list$lag_num==2)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("hurs","absh","tasmax","tas","none"))
+# plot_pm2p5_l2 <- ggplot(tmp)+
+#   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
+#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+#   geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.05)+
+#   theme_bw()+
+#   xlab("Var")+
+#   ylab("Relative Risk")+
+#   # scale_y_continuous(trans="log10")+
+#   scale_y_continuous(trans="log10", limits = c(0.9,1.1), breaks = c(0.9, 1, 1.1))+
+#   scale_color_manual(values = color_labels)+
+#   scale_fill_manual(values = color_labels)+
+#   scale_linetype_manual(values = linetype_labels)+
+#   ggtitle("PM 2.5")+
+#   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+#   # facet_wrap(.~lag_week, nrow = 1)+
+#   # xlab(ax_labs[c])+
+#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+#         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+#         legend.position = "none")
+# 
+# ### Relative humidity with pm10 and pm2.5 and without any ----------------------
+# tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+# tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","tas","none"))
+# plot_pm10 <- ggplot(tmp)+
+#   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype=cov2),alpha=0.7)+
+#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+#   geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.05)+
+#   theme_bw()+
+#   xlab("Var")+
+#   ylab("Relative Risk")+
+#   # scale_y_continuous(trans="log10")+
+#   scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+#   scale_color_manual(values = color_labels)+
+#   scale_fill_manual(values = color_labels)+
+#   scale_linetype_manual(values = linetype_labels)+
+#   ggtitle("PM 10")+
+#   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+#   facet_wrap(.~lag_week, nrow = 1)+
+#   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
+# tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$cov2%in%c("absh","hurs","tasmax","tas","none") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2" & fit_list$lag_num == 2)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("absh","hurs","tasmax","tas","none"))
+# plot_pm10_l2 <- ggplot(tmp)+
+#   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype=cov2),alpha=0.7)+
+#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+#   geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_week,space_time,cov2), fill=cov2),alpha=0.05)+
+#   theme_bw()+
+#   xlab("Var")+
+#   ylab("Relative Risk")+
+#   # scale_y_continuous(trans="log10")+
+#   scale_y_continuous(trans="log10", limits = c(0.9,1.1), breaks = c(0.9, 1, 1.1))+
+#   scale_color_manual(values = color_labels)+
+#   scale_fill_manual(values = color_labels)+
+#   scale_linetype_manual(values = linetype_labels)+
+#   ggtitle("PM 10")+
+#   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
+#   # facet_wrap(.~lag_week, nrow = 1)+
+#   # xlab(ax_labs[c])+
+#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+#         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+#         legend.position = "none")
+# 
+# plot_hurs/plot_pm2p5/plot_pm10
+# 
+# plot_hurs_l2 + plot_pm2p5_l2 + plot_pm10_l2
 
