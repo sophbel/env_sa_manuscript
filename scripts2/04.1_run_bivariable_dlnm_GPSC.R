@@ -18,10 +18,10 @@
 ####LOAD DATA & LIBRARIES ######################################################
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 ### set if interaction is true or not
-interaction = FALSE
+interaction = TRUE
 ### set resolution
 time = "weekly"
-space = "adm2"
+space = "adm1"
 ### set the time period 2005 - 2019 is precov and 2005-2023 is not precov
 precov = TRUE
 
@@ -124,19 +124,23 @@ all_gpscs <- all
 all <- grep("lag0",all, value = TRUE)
 if(interaction == TRUE){
   cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
+  # cov_names <- grep("pm2p5", all, value = TRUE)
   # cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
   cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag0","tas_lag0")
+  cov_names2 <- c("absh_lag3")
   
 }else{
   if(space == "adm2"){
   cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
   # cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
   cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag0","tas_lag0")
+  cov_names2 <- c("absh_lag3")
   
   }else{
     cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
     # cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
     cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag0","tas_lag0")
+    cov_names2 <- c("absh_lag3")
     
   }
   }
@@ -146,10 +150,10 @@ gpsc_vec <- grep("GPSC", all_gpscs, value = TRUE)
 gpsc_vec <- grep("count", gpsc_vec, value = TRUE) ## if including the proportions 
 
 ### select some serotypes to include
-data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-dtsero <- data.table(table(data2$serotype))[data.table(table(data2$serotype))$N>800]
-pcv_vec <- c("4","6B","9V","14","18C","19F","23F","1","3","5","6A","7F","19A")
-dtsero[which(dtsero$V1%notin%pcv_vec)]
+# data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# dtsero <- data.table(table(data2$serotype))[data.table(table(data2$serotype))$N>800]
+# pcv_vec <- c("4","6B","9V","14","18C","19F","23F","1","3","5","6A","7F","19A")
+# dtsero[which(dtsero$V1%notin%pcv_vec)]
 
 ## make a group for humidity
 # Create grouped version
@@ -272,7 +276,8 @@ for(gp in 1:length(gpsc_vec_sub)){
             # Step 1: scale only non-zero props
             prop_nonzero <- prop[prop > 0]
             scaled_nonzero <- scale(prop_nonzero, center = TRUE, scale = TRUE)
-            
+            q_prop   <- quantile(prop_nonzero, probs = c(0.1,0.5,0.8), na.rm=TRUE)
+            q_scaled <- quantile(scaled_nonzero, probs = c(0.1,0.5,0.8), na.rm=TRUE)
             # Step 2: put scaled values back into a vector matching full dataset length
             interact_var_scaled <- rep(0, length(prop))  # default to 0
             interact_var_scaled[prop > 0] <- scaled_nonzero
@@ -513,24 +518,6 @@ for(gp in 1:length(gpsc_vec_sub)){
                                  vcov = vcov_high)
             
             
-            ### Relative Risk incorporating the variance covariacne
-            # X_high <- cp_high$coefficients
-            # X_low <- cp_low$coefficients
-            # vcov_model <- original_vcov_interact
-            # X_diff <- X_high - X_low
-            # SE_diff <- sqrt(t(X_diff) %*% vcov_model %*% X_diff)
-            # fit_high <- cp_high$allfit
-            # fit_low  <- cp_low$allfit
-            # RR_ratio <- exp(fit_high - fit_low)
-            # diff <- fit_high - fit_low
-            # RR_ratio_lower <- exp(diff - 1.96 * SE_diff)
-            # RR_ratio_upper <- exp(diff + 1.96 * SE_diff)
-            # rr_ratiodf <- data.frame(cbind(names(RR_ratio),RR_ratio, RR_ratio_lower, RR_ratio_upper))
-            # rr_ratiodf$gpsc <- gpsc_vec_sub[gp]
-            # rr_ratiodf$cov <- cov_names[c]
-            # colnames(rr_ratiodf) <- c("var", "rr_ratio","rr_lowerCI","rr_upperCI", "gpsc","cov")
-            # rr_ratiodf[,2:4] <- sapply(rr_ratiodf[,2:4], as.numeric)
-            # 
             }else{
             print("run crosspred no interaction")
             cp <- crosspred(basis = cb, cen=cen, coef = original_coefs, vcov = original_vcov) ## have to center it somewhere because its not linear so its not just at time 0.
@@ -574,10 +561,6 @@ for(gp in 1:length(gpsc_vec_sub)){
               df_high <- extract_cp_gpsc_data(cp_high, "high", gpsc_name, cov_names[c])
               gpsc_results <- rbind(gpsc_results, df_low,df_med, df_high)
               
-              # relative risk ratio results
-              ## rename RR
-              rr_ratiodf$var <- new_predvar
-              rr_ratio_all <- rbind(rr_ratio_all, rr_ratiodf)
               
             }else{
               print(paste("No need to rescale", cov_names[c]))
@@ -589,8 +572,7 @@ for(gp in 1:length(gpsc_vec_sub)){
         
               gpsc_results <- rbind(gpsc_results, df_low, df_med, df_high)
               
-              # relative risk ratio results
-              rr_ratio_all <- rbind(rr_ratio_all, rr_ratiodf)
+     
               
             }
           }else{
@@ -625,9 +607,9 @@ for(gp in 1:length(gpsc_vec_sub)){
           mod_spat<-mod$summary.random$id_u
           mod_y<-mod$summary.random$id_y
           mod_m<-mod$summary.random$id_m
-          if(cov_names2[c2]=="hurs_lag0"){
-            mod_hurs <- mod$summary.random$hurs_grp
-          }
+          # if(cov_names2[c2]=="hurs_lag3|absh_lag3"){
+          #   mod_hurs <- mod$summary.random$hurs_grp
+          # }
           # mod hyper
           mod_sum <- summary(mod)
           # save mean and sd for each variable
@@ -636,16 +618,16 @@ for(gp in 1:length(gpsc_vec_sub)){
           ### save all
           if(interaction==TRUE){
             cp_high$cov <- cp_low$cov <- cp_med$cov <- cov_names[c]
-            cp_list[[c]] <- list(cp = cp, cp_low = cp_low, cp_med = cp_med ,cp_high = cp_high)
-            cp_list[[c]] <- list(cp_low = cp_low, cp_med = cp_med ,cp_high = cp_high, rr_ratio = rr_ratiodf)
-            model_out[[c]][[c2]]<-list(data=list(cov=cov,cov2 = cov2, mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m,  mod_sum=mod_sum), cp = list(cp_low = cp_low, cp_med = cp_med, cp_high = cp_high, rr_ratio = rr_ratiodf))
+            # cp_list[[c]] <- list(cp = cp, cp_low = cp_low, cp_med = cp_med ,cp_high = cp_high) ### i don't know why this was here - it looks like a hangover from a copy
+            cp_list[[c]] <- list(cp_low = cp_low, cp_med = cp_med ,cp_high = cp_high)
+            model_out[[c]][[c2]]<-list(data=list(cov=cov,cov2 = cov2, mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m,  mod_sum=mod_sum), cp = list(cp_low = cp_low, cp_med = cp_med, cp_high = cp_high))
           }else{
             cp$cov <- cov_names[c]
             cp_list[[c]] <- cp
             if(cov_names2[c2]=="hurs_lag0"){
-              model_out[[c]][[c2]]<-list(data=list(cov=cov, cov2 = cov2, mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m, id_hurs=mod_hurs, mod_sum=mod_sum), cp = cp) 
+              model_out[[c]][[c2]]<-list(data=list(cov=cov, cov2 = cov2, mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m, id_hurs=mod_hurs, mod_sum=mod_sum), cp = cp)
             }else{
-            model_out[[c]][[c2]]<-list(data=list(cov=cov, cov2 = cov2, mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m, mod_sum=mod_sum), cp = cp) 
+            model_out[[c]][[c2]]<-list(data=list(cov=cov, cov2 = cov2, mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m, mod_sum=mod_sum), cp = cp)
             }
             }
         } ### end of the loop through covariates
@@ -671,7 +653,12 @@ for(gp in 1:length(gpsc_vec_sub)){
         }
         
         ############## SAVE FILES ##############################################
-        saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.rds"))
+        # save this and overwrite it each time until get to the end of the GPSCs as a stop gap
+        if(interaction==TRUE){
+        write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        }
+          ## save individual gpsc files
+        # saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.rds"))
         # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,".rds"))
         write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 

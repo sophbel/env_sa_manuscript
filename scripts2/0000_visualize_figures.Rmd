@@ -2480,22 +2480,25 @@ table(data2[which(data2$serotype=="8")]$GPSC)
 table(data2[which(data2$serotype=="4")]$GPSC)/sum(table(data2[which(data2$serotype=="4")]$GPSC))
 table(data2[which(data2$serotype=="4")]$GPSC)
 
+age_rr[which(age_rr$RR_ratio_lower>0.99),c("GPSC","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
+
 ```
 
 
 #### plot GPSC21 19F and pull numbers for manuscript
 ```{r}
 time = "weekly"
-space = "adm1"
-gpsc_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_8_2019.csv"))
-nointer <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_",time,"_",space,"_8_2019.csv"))
+space = "adm2"
+gpsc_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_8_2019_templag0humlag3.csv"))
+gpsc_results$cov2 <- "absh_lag3"
+nointer <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",time,"_",space,"_bivariable_8_2019_templag0humlag3.csv"))
 gpsc_results <- rbind(gpsc_results,nointer)
 gpsc21 <- gpsc_results[which(gpsc_results$GPSC%in%c("GPSC21") & gpsc_results$interaction_level%in%c("high","none") & gpsc_results$covariate=="pm2p5_lag0")]
 nointer <- gpsc_results[which(gpsc_results$GPSC%in%c("no_interaction") & gpsc_results$interaction_level%in%c("high","none") & gpsc_results$covariate=="pm2p5_lag0")]
 ggplot(gpsc21) + 
   geom_line(aes(x=var, y = fit, group = interaction(lag_num)))+
   geom_ribbon(aes(x = var, ymin =lowerCI, ymax=upperCI, group = lag_num), alpha = 0.3)+ 
-  geom_line(data= nointer, aes(x=var, y = fit, group = lag_num), color = "blue") + 
+  geom_line(data= nointer, aes(x=var, y = fit, group = lag_num), color = "blue", linetype ="dotted") + 
   facet_grid(. ~lag_num, scales = "free")
 
 gpsc21[which(gpsc21$lag_num==0 & gpsc21$var==50),]
@@ -2558,8 +2561,8 @@ dev.off()
 
 ##### numbers for meningitis vs bacteremia cumulative ###
 ```{r}
-dlnm_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/demographic/dlnm_subsetoutcomes_results_fits_weekly_adm2_demographic_2019.csv"))
-dlnmmenbact <- dlnm_results[which(dlnm_results$GPSC%in%c("mening_count","bact_count")  & dlnm_results$covariate=="pm2p5_lag0" & dlnm_results$lag_num == 0 & 
+dlnm_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/dlnm_subsetoutcomes_results_fits_weekly_adm2_demographic_2019.csv"))
+dlnmmenbact <- dlnm_results[which(dlnm_results$GPSC%in%c("mening_count","bact_count","WGS_PEN_SIR_Meningitis_R_count")  & dlnm_results$covariate=="pm2p5_lag0" & dlnm_results$lag_num == 0 & 
                                     dlnm_results$var==50),]
 cbind(dlnmmenbact[,c("GPSC")],exp(dlnmmenbact[,c("cumulative_fit","cum_lowerCI","cum_upperCI")]))
 
@@ -2592,10 +2595,11 @@ gpsc_vec <- paste0("GPSC",dtgpsc$GPSC,"_count")
 ```{r}
 #### read in the fits for all the models -- NO INTERACTION 
 st_vec <- c("weekly_adm1","weekly_adm2")
+# st_vec <- c("weekly_adm2")
 
 stlist <- list()
 for(s in 1:length(st_vec)){
-  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_",st_vec[s],"_8_2019.csv"))
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_8_2019_templag0humlag3.csv"))
   m1$space_time <- st_vec[s]
   stlist[[s]] <- m1
 }
@@ -2609,12 +2613,13 @@ st_vec <- c("weekly_adm1","weekly_adm2")
 stlist <- list()
 
 for(s in 1:length(st_vec)){
-  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/gpsc_results_fits_",st_vec[s],"_allGPSCs_propprov_8_2019.csv"))
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",st_vec[s],"_allGPSCs_propprov_bivariable_8_2019_templag0humlag3.csv"))
   m1$space_time <- st_vec[s]
   stlist[[s]] <- m1
 }
 interfit_list <- rbindlist(stlist)
 interfit_list$cov <- gsub("_lag0","",interfit_list$covariate)
+interfit_list$cov2 <- "absh_lag3"
 
 ## bind this with the no interaction models
 allfits <- rbind(interfit_list, fit_list_norm)
@@ -2626,7 +2631,7 @@ data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/dis
 dtgpsc <- data.table(table(data2$GPSC))[which(data.table(table(data2$GPSC))$N>100 | data.table(table(data2$GPSC))$V1%in%c("8","41"))]
 gpsc_vec <- paste0("GPSC",dtgpsc[order(-N)]$GPSC)
 ########## calculate the relative risk ratio at 180ug/m3 for pm2.5 and pm10 for each GPSC high vs low and medium vs. low
-madm1 <- interfit_list[which(interfit_list$space_time=="weekly_adm1"),]
+madm1 <- interfit_list[which(interfit_list$space_time=="weekly_adm2"),]
 madm1 <- data.frame(madm1)
 # Pivot wider to get high and low side-by-side
 madm1_wide <- madm1 %>%
@@ -2684,20 +2689,20 @@ pm10 <- ggplot(pm10plot)+
   # ylim(0.85,1.25)+
   facet_grid(.~var)
 
-## hurs plot
-hursplot <- madm1_rr[which(madm1_rr$cov=="hurs"&madm1_rr$lag%in%c("lag1")),]#&madm1_rr$GPSC%notin%c("GPSC56","GPSC8")),]
-hursplot$var1 <- round(hursplot$var,0)
-hursplot2 <- hursplot[which(hursplot$var1%in%c(24,50)),]
-hursp <- ggplot(hursplot2)+
-  geom_hline(yintercept=1,linetype="dashed",color="red")+
-  geom_pointrange(aes(x=GPSC, y=RR_ratio, ymin=RR_ratio_lower,ymax=RR_ratio_upper,group=interaction(var1,lag)))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle=45,hjust=1))+
-  ylab("Relative Risk Ratio")+
-  ggtitle("Relative Humidity")+
-  xlab("GPSC")+
-  # ylim(0.85,1.25)+
-  facet_grid(.~var)
+# ## hurs plot
+# hursplot <- madm1_rr[which(madm1_rr$cov=="hurs"&madm1_rr$lag%in%c("lag1")),]#&madm1_rr$GPSC%notin%c("GPSC56","GPSC8")),]
+# hursplot$var1 <- round(hursplot$var,0)
+# hursplot2 <- hursplot[which(hursplot$var1%in%c(24,50)),]
+# hursp <- ggplot(hursplot2)+
+#   geom_hline(yintercept=1,linetype="dashed",color="red")+
+#   geom_pointrange(aes(x=GPSC, y=RR_ratio, ymin=RR_ratio_lower,ymax=RR_ratio_upper,group=interaction(var1,lag)))+
+#   theme_bw()+
+#   theme(axis.text.x = element_text(angle=45,hjust=1))+
+#   ylab("Relative Risk Ratio")+
+#   ggtitle("Relative Humidity")+
+#   xlab("GPSC")+
+#   # ylim(0.85,1.25)+
+#   facet_grid(.~var)
 (pm2p5+pm10) 
 # pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/interaction/cumulative_rrRatio_pm2p5.pdf", width = 4,height=3)
 # print(pm2p5) 
@@ -2712,7 +2717,7 @@ dtgpsc <- data.table(table(data2$GPSC))[which(data.table(table(data2$GPSC))$N>10
 gpsc_vec <- c(paste0("GPSC",dtgpsc[order(-N)]$V1,"_count"),"none")
 # Function to read and tag each GPSC
 read_gof <- function(gpsc) {
-  file_path <- paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/mod_gof_dlnm_weekly_adm2_", gpsc, "_8_2019.csv")
+  file_path <- paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm_weekly_adm1_", gpsc, "_bivariable_8_2019_templag0humlag3.csv")
   if (file.exists(file_path)) {
     df <- fread(file_path)
     df$GPSC <- gpsc
@@ -2728,7 +2733,7 @@ gof_all <- rbindlist(gof_list, fill = TRUE)
 
 ### plot WAICs
 # Filter to only rows with pm2p5 as covariate
-gof_pm2p5 <- gof_all %>% filter(cov == "pm2p5")
+gof_pm2p5 <- gof_all %>% filter(cov == "pm2p5" & cov2 == "absh_lag3")
 gof_pm2p5$GPSC <- gsub("_count","",gof_pm2p5$GPSC)
 # Plot
 waic <- ggplot(gof_pm2p5, aes(x = reorder(GPSC,waic), y = waic)) +
@@ -2737,7 +2742,7 @@ waic <- ggplot(gof_pm2p5, aes(x = reorder(GPSC,waic), y = waic)) +
   labs(x = "GPSC",
        y = "WAIC") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size=12),axis.text = element_text(size=12), axis.title = element_text(size=12))
-pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure5/waic_interactions_pm2p5_adm2.pdf", width = 4,height=3)
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure5/waic_interactions_pm2p5_adm1.pdf", width = 4,height=3)
 print(waic) 
 dev.off()
 
@@ -2750,7 +2755,7 @@ space = "adm1"
 tmps <- subset(allfits, allfits$cov== "pm2p5" & allfits$interaction_level %in% c("low","high","none") & allfits$lag_num==3 & allfits$space_time==paste0("weekly_",space))
 
 
-no_int <- tmps %>% filter(GPSC == "no_interaction") %>%
+no_int <- tmps %>% filter(GPSC == "no_interaction" & cov2=="absh_lag3") %>%
   rename_with(~paste0(., "_noint"), c("cumulative_fit", "cum_lowerCI", "cum_upperCI"))
 
 main_gpsc <- tmps %>% filter(GPSC != "no_interaction")
@@ -2761,16 +2766,22 @@ allfits_pivoted <- main_gpsc %>%
               dplyr::select(space_time, cov, var,lag,cumulative_fit_noint, cum_lowerCI_noint, cum_upperCI_noint),
             by = c("var","cov","space_time","lag"))
 
+## test
+ggplot(allfits_pivoted[which(allfits_pivoted$interaction_level=="high"),])+
+  geom_line(aes(x=var, y= cumulative_fit_noint, group = interaction(GPSC,cov)))
+allfits_pivoted[which(allfits_pivoted$interaction_level=="high"&allfits_pivoted$GPSC=="GPSC1"&allfits_pivoted$predvar==50),]
+##
+
 p14 <- ggplot(allfits_pivoted)+
   geom_line(aes(x=var,y=exp(cumulative_fit), group=interaction(cov, GPSC, interaction_level,lag),  color=interaction_level))+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_line(aes(x = var, y = exp(cumulative_fit_noint), group=interaction(lag,interaction_level)), color = "black", linetype="solid") +
+  geom_line(aes(x = var, y = exp(cumulative_fit_noint), group=interaction(cov, lag,interaction_level,GPSC)), color = "black", linetype="solid") +
   geom_ribbon(aes(x=var, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(cov, GPSC, interaction_level,lag), fill=interaction_level),alpha=0.2)+
-  geom_ribbon(aes(x=var, ymin=exp(cum_lowerCI_noint) ,ymax= exp(cum_upperCI_noint), group=interaction(cov, GPSC)),fill="black",alpha=0.4)+
+  geom_ribbon(aes(x=var, ymin=exp(cum_lowerCI_noint) ,ymax= exp(cum_upperCI_noint), group=interaction(cov,lag, GPSC)),fill="black",alpha=0.4)+
   # scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   # scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
-   scale_color_manual(values = c("high"="red")) +
-  scale_fill_manual(values = c("high"="red")) +
+   scale_color_manual(values = c("high"="red","low"="blue")) +
+  scale_fill_manual(values = c("high"="red","low"="blue")) +
   # xlab(cov_names_labels[c])+
   scale_y_continuous(trans="log10")+
   theme_bw()+
@@ -2786,12 +2797,12 @@ dev.off()
 ```
 ##### 8 week lagged dose response curves
 ```{r}
-space = "adm2"
+space = "adm1"
 tmps <- subset(allfits, allfits$cov== "pm2p5" & allfits$interaction_level %in% c("low","high","none") & allfits$space_time==paste0("weekly_",space))
 # tmps <- subset(allfits, allfits$cov == "pm10" & allfits$interaction_level %in% c("low","none") & allfits$lag_num==3 & allfits$space_time=="weekly_adm2")
 main_gpsc <- tmps %>% filter(GPSC != "no_interaction")
 # 
-no_int <- tmps %>% filter(GPSC == "no_interaction") %>%
+no_int <- tmps %>% filter(GPSC == "no_interaction" & cov2 == "absh_lag3") %>%
   rename_with(~paste0(., "_noint"), c("fit", "lowerCI", "upperCI"))
 # 
 main_gpsc <- tmps %>% filter(GPSC != "no_interaction")
@@ -2808,7 +2819,7 @@ p14 <- ggplot(allfits_pivoted)+
   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lagweek),  color=interaction_level))+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
   geom_ribbon(aes(x=var, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(cov, GPSC, interaction_level,lagweek), fill=interaction_level),alpha=0.2)+
-    geom_line(aes(x = var, y = exp(fit_noint), group=interaction(cov, GPSC, interaction_level,lagweek)), color = "black", linetype="solid") +
+    # geom_line(aes(x = var, y = exp(fit_noint), group=interaction(cov, GPSC, interaction_level,lagweek)), color = "black", linetype="solid") +
   scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   # ylim(0,3.5)+
@@ -2829,7 +2840,7 @@ dev.off()
 #### select GPSCs
 p15 <- ggplot(allfits_pivoted[which(allfits_pivoted$GPSC%in%c("GPSC14","GPSC21","GPSC26")),])+
   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lagweek),  color=interaction_level))+
-      geom_line(aes(x = var, y = exp(fit_noint), group=interaction(cov, GPSC, interaction_level,lagweek)), color = "black", linetype="solid") +
+      # geom_line(aes(x = var, y = exp(fit_noint), group=interaction(cov, GPSC, interaction_level,lagweek)), color = "black", linetype="solid") +
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
   geom_ribbon(aes(x=var, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(cov, GPSC, interaction_level,lagweek), fill=interaction_level),alpha=0.2)+
   scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
@@ -2854,7 +2865,7 @@ dev.off()
 p16 <- ggplot(allfits_pivoted[which(allfits_pivoted$GPSC%in%c("GPSC1","GPSC21")),])+
   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lagweek),  color=interaction_level))+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-        geom_line(aes(x = var, y = exp(fit_noint), group=interaction(cov, GPSC, interaction_level,lagweek)), color = "black", linetype="dotted") +
+        # geom_line(aes(x = var, y = exp(fit_noint), group=interaction(cov, GPSC, interaction_level,lagweek)), color = "black", linetype="dotted") +
   geom_ribbon(aes(x=var, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(cov, GPSC, interaction_level,lagweek), fill=interaction_level),alpha=0.2)+
   scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
   scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
@@ -3031,7 +3042,7 @@ dev.off()
 tmps <- subset(allfits, allfits$GPSC%in% c("GPSC21","GPSC1","GPSC26","GPSC56","GPSC13","GPSC41")& allfits$cov== "pm2p5" & allfits$interaction_level %in% c("low","high","none") & allfits$lag_num==3 & allfits$space_time=="weekly_adm1")
 # tmps <- subset(allfits, allfits$cov == "pm10" & allfits$interaction_level %in% c("low","none") & allfits$lag_num==3 & allfits$space_time=="weekly_adm2")
 
-no_int <- tmps %>% filter(GPSC == "no_interaction") %>%
+no_int <- tmps %>% filter(GPSC == "no_interaction" & cov2 == "absh_lag3") %>%
   rename_with(~paste0(., "_noint"), c("cumulative_fit", "cum_lowerCI", "cum_upperCI"))
 
 main_gpsc <- tmps %>% filter(GPSC != "no_interaction")

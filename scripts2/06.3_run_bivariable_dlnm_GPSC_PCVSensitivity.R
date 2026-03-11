@@ -18,7 +18,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 interaction = FALSE
 ### set resolution
 time = "weekly"
-space = "adm1"
+space = "adm2"
 
 ## load spatial data
 if(space == "adm1"){
@@ -91,6 +91,9 @@ df$id_prov <- as.numeric(factor(df$NAME_1, levels = c("Eastern_Cape", "Free_Stat
                                                       "North_West", "Northern_Cape", "Western_Cape")))
 df$vaccination_period <- as.factor(df$vaccination_period)
 
+## group absolute humidity
+absh_grp <- inla.group(df$absh_lag3, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
+df$absh_grp <- absh_grp
 ## include the proportion of each GPSC per the number sequenced each month
 # df <- df %>%
 #   group_by(year, month, NAME_1) %>%
@@ -109,7 +112,7 @@ df2 <- df
 
 ### for the no interaction model do sensitivity on particular outcomes
 outcomes <- c("nvt","pcv7","pcv13","disease")
-o = 3
+o = 2
 ### subset by time we have sequenced
 time_vec <- c(as.Date("2009-01-01"), as.Date("2021-01-01"))
 time_vec_label <- c("prePCV","postPCV")
@@ -128,7 +131,7 @@ for(pcvcut in 1:length(time_vec_label)){
         all <- grep("lag0",all, value = TRUE)
         if(interaction == TRUE){
           # cov_names <- grep("tasmax|hurs|absh|pm2p5|pm10|o3|so2", all, value = TRUE)
-          cov_names <- grep("pm2p5|pm10", all, value = TRUE)
+          cov_names <- grep("pm2p5", all, value = TRUE)
         }else{
         # cov_names <- grep("tasmax|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|pm2p5|pm10|o3|so2|spei3|spei6|spi3|spi6", all, value = TRUE)
         cov_names <- grep("pm2p5", all, value = TRUE)
@@ -210,8 +213,7 @@ for(pcvcut in 1:length(time_vec_label)){
                                            'f(id_u, model = "bym2", graph = g, hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01)))) + ',  # Spatial effect per outcome
                                            'f(id_m, model = "rw2", cyclic = TRUE, scale.model = TRUE, constr = TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01)))) + ',# seasonal effect per outcome
                                            'f(id_y, model = "iid",replicate = id_prov,  hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01)))) +', #interannual effect per outcome
-                                           'vaccination_period +', 'population_density'
-        ))
+                                           'vaccination_period +', 'population_density'))
         forms$cov <- 're'
         re_mod <- inla.mod(form = forms, fam = "nbinomial", df, nthreads = 4, config = FALSE)
         
@@ -325,7 +327,10 @@ for(pcvcut in 1:length(time_vec_label)){
                         "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                         "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                         "+ vaccination_period",
-                        "+ population_density"
+                        "+ population_density",
+                        "+ tas_lag0",
+                        paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
+                        
                       )
                     )
                   cb_form$covs<-paste0("crossbasis_", cov_oi, "_interaction_", gsub("_count","",interact_var))
@@ -342,7 +347,10 @@ for(pcvcut in 1:length(time_vec_label)){
                         "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                         "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                         "+ vaccination_period",
-                        "+ population_density"
+                        "+ population_density",
+                        "+ tas_lag0",
+                        paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
+                        
                       )
                     )
                   cb_form$covs<-paste0("crossbasis_", cov_oi, "_none")
@@ -424,13 +432,13 @@ for(pcvcut in 1:length(time_vec_label)){
                       2 * z_high * original_vcov_cross
           
                     ## crosspred for each low and high proportions
-                    cp_low <- crosspred(basis = cbinteract, cen = cen,
+                    cp_low <- crosspred(basis = cb, cen = cen,
                                         coef = coef_low,
                                         vcov = vcov_low)
-                    cp_med <- crosspred(basis = cbinteract, cen = cen,
+                    cp_med <- crosspred(basis = cb, cen = cen,
                                          coef = coef_med,
                                          vcov = vcov_med)
-                    cp_high <- crosspred(basis = cbinteract, cen = cen,
+                    cp_high <- crosspred(basis = cb, cen = cen,
                                          coef = coef_high,
                                          vcov = vcov_high)
                     
@@ -597,96 +605,98 @@ for(pcvcut in 1:length(time_vec_label)){
 
 }
 # # ################################################################################
-# time_vec_label <- c("prePCV","postPCV")
-# premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/gpsc_results_fits_weekly_adm1_allGPSCs_propprov_8week_prePCV.csv"))
-# premod$type <- "prePCV"
-# postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/gpsc_results_fits_weekly_adm1_allGPSCs_propprov_8week_postPCV.csv"))
-# postmod$type <- "postPCV"
-# ## bind the sets
-# sensmods <- rbind(premod,postmod)
-# sensmods$cov <- gsub("_lag0","",sensmods$covariate)
-# tmps <- subset(sensmods, sensmods$cov== "pm2p5" & sensmods$interaction_level %in% c("low","high","none") & sensmods$lag_num==3)
-# tmps$type <- factor(tmps$type, levels = c("prePCV","postPCV"))
-# tmps$GPSC <- factor(tmps$GPSC, levels = c("GPSC21","GPSC1","GPSC26","GPSC56","GPSC13","GPSC41"))
-# tmpssub <- tmps[which(tmps$GPSC%notin%c("GPSC26","GPSC56")),]
-# p14 <- ggplot(tmpssub)+
-#   geom_line(aes(x=var,y=exp(cumulative_fit), group=interaction(cov, GPSC, interaction_level,lag, type),  color=interaction_level))+
-#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-#   geom_ribbon(aes(x=var, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(cov, GPSC, interaction_level,lag), fill=interaction_level),alpha=0.2)+
-#   scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
-#   scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
-#   # ylim(0,3)+
-#   # xlab(cov_names_labels[c])+
-#   theme_bw()+
-#   ylab("Relative Risk")+
-#   scale_y_continuous(trans = "log10")+
-#   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-#   facet_grid(GPSC~type,scales="free")+
-#   labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
-#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13),
-#         strip.text.y = element_text(angle=0))
-# # 
-# # pdf("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/cumulative_prepostGPSCsensitivity.pdf")
-# # print(p14)
-# # dev.off()
+space = "adm1"
+time_vec_label <- c("prePCV","postPCV")
+premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/gpsc_results_fits_weekly_",space,"_allGPSCs_propprov_8week_prePCV.csv"))
+premod$type <- "prePCV"
+postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/gpsc_results_fits_weekly_",space,"_allGPSCs_propprov_8week_postPCV.csv"))
+postmod$type <- "postPCV"
+## bind the sets
+sensmods <- rbind(premod,postmod)
+sensmods$cov <- gsub("_lag0","",sensmods$covariate)
+tmps <- subset(sensmods, sensmods$cov== "pm2p5" & sensmods$interaction_level %in% c("low","high","none") & sensmods$lag_num==3)
+tmps$type <- factor(tmps$type, levels = c("prePCV","postPCV"))
+tmps$GPSC <- factor(tmps$GPSC, levels = c("GPSC21","GPSC1","GPSC26","GPSC56","GPSC13","GPSC41"))
+tmpssub <- tmps[which(tmps$GPSC%notin%c("GPSC26","GPSC56")),]
+p14 <- ggplot(tmpssub)+
+  geom_line(aes(x=var,y=exp(cumulative_fit), group=interaction(cov, GPSC, interaction_level,lag, type),  color=interaction_level))+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(cov, GPSC, interaction_level,lag), fill=interaction_level),alpha=0.2)+
+  scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
+  scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
+  # ylim(0,3)+
+  # xlab(cov_names_labels[c])+
+  theme_bw()+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans = "log10")+
+  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+  facet_grid(GPSC~type,scales="free")+
+  labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13),
+        strip.text.y = element_text(angle=0))
+#
+# pdf("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/cumulative_prepostGPSCsensitivity_adm1.pdf")
+# print(p14)
+# dev.off()
 # 
 # 
 # #### weekly
-# tmps <- subset(sensmods, sensmods$cov== "pm2p5" & sensmods$interaction_level %in% c("low","high","none"))
-# tmps$type <- factor(tmps$type, levels = c("prePCV","postPCV"))
-# # tmps$GPSC <- factor(tmps$GPSC, levels = c("GPSC1"))
-# # tmpssub <- tmps[which(tmps$GPSC%notin%c("GPSC26","GPSC56")),]
-# c("GPSC21","GPSC1","GPSC26","GPSC56","GPSC13","GPSC41")
-# tmps$lag_week <- gsub("lag","week ",tmps$lag)
-# p14 <- ggplot(tmps[which(tmps$GPSC%in%c("GPSC21")),])+
-#   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lag_week, type),  color=interaction_level))+
-#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-#   geom_ribbon(aes(x=var, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(cov, GPSC, interaction_level,lag_week), fill=interaction_level),alpha=0.2)+
-#   scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
-#   scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
-#   # ylim(0,3)+
-#   # xlab(cov_names_labels[c])+
-#   scale_y_continuous(trans = "log10")+
-#   theme_bw()+
-#   ylab("Relative Risk")+
-#   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-#   facet_grid(type~lag_week,scales="free")+
-#   labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
-#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45, hjust=1),
-#         strip.text.y = element_text(angle=0))
+tmps <- subset(sensmods, sensmods$cov== "pm2p5" & sensmods$interaction_level %in% c("low","high","none"))
+tmps$type <- factor(tmps$type, levels = c("prePCV","postPCV"))
+# tmps$GPSC <- factor(tmps$GPSC, levels = c("GPSC1"))
+# tmpssub <- tmps[which(tmps$GPSC%notin%c("GPSC26","GPSC56")),]
+c("GPSC21","GPSC1","GPSC26","GPSC56","GPSC13","GPSC41")
+tmps$lag_week <- gsub("lag","week ",tmps$lag)
+p14 <- ggplot(tmps[which(tmps$GPSC%in%c("GPSC21")),])+
+  geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lag_week, type),  color=interaction_level))+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(cov, GPSC, interaction_level,lag_week), fill=interaction_level),alpha=0.2)+
+  scale_color_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
+  scale_fill_manual(values = c("high"="red","low"="blue", "med" = "darkgreen")) +
+  # ylim(0,3)+
+  # xlab(cov_names_labels[c])+
+  scale_y_continuous(trans = "log10")+
+  theme_bw()+
+  ylab("Relative Risk")+
+  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+  facet_grid(type~lag_week,scales="free")+
+  labs(fill="GPSC Prevalence", color = "GPSC Prevalence")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45, hjust=1),
+        strip.text.y = element_text(angle=0))
 # 
-# pdf("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/weeklyGPSC21_prepostGPSCsensitivity.pdf", width = 10, height =2)
-# print(p14)
-# dev.off()
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/weeklyGPSC21_prepostGPSCsensitivity_",space,".pdf"), width = 10, height =2)
+print(p14)
+dev.off()
 # 
-# print(p14)
-# ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/weeklyGPSC21_prepostGPSCsensitivity.png", width = 10, height =4)
-# dev.off()
+print(p14)
+ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/weeklyGPSC21_prepostGPSCsensitivity_",space,".png"), width = 10, height =4)
+dev.off()
 
 
 
 
 
 # #### SENSITIVITY FOR NVT AND PCV7 PCV13 EFFECTS PRE AND POST PCV
+space = "adm2"
 time_vec_label <- c("prePCV","postPCV")
 
 ###NVT
-    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_nvt_weekly_adm1_8week_prePCV.csv"))
-    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_nvt_weekly_adm1_8week_postPCV.csv"))
+    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_nvt_weekly_",space,"_8week_prePCV.csv"))
+    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_nvt_weekly_",space,"_8week_postPCV.csv"))
     premod$type <- "prePCV"
     postmod$type <- "postPCV"
     sensmods1 <- rbind(premod,postmod)
     sensmods1$outcome <- "nvt"
 ###PCV7
-    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv7_weekly_adm1_8week_prePCV.csv"))
-    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv7_weekly_adm1_8week_postPCV.csv"))
+    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv7_weekly_",space,"_8week_prePCV.csv"))
+    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv7_weekly_",space,"_8week_postPCV.csv"))
     premod$type <- "prePCV"
     postmod$type <- "postPCV"
     sensmods2 <- rbind(premod,postmod)
     sensmods2$outcome <- "pcv7"
 ###PCV13
-    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv13_weekly_adm1_8week_prePCV.csv"))
-    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv13_weekly_adm1_8week_postPCV.csv"))
+    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv13_weekly_",space,"_8week_prePCV.csv"))
+    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv13_weekly_",space,"_8week_postPCV.csv"))
     premod$type <- "prePCV"
     postmod$type <- "postPCV"
     sensmods3 <- rbind(premod,postmod)
@@ -718,12 +728,12 @@ p14 <- ggplot(tmps)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45, hjust=1),
         strip.text.y = element_text(angle=0), legend.title = element_blank())
 
-pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV.pdf", width = 12, height = 5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV_",space,".pdf"), width = 12, height = 5)
 print(p14)
 dev.off()
 
 print(p14)
-ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV.png", width = 12, height = 5)
+ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV_",space,".png"), width = 12, height = 5)
 dev.off()
 
 
