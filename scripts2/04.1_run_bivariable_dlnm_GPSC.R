@@ -18,12 +18,12 @@
 ####LOAD DATA & LIBRARIES ######################################################
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 ### set if interaction is true or not
-interaction = TRUE
+interaction = FALSE
 ### set resolution
 time = "weekly"
-space = "adm1"
+space = "adm2"
 ### set the time period 2005 - 2019 is precov and 2005-2023 is not precov
-precov = TRUE
+precov = FALSE
 
 ## load spatial data
 if(space == "adm1"){

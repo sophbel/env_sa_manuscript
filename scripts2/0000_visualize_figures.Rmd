@@ -188,7 +188,7 @@ library(viridis)
 cols <- colnames(sa_adm2_weekly)
 sero_cols <- grep("Sero",cols, value=T)
 age_cols <- c("age_lt6", "age_6t14", "age_15t64", "age_gt65")
-type_cols <- c("other_count", "mening_count", "bact_count")
+type_cols <- c("other_count", "mening_count", "bact_count","WGS_PEN_SIR_Meningitis_R_count")
 vaccine_cols <- c("pcv7", "pcv13", "nvt")
 disease_cols <- c("disease")
 
@@ -218,7 +218,7 @@ yearly_summary <- soc_data %>%
   group_by( variable, facet_group) %>%
   summarise(value = sum(value), .groups = "drop") %>%
   arrange(facet_group, variable, value)
-write.csv(yearly_summary, "/home/sbelman/Documents/env_sa_manuscript/figures/figure1/yearly_summary.csv", row.names = FALSE)
+# write.csv(yearly_summary, "/home/sbelman/Documents/env_sa_manuscript/figures/figure1/yearly_summary.csv", row.names = FALSE)
 
 ## factor for order
 soc_data$facet_group <- factor(soc_data$facet_group, 
@@ -231,7 +231,8 @@ soc_data$variable <- gsub("_count","",soc_data$variable)
 
  # color palettes
 age_colors <- setNames(brewer.pal(4, "Set2"), age_cols)
-disease_type_colors <- c("bact" = "#D7191C", "mening" = "#2C7BB6", "other" = "#1A9641")
+disease_type_colors <- c("bact" = "#D7191C", "mening" = "#2C7BB6", "other" = "#1A9641","WGS_PEN_SIR_Meningitis_R"= "purple")
+# disease_type_colors <- c("bact" = "#D7191C", "mening" = "#2C7BB6", "other" = "#1A9641")
 pcv_colors <- c("nvt" = "#E75480", "pcv7" = "#522081", "pcv13" = "darkgreen")
 disease_color <- c("disease" = "black")
 sero_groups <- list(
@@ -251,6 +252,8 @@ soc_data$variable <- factor(soc_data$variable,
                                levels = gsub("_count","",c(disease_cols, age_cols, type_cols, vaccine_cols, sero_cols)))
 soc_data_2023 <- subset(soc_data,  soc_data$variable != "disease")
 soc_ts_2023 <- ggplot(soc_data_2023) +
+    geom_vline(xintercept=as.Date("2009-01-01"), linetype ="dashed",color = "black", alpha = 0.7)+
+    geom_vline(xintercept=as.Date("2011-01-01"), linetype ="dashed",color = "black", alpha = 0.7)+
   geom_line(aes(x = date, y = value, group = interaction(variable), color = variable), alpha = 0.9) +
   facet_wrap(~ facet_group, scales = "free_y", ncol = 1, strip.position = "left")+
     scale_color_manual(values = final_color_map) +
@@ -261,9 +264,9 @@ soc_ts_2023 <- ggplot(soc_data_2023) +
     legend.title = element_blank(),
     strip.text.y = element_text(size = 14), axis.text = element_text(size=13)
   ) +
-  guides(color = guide_legend(nrow = 10,override.aes = list(size = 4)))
+  guides(color = guide_legend(nrow = 11,override.aes = list(size = 4)))
 
-pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure1/soc_ts_2023.pdf", width = 6,height=7)
+pdf(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure1/soc_ts_2023.pdf", width = 7.5,height=7)
 print(soc_ts_2023)
 dev.off()
 
@@ -350,6 +353,8 @@ dis_env <- ggplot(df_scaled, aes(x = date)) +
 
 
 dis_pm <- ggplot(df_scaled, aes(x = date)) +
+      geom_vline(xintercept=as.Date("2009-01-01"), linetype ="dashed",color = "grey20", alpha = 0.7)+
+    geom_vline(xintercept=as.Date("2011-01-01"), linetype ="dashed",color = "grey20", alpha = 0.7)+
   # geom_line(aes(y = disease_smooth, color = "Disease"), linewidth = 0.8) +
     geom_line(aes(y = disease, color = "Disease"), linewidth = 0.8, alpha = 0.7) +
   geom_line(aes(y = pm2p5_scaled, color = "PM2.5"), alpha = 0.7, linetype = "solid",  linewidth = 0.6) +
@@ -371,6 +376,8 @@ dis_pm <- ggplot(df_scaled, aes(x = date)) +
     axis.text.y = element_text(size=15), axis.title = element_text(size=15)
   )
 dis_hurs <- ggplot(df_scaled, aes(x = date)) +
+        geom_vline(xintercept=as.Date("2009-01-01"), linetype ="dashed",color = "grey20", alpha = 0.7)+
+    geom_vline(xintercept=as.Date("2011-01-01"), linetype ="dashed",color = "grey20", alpha = 0.7)+
   # geom_line(aes(y = disease_smooth, color = "Disease"), linewidth = 0.8) +
   geom_line(aes(y = disease, color = "Disease"), linewidth = 0.8, alpha = 0.7) +
   geom_line(aes(y = hurs_scaled, color = "Humidity"), alpha = 0.7, linetype = "solid" , linewidth = 0.6) +
@@ -953,8 +960,8 @@ dfintC[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr"
 Load Data. The cumulative and lagged effects of top univariable and additive effect models across South Africa. 
 ```{r}
 # ##  VISUALIZE BIVARIABLE OUTPUTS 
-# st_vec <- c("weekly_adm1","weekly_adm2")
-st_vec <- c("weekly_adm2")
+st_vec <- c("weekly_adm1","weekly_adm2")
+# st_vec <- c("weekly_adm2")
 endyear = 2019
 
 ### read in bivariable
@@ -1720,10 +1727,18 @@ prov_name = "Gauteng"
 nointgaut <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_2019_",prov_name,".csv"))
 nointgaut$cov2 <- "none"
 nointgaut <- subset(nointgaut, nointgaut$covariate%notin%c("pm2p5_lag0","pm10_lag0","so2_lag0"))
+nointgaut$type <- "Gauteng"
 ## pollution only
 biv_nointgaut <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_bivariable_8week_2019_",prov_name,"_temp0hum3.csv"))
 biv_nointgaut <- subset(biv_nointgaut, biv_nointgaut$covariate%in%c("pm2p5_lag0","pm10_lag0","so2_lag0") & biv_nointgaut$cov2=="absh_lag3")
-fit_list_gaut <- rbind(biv_nointgaut,nointgaut)
+biv_nointgaut$type <- "Gauteng"
+## pollution only NO GAUTENG
+biv_nointnogaut <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_bivariable_8week_2019_exclude",prov_name,"_temp0hum3.csv"))
+biv_nointnogaut <- subset(biv_nointnogaut, biv_nointnogaut$covariate%in%c("pm2p5_lag0","pm10_lag0","so2_lag0") & biv_nointnogaut$cov2=="absh_lag3")
+biv_nointnogaut$type <- "NoGauteng"
+fit_list_gaut <- rbind(biv_nointgaut,nointgaut,biv_nointnogaut)
+# fit_list_gaut <- rbind(biv_nointgaut,nointgaut)
+
 fit_list_gaut$lag_week <- paste0("Week",fit_list_gaut$lag_num)
 fit_list_gaut$cov <- gsub("_lag0","",fit_list_gaut$covariate)
 fit_list_gaut$lag_week <- factor(fit_list_gaut$lag_week, levels = paste0("Week",seq(0,8,1)), labels = paste0("Week",seq(0,8,1)))
@@ -1734,14 +1749,22 @@ fit_list_gaut$upperCI_rr <- exp(fit_list_gaut$upperCI)
 fit_list_gaut$cumrr <- exp(fit_list_gaut$cumulative_fit)
 fit_list_gaut$cumlowerCI_rr <- exp(fit_list_gaut$cum_lowerCI)
 fit_list_gaut$cumupperCI_rr <- exp(fit_list_gaut$cum_upperCI)
-fit_list_gaut$type <- "Gauteng"
-cols <- colnames(fit_list_gaut)[1:(length(colnames(fit_list_gaut))-1)]
+# fit_list_gaut$type <- "Gauteng"
+cols <- colnames(fit_list_gaut)[which(colnames(fit_list_gaut)!="type")]
+
 ## change name of south africa one to mitigate confusion
-fit_list_SA <- fit_list[,..cols]
+fit_list_SA <- fit_list
+fit_list_SA <- subset(fit_list_SA, fit_list_SA$space_time==paste0("weekly_",space))
+fit_list_SA <- fit_list_SA[,..cols]
 fit_list_SA$type <- "South Africa"
+fit_list_SA[which(fit_list_SA$predvar==50&fit_list_SA$cov2=="absh_lag3 + tas_lag0" & fit_list_SA$cov=="pm2p5")]
 
 fit_listcomp <- rbind(fit_list_gaut, fit_list_SA)
-fit_listcomp <- subset(fit_listcomp, fit_listcomp$cov2%in%c("absh_lag3", "none"))
+fit_listcomp <- subset(fit_listcomp, fit_listcomp$cov2%in%c("absh_lag3", "absh_lag3 + tas_lag0","none"))
+
+## drop any air pollutants with no cov2
+fit_listcomp <- fit_listcomp %>%
+  filter(!(cov %in% c("pm2p5","pm10","so2") & cov2 == "none"))
 fit_listcomp$cov2[which(fit_listcomp$cov2 == "absh_lag3")] <- "absh_lag3 + tas_lag0"
 
 ########### cumulative plot of all on grid ####
@@ -1756,11 +1779,14 @@ fit_listcompcum$covfact <- factor(fit_listcompcum$cov, levels = c("tas", "tasmin
                                                                   "Absolute Humidity (g/m3)","Relative Humidity (%)", "Wind Speed (km/hr)", "Ozone (µg/m³)",
                                                                  "PM2.5 (µg/m³)","PM10 (µg/m³)","SO2 (µg/m³)"))
 
-cumplots <- ggplot(fit_listcompcum)+
+
+
+################## PLOTS FOR GAUTENG ALONE AND SOUTH AFRICA OVERALL ############
+cumplots <- ggplot(fit_listcompcum[which(fit_listcompcum$type!="NoGauteng")])+
   geom_line(aes(x=var,y=cumrr,group=interaction(type,covfact), color = type),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
   geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(type,covfact), fill=type),alpha=0.4)+
-  scale_color_manual(values = c("Gauteng" = "purple", "South Africa" = "black"))+
+  scale_color_manual(values = c("Gauteng" = "purple","", "South Africa" = "black"))+
   scale_fill_manual(values = c("Gauteng" = "purple", "South Africa" = "black"))+
   theme_bw()+
   xlab("Var")+
@@ -1913,6 +1939,88 @@ print(aqlaggautplot)
 dev.off() 
 ```
 
+####### PLOT WITH GAUTENG ALONE, NO GAUTENG, AND ALL OF SOUTH AFRICA. RELIES ON TOP PART OF CHUNK ABOVE
+```{r}
+fit_listcompcum$type <- factor(fit_listcompcum$type, levels = c("NoGauteng","Gauteng","South Africa"))
+cumplotsno <- ggplot(fit_listcompcum[which(fit_listcompcum$cov%in%c("pm2p5","pm10","so2"))])+
+  geom_line(aes(x=var,y=cumrr,group=interaction(type,covfact), color = type),alpha=0.7)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(type,covfact), fill=type),alpha=0.4)+
+  scale_color_manual(values = c("Gauteng" = "purple","NoGauteng" = "darkgreen", "South Africa" = "black"))+
+  scale_fill_manual(values = c("Gauteng" = "purple", "NoGauteng" = "darkgreen", "South Africa" = "black"))+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  # scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  labs(color = "", fill = "")+
+  facet_grid(type~covfact, scales = "free_x")+
+  xlab("Exposure Value")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=11), axis.text.x = element_text(angle = 45,hjust=1, size=13))
+
+  pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/NOgautengsouthAfrica_adm2_cumulative.pdf", width = 6, height = 4)
+  print(cumplotsno)
+  dev.off()
+
+
+
+#### point plot of each lag and cumulative for all 3 types
+fitsweeks50 <- fit_listcomp[which(fit_listcomp$cov%in%c("pm2p5")&fit_listcomp$predvar==50),
+                       c("rr","lowerCI_rr","upperCI_rr","cov","covfact","type","lag_num","lag_week")]
+fitscum50 <- fit_listcompcum[which(fit_listcompcum$cov%in%c("pm2p5")&fit_listcompcum$predvar==50),
+                             c("cumrr","cumlowerCI_rr","cumupperCI_rr","cov","covfact","type","lag_num","lag_week")]
+fitscum50$lag_num <- 10
+fitscum50$lag_week <- "cumulative"
+colnames(fitscum50) <-  c("rr","lowerCI_rr","upperCI_rr","cov","covfact","type","lag_num","lag_week")
+fits50 <- rbind(fitsweeks50,fitscum50)
+fits50$modtype <- "weekly"
+fits50$modtype[which(fits50$lag_num==10)] <- "cumulative"
+fits50$modtype <- factor(fits50$modtype,levels=c("weekly","cumulative"))
+
+plotfit50 <- ggplot(fits50) +
+      geom_hline(yintercept=1,color="red",linetype="dashed",alpha=0.6) +
+      geom_pointrange(aes(x=lag_num,ymin=lowerCI_rr,ymax=upperCI_rr,y=rr,color=type,group=type),alpha=0.8,position=position_dodge(width=0.45)) +
+      scale_color_manual(values=c("Gauteng"="purple","NoGauteng"="darkgreen","South Africa"="black")) +
+      scale_y_continuous(trans="log10") +
+      ylab(expression("Relative Risk at 50 "*mu*"g/m"^3*" PM2.5")) +
+      scale_x_continuous(breaks=0:8,labels=paste0("week",1:9)) +
+      facet_grid(.~modtype,scales="free_x",space="free_x",labeller=labeller(modtype=c("weekly"="Weekly lag","cumulative"="Cumulative"))) +
+      theme_bw() +
+      theme(strip.background=element_rect(fill="white"),strip.text=element_text(size = 9),axis.title.x=element_blank(),
+            axis.text = element_text(size=12), axis.text.x = element_text(angle = 45, hjust =1),legend.title = element_blank())
+
+  pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/NOgautengsouthAfrica_adm2_50ugm3weekly.pdf", width = 9, height = 3)
+  print(plotfit50)
+  dev.off()
+  
+  
+  
+  ### not using
+  
+#### weekly lags
+# turn to factors and label so that metrics are included
+# fit_listcomp$covfact <- factor(fit_listcomp$cov, levels = c("pm2p5","pm10","so2"),
+#                               labels = c("PM2.5 (µg/m³)","PM10 (µg/m³)","SO2 (µg/m³)"))
+# aqlaggautplotno <- ggplot(fit_listcomp[which(fit_listcomp$cov %in% c("pm2p5","pm10","so2"))])+
+# aqlaggautplotno <- ggplot(fit_listcomp[which(fit_listcomp$cov %in% c("pm2p5"))])+
+#   geom_line(aes(x=var,y=rr,group=interaction(type,covfact,lag_num), color = type),alpha=0.7)+
+#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+#   geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(type,covfact,lag_num), fill=type),alpha=0.4)+
+#   scale_color_manual(values = c("Gauteng" = "purple","NoGauteng" = "darkgreen", "South Africa" = "black"))+
+#   scale_fill_manual(values = c("Gauteng" = "purple", "NoGauteng" = "darkgreen", "South Africa" = "black"))+
+#   theme_bw()+
+#   xlab("Var")+
+#   ylab("Relative Risk")+
+#   # scale_y_continuous(trans="log10")+
+#   scale_y_continuous(trans="log10", limits = c(0.9,1.2), breaks = c(0.9, 1, 1.2))+
+#   xlim(0,150)+
+#   labs(color = "", fill = "")+
+#   xlab("Exposure Value")+
+#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),strip.background = element_blank())+
+#   facet_grid(type ~ lag_num, scales = "free_x")
+#     # facet_wrap(type~lag_num,scales = "free", ncol = 9, labeller = labeller(lag_num = function(x) ""))
+
+```
 
 
 

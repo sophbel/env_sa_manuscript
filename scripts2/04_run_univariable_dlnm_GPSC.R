@@ -19,8 +19,8 @@ interaction = FALSE
 ### set resolution
 time = "monthly"
 space = "adm2"
-precov = TRUE
-permute = TRUE
+precov = FALSE
+permute = FALSE
 ## load spatial data
 if(space == "adm1"){
   shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
@@ -86,6 +86,7 @@ df <- df %>%
 
 colnames(df)[grep("present",colnames(df))] <- gsub("_count","", colnames(df)[grep("present",colnames(df))])
 
+
 ### include province as factors for replications
 df$id_prov <- as.numeric(factor(df$NAME_1, levels = c("Eastern_Cape", "Free_State", "Gauteng", 
                                                       "KwaZulu-Natal", "Limpopo", "Mpumalanga", 
@@ -93,6 +94,11 @@ df$id_prov <- as.numeric(factor(df$NAME_1, levels = c("Eastern_Cape", "Free_Stat
 
 df$vaccination_period <- as.factor(df$vaccination_period)
 
+## calculating total cases. 
+# mattests <- df %>%
+#   group_by(id_prov) %>%
+#   summarise(totpop = sum(population_size),
+#             totdis = sum(disease))
 ## include the proportion of each GPSC per the number sequenced each month
 # df <- df %>%
 #   group_by(year, month, NAME_1) %>%

@@ -1,45 +1,40 @@
 ################################################################################
 #### PURPOSE ##########
 ################################################################################
-## IT INCLUDES THE BASE SCRIPT WHEREBY A DLNM IS RUN FOR EACH VARIABLE INDEPENDENTLY 
-## AND THEN ITERATIVELY INCLUDING EACH GPSC TO DETERMINE IF THE GPSC HAS A MODIFYING 
-## EFFECT ON THE ENVIRONMENTAL VARIABLE. INCLUDING THE GPSC PROPORTIONS VIA A BINOMIAL
-## PROBABILITY MODEL. 
-## We are running this at weekly administrative region 1 WITH THE INTERACTION to
+## IT INCLUDES THE BASE SCRIPT WHEREBY A DLNM IS RUN FOR EACH AIR POLLUTION VARIABLE (PM2.5, PM10, SO2)
+## INCLUDING THE CONFOUNDING EFFECT FOR EACH OF HURS+TASlag0, ABSH+TASlag0, TASMAXlag0, TASlag0 FOR ALL 3 OF THEM
+## THIS SCRIPT INCLUDE MANUAL MODIFICATIONS TO COVARIATES BUT AT THE BOTTOM WHERE THEY ARE READ IN IT IS CLEAR WHICH MODEL WAS RUN. 
+## IT INCLUDES A MIXTURE OF ALL LAG0, ALL LAG3, AND TEMP LAG0 BUT HUMIDITY AT LAG3 
+## AND THE REVERSE WITH HUMIDITY LAG 0 AND TEMP LAG 3
+
+
+## We are running this at weekly administrative region 2 to
 ## maximize the power of the temporal effect but not reducing the power too much.
 
-### includes a modification to run on either Gauteng or Western Cape. Convergence with Western Cape is difficult. 
-## it can be run with adm1 whereby there is no spatial component, or adm2 where it includes the spatial effect contributed by the 
-## districts within Gauteng.
+## including a multiplicative effect of multiple environmental covariates in the same model (bivariable)
+## allows models from 2005-2019 and 2005-2023
+## also can run with and without the interaction of the GPSC and at all spatial and temporal levels
 
-####LOAD DATA & LIBRARIES #####################################################
-
-library(spdep)
+####LOAD DATA & LIBRARIES ######################################################
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 ### set if interaction is true or not
 interaction = FALSE
 ### set resolution
 time = "weekly"
 space = "adm2"
-prov_name = "Gauteng" ### this should either be "Gauteng" or "Western Cape"
+### set the time period 2005 - 2019 is precov and 2005-2023 is not precov
 precov = TRUE
+
 ## load spatial data
 if(space == "adm1"){
-  print("WARNING: MAKE SURE TO REMOVE SPATIAL EFFECT AS WE'RE ONLY RUNNING THIS ON A SINGLE PROVINCE")
   shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
   ## read adjacency matrix
   g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_adm1.adj")
 }
 if(space == "adm2"){
-  shp <- st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
-  shp <- shp[which(shp$NAME_1 == gsub("_"," ", prov_name)),]
-  adm_idx <- shp[,c("GID_1","GID_2","NAME_2")]
-  adm_idx <- st_drop_geometry(adm_idx)
-  idx <- unique(shp$GID_2)
-  ## save adjacency matrix
-  nb <- poly2nb(shp)
-  nb2INLA(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_singleprov.adj", nb)
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_singleprov.adj")
+  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+  ## read adjacency matrix
+  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
 }
 
 # load  data depending on aggregations
@@ -62,24 +57,6 @@ if(time == "monthly" & space == "adm2"){
   data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag_sc.csv")
   data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag.csv")
 }
-
-##### subset data by province of interest
-data <- data[which(data$NAME_1==prov_name),]
-if(space=="adm1"){
-  data$id_u <- as.numeric(as.factor(data$GID_1))
-}else{
-  data$id_u <- as.numeric(as.factor(data$GID_2))
-  
-
-data$id_u <- as.integer(data$id_u)
-all(diff(unique(data$id_u)) == 1)
-if(all(diff(match(unique(data$GID_2),adm_idx$GID_2))==1)){print("the indexes match the order")}
-}
-data_unscaled <- data_unscaled[which(data_unscaled$NAME_1==prov_name),]
-
-### plot data to check
-# ggplot(data) + geom_line(aes(x=date, y = disease, group=GID_2)) + facet_wrap(GID_2~.) + theme_bw()
-# ggplot(data) + geom_line(aes(x=date, y = absh_lag0, group=GID_2)) + facet_wrap(GID_2~.) + theme_bw()
 
 ### set variables and rename appropriately
 if("date"%notin%colnames(data)){
@@ -112,6 +89,12 @@ df <- df %>%
   )
 
 colnames(df)[grep("present",colnames(df))] <- gsub("_count","", colnames(df)[grep("present",colnames(df))])
+
+### include province as factors for replications
+df$id_prov <- as.numeric(factor(df$NAME_1, levels = c("Eastern_Cape", "Free_State", "Gauteng", 
+                                                      "KwaZulu-Natal", "Limpopo", "Mpumalanga", 
+                                                      "North_West", "Northern_Cape", "Western_Cape")))
+
 df$vaccination_period <- as.factor(df$vaccination_period)
 
 ## include the proportion of each GPSC per the number sequenced each month
@@ -135,41 +118,46 @@ if(precov==TRUE){
 }else{
   endyear = 2023
 }
-
-
 ### add environmental covariates
 all <- colnames(df)
 all_gpscs <- all
 all <- grep("lag0",all, value = TRUE)
 if(interaction == TRUE){
-  # cov_names <- grep("tasmax|hurs|absh|pm2p5|pm10|o3|so2", all, value = TRUE)
-  cov_names <- grep("hurs|absh|pm2p5|pm10", all, value = TRUE)
+  cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
+  cov_names2 <- c("hurs_lag0","absh_lag0","tasmax_lag3","tas_lag3")
+  
 }else{
-# cov_names <- grep("tasmax|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|pm2p5|pm10|o3|so2|spei3|spei6|spi3|spi6", all, value = TRUE)
-cov_names <- grep("tasmax|tasmin|tas|hurs|absh|prlrsum|prlrmean|sfcWind|pm2p5|pm10|o3|so2|spei3|spei6", all, value = TRUE)
-
-# cov_names <- grep("hurs|absh|tasmax|tasmin|o3|sfcWind|prlrsum|so2|pm2p5|pm10", all, value = TRUE)
-}
+  if(space == "adm2"){
+  cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
+  cov_names2 <- c("hurs_lag0","absh_lag0","tasmax_lag3","tas_lag3")
+  
+  }else{
+    cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
+    cov_names2 <- c("hurs_lag0","absh_lag0","tasmax_lag3","tas_lag3")
+    
+  }
+  }
 cov_names_labels <- gsub("_lag0", "", cov_names)
+### select which GPSCs will be includes
+gpsc_vec <- grep("GPSC", all_gpscs, value = TRUE)
+gpsc_vec <- grep("count", gpsc_vec, value = TRUE) ## if including the proportions 
 
 ### select some serotypes to include
 data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-data2prov <- subset(data2, data2$province==gsub("_"," ",prov_name))
-dtsero <- data.table(table(data2prov$serotype))[data.table(table(data2prov$serotype))$N>800]
+dtsero <- data.table(table(data2$serotype))[data.table(table(data2$serotype))$N>800]
 pcv_vec <- c("4","6B","9V","14","18C","19F","23F","1","3","5","6A","7F","19A")
 dtsero[which(dtsero$V1%notin%pcv_vec)]
 
-### select which GPSCs will be includes
-# gpsc_vec <- grep("GPSC", all_gpscs, value = TRUE)
-# gpsc_vec <- grep("count", gpsc_vec, value = TRUE) ## if including the proportion
-dtgpsc <- data.table(table(data2prov$GPSC))[which(data.table(table(data2prov$GPSC))$N>50 | data.table(table(data2prov$GPSC))$V1%in%c("8","41"))]
-dtgpsc <- data.table(table(data2prov$GPSC))[which(data.table(table(data2prov$GPSC))$N>40)]
+## make a group for humidity
+# Create grouped version
+hurs_grp <- inla.group(df$hurs_lag0, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
+df$hurs_grp <- hurs_grp
+absh_grp <- inla.group(df$absh_lag0, n = 5)  # You can adjust 'n' (number of groups) depending on granularity
+df$absh_grp <- absh_grp
 
-dtgpsc[order(-N)]$V1
-gpsc_vec <- paste0("GPSC",dtgpsc$V1,"_count")
 
 ##### VISUALIZE DATA ###########################################################
-# # visualize the weekly admin 1 gpsc data
+## visualize the weekly admin 1 gpsc data
 # gpsc_annual_plot <- gpsc_season_plot <- list()
 # for(gp in 1:length(gpsc_vec)){
 # gpsc_season_plot[[gp]] <- df %>%
@@ -196,26 +184,11 @@ gpsc_vec <- paste0("GPSC",dtgpsc$V1,"_count")
 # grid.arrange(grobs=gpsc_annual_plot)
 
 ##### LOAD INTERCEPT MODELS FOR R2 CALCULATION ##################################
-### run intercept only model
-base_form_list<-readRDS("/home/sbelman/Documents/env_sa_manuscript/formulas/base_form_list.rds")
-int_mod <- inla.mod(base_form_list[[1]], fam = "nbinomial", df = df, nthreads=4, config=FALSE)
-saveRDS(int_mod, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/base_model_main_",time,"_intercept_",space,"_",prov_name,"_",endyear,".rds"))
-
-## run random effect only model
-base_form<-list()
-form <- reformulate(c(1, 
-                      # 'f(id_u, model = "bym2", graph = g, scale.model = T, adjust.for.con.comp=TRUE, hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01))))',
-                      'f(id_m, model = "rw2", cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01))))',
-                      'f(id_y, model = "iid", hyper = list(prec = list(prior = "pc.prec", param = c(1, 0.01))))',
-                      'vaccination_period', 'population_density'),
-                    "disease")
-base_form$formula <- as.formula(form)
-base_form$covs<-paste0("spatial, seasonal, and annual (province replication) accounting for both vaccination, and population density")
-re_mod <- inla.mod(base_form, fam = "nbinomial", df = df, nthreads=4, config=FALSE)
-saveRDS(re_mod, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/base_model_",time,"_20092011_popdens_",space,"_",prov_name,"_",endyear,".rds"))
-
+int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
+re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
 
 ##### SET UP LOOPS FOR MODELS    ###############################################
+
 ## define loop length
     if(interaction==TRUE){
       gpsc_vec_sub <- gpsc_vec
@@ -225,19 +198,6 @@ saveRDS(re_mod, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dl
       dlnm_results <- NULL
     }
 
-# ### plot each variable in the province
-# dftest <- df
-# plist2 <-list()
-# for(c in 1:length(cov_names)){
-#   dftest$outcome <- NA
-#   dftest$outcome <- dftest[[cov_names[c]]]
-#   p <- ggplot(dftest)+
-#     geom_line(aes(x=date, y= outcome, group= GID_1, color = GID_1), alpha = 0.7)+
-#     theme_bw() +
-#     ggtitle(cov_names[c])
-#   plist2[[c]] <- p
-# }
-# wrap_plots(plist2)
 ### initiate GPSC loop or loop through single "none" vector for no interaction
 for(gp in 1:length(gpsc_vec_sub)){
   print(paste0("Running Models for: ",gpsc_vec_sub[gp]))
@@ -245,9 +205,11 @@ for(gp in 1:length(gpsc_vec_sub)){
     interact_var = gpsc_vec_sub[gp]
         ### create empty lists
         model_out <- cp_list  <- plot_heatmap <- plot_slices <- list()
-        failed_indices <- integer()
         for(c in 1:length(cov_names)) {
+          model_out[[c]] <- list()
           print(paste0("Running Cov: ", c, "/", length(cov_names)))
+          for(c2 in 1:length(cov_names2)){
+            if(cov_names2[c2]==cov_names[c]){next}
           cov_oi <- cov_names[c]
           print(cov_oi)
           
@@ -260,6 +222,7 @@ for(gp in 1:length(gpsc_vec_sub)){
           }else{
             max_lag <- 3
             lag_knots <- c(1.5,2.5) # Log-spaced knots
+            
           }
           
           if(cov_oi%in%c("prlrsum_lag0","prlrmean_lag0")){
@@ -268,27 +231,26 @@ for(gp in 1:length(gpsc_vec_sub)){
             exp_knots <- quantile(df[[cov_oi]], probs = c(0.33, 0.66), na.rm = TRUE)
           }
           
-          if(cov_oi%in%c("hurs_lag0")){
+          if(cov_oi%in%c("hurs_lag0","absh_lag0")){
             cb <- crossbasis(
               x = df[[cov_oi]],
               lag = max_lag,
               argvar = list(fun = "ns", knots = exp_knots),
-              arglag = list(fun = "ns", df = 3)
-              # ,
+              arglag = list(fun = "ns", df = 3),
               # arglag = list(fun = "ns", knots = lag_knots),
-              # group = df$id_u
+              group = df$id_u
             )
           }else{
             cb <- crossbasis(
               x = df[[cov_oi]],
               lag = max_lag,
               argvar = list(fun = "ns", knots = exp_knots),
-              arglag = list(fun = "ns", df = 2)
-              # ,
+              arglag = list(fun = "ns", df = 2),
               # arglag = list(fun = "ns", knots = lag_knots),
-              # group = df$id_u
+              group = df$id_u
             )
           }
+          
           
           ####### set up crossbasis with and without interaction
           if (interaction == TRUE) {
@@ -324,33 +286,62 @@ for(gp in 1:length(gpsc_vec_sub)){
           }
             if(interaction==FALSE){
             # create data frame with crossbasis
-              
-              ### TEST TRIMMING
-              trim_crossbasis <- function(cb, rows) {
-                cb_trimmed <- cb[rows, , drop = FALSE]
-                for (attr_name in setdiff(names(attributes(cb)), c("dim", "dimnames"))) {
-                  attr(cb_trimmed, attr_name) <- attr(cb, attr_name)
-                }
-                return(cb_trimmed)
-              }
-              df_pre_bound <- df
-              rows_to_keep <- ((max_lag * 5) + 1):nrow(df_pre_bound)
-              
-              cb <- trim_crossbasis(cb, rows_to_keep)
-              data_trimmed <- df_pre_bound[rows_to_keep, ]
-              cb_df <- cbind(data_trimmed, cb)
-              
-              #### END TEST
-            #   
-            # df_pre_bound <- df
-            # cb <- cb[((max_lag*5) + 1):nrow(cb), ]
-            # data_trimmed <- df_pre_bound[((max_lag*5) + 1):nrow(df_pre_bound), ]
-            # cb_df <- cbind(data_trimmed, cb)
-
-            # cb_df <- cbind(df_pre_bound, cb)
+            df_pre_bound <- df
+            cb_df <- cbind(df_pre_bound, cb)
             }
         ###################### PREPARE FORMULA #########################################
           if(interaction==TRUE){
+            if(cov_names2[c2]%in%c("hurs_lag0")){
+              # write formula for hurs
+              cb_form<- list()
+              cb_form$formula <-
+                as.formula(
+                  paste(
+                    "disease ~",
+                    paste(c(
+                      colnames(cb),                 # main effect of crossbasis - this creates instability in the model due to colinearity
+                      interact_var,                 # main effect of GPSC proportion
+                      colnames(cbinteract)),         # interaction terms
+                      collapse = " + "),
+                    ### only the crossbasis
+                    # paste(colnames(cb), collapse = " + "),  # Include all crossbasis variables
+                    "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                    "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                    "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                    "+ vaccination_period",
+                    "+ population_density",
+                    "+ tas_lag3",
+                    paste0("+ f(hurs_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
+                  )
+                )
+            }
+            if(cov_names2[c2]%in%c("absh_lag0")){
+              # write formula
+              cb_form<- list()
+              cb_form$formula <-
+                as.formula(
+                  paste(
+                    "disease ~",
+                    paste(c(
+                      colnames(cb),                 # main effect of crossbasis - this creates instability in the model due to colinearity
+                      interact_var,                 # main effect of GPSC proportion
+                      colnames(cbinteract)),         # interaction terms
+                      collapse = " + "),
+                    ### only the crossbasis
+                    # paste(colnames(cb), collapse = " + "),  # Include all crossbasis variables
+                    "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                    "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                    "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                    "+ vaccination_period",
+                    "+ population_density",
+                    "+ tas_lag3",
+                    paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
+                  )
+                )
+            }## end loop not hurs
+            
+            ## this is a model where I only account for temperature
+        if(cov_names2[c2]%notin%c("hurs_lag0","absh_lag0")){
           # write formula
           cb_form<- list()
           cb_form$formula <-
@@ -363,16 +354,21 @@ for(gp in 1:length(gpsc_vec_sub)){
                   colnames(cbinteract)),         # interaction terms
                   collapse = " + "),
                 ### only the crossbasis
-                # "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                # paste(colnames(cb), collapse = " + "),  # Include all crossbasis variables
+                "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
-                "+ f(id_y, model = 'iid',  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ vaccination_period",
-                "+ population_density"
+                "+ population_density",
+                paste("+",cov_names2[c2])
               )
             )
-          cb_form$covs<-paste0("crossbasis_", cov_oi, "_interaction_", gsub("_count","",interact_var))
+            }## end loop not hurs
+            cb_form$covs<-paste0("crossbasis_", cov_oi, "_interaction_", gsub("_count","",interact_var),"_",cov_names2[c2])
+            
         }else{
-          # write formula
+          if(cov_names2[c2]=="hurs_lag0"){
+            # write formula for hurs          
           cb_form<- list()
           cb_form$formula <-
             as.formula(
@@ -380,26 +376,60 @@ for(gp in 1:length(gpsc_vec_sub)){
                 "disease ~",
                 ### only the crossbasis
                 paste(colnames(cb), collapse = " + "),  # Include all crossbasis variables
-                # "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
-                "+ f(id_y, model = 'iid', hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                 "+ vaccination_period",
-                "+ population_density"
+                "+ population_density",
+                "+ tas_lag3",
+                paste0("+ f(hurs_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
               )
             )
-          cb_form$covs<-paste0("crossbasis_", cov_oi, "_none")
+          }
+          if(cov_names2[c2]=="absh_lag0"){
+            # write formula for hurs          
+            cb_form<- list()
+            cb_form$formula <-
+              as.formula(
+                paste(
+                  "disease ~",
+                  ### only the crossbasis
+                  paste(colnames(cb), collapse = " + "),  # Include all crossbasis variables
+                  "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                  "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                  "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                  "+ vaccination_period",
+                  "+ population_density",
+                  "+ tas_lag3",
+                  paste0("+ f(absh_grp, model = 'rw2', scale.model = T, hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))" )
+                )
+              )
+          }
+          if(cov_names2[c2]%notin%c("hurs_lag0","absh_lag0")){
+            cb_form<- list()
+            cb_form$formula <-
+              as.formula(
+                paste(
+                  "disease ~",
+                  ### only the crossbasis
+                  paste(colnames(cb), collapse = " + "),  # Include all crossbasis variables
+                  "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                  "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                  "+ f(id_y, model = 'iid', replicate = id_prov,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+                  "+ vaccination_period",
+                  "+ population_density",
+                  paste("+",cov_names2[c2])
+                )
+              )
+          }
+          cb_form$covs<-paste0("crossbasis_", cov_oi, "_none_",cov_names2[c2])
         }
         
         ######## RUN MODELS WITH CROSSBASIS #############################################
-          ## drop NAs
-          
-          
-          ## run model
           print("running INLA")
           mod <- INLA::inla(
             formula = cb_form$formula,
-            # family = "nbinomial",  
-            family = "nbinomial",  
+            family = "nbinomial",  # One per outcome
             offset=log(population_size/100000),
             control.inla = list(strategy = 'adaptive'),
             control.compute = list(dic = TRUE, waic=TRUE, cpo=TRUE, config = FALSE, return.marginals = TRUE),
@@ -409,36 +439,23 @@ for(gp in 1:length(gpsc_vec_sub)){
             verbose = FALSE,
             data = cb_df)
           mod$cov <- cov_names[c]
-          
-          ### check VIF
-          Q <- mod$misc$lincomb.derived.covariance.matrix
-          # Calculate a pseudo-VIF: diagonal(Q) / sd^2
-          vif_bayes <- diag(Q) / (summary(mod)$fixed[, "sd"]^2)
-          print(vif_bayes)
-          ## end check vif
-          
-          if (is.null(mod) || is.null(mod$misc) || is.null(mod$misc$lincomb.derived.covariance)) {
-            print("WARNING: Non-Convergence - MODEL SKIPPED")
-            failed_indices <- c(failed_indices, c)
-            next
-          }          
+          mod$cov2 <- cov_names2[c2]
+        
         ######## CROSSPREDICTION AND PLOT ##############################################
           print("extract covariance")
           ### set center
-          if(cov_oi%in%c("pm2p5_lag0","pm10_lag0","so2_lag0")){
+          if(cov_oi%in%c("pm2p5_lag0","pm10_lag0","o3_lag0","so2_lag0")){
             if(cov_oi=="pm2p5_lag0"){ cen = 40 }
             if(cov_oi=="pm10_lag0"){ cen = 75 }
+            # if(cov_oi=="o3_lag0"){ cen = 100 } ## removing this and centering at the median as it fluctuates day and night and follows an 8 hour cycle
             if(cov_oi=="so2_lag0"){ cen = 125 }
           }else{
             ### set center at the median for the rest
-            cen = ((range(cb_df[[cov_oi]],na.rm = T)[2]-range(cb_df[[cov_oi]],na.rm = T)[1])/2)+range(cb_df[[cov_oi]],na.rm = T)[1]
+            cen = ((range(data[[cov_oi]],na.rm = T)[2]-range(data[[cov_oi]],na.rm = T)[1])/2)+range(data[[cov_oi]],na.rm = T)[1]
           }          ### extract covariance and variance
           original_coefs <- mod$summary.fixed$mean[c(1:ncol(cb)+1)]  # Extract fixed-effect coefficients
           original_vcov <- mod$misc$lincomb.derived.covariance[1:ncol(cb)+1,1:ncol(cb)+1] # Extract variance-covariance
-          names(original_coefs) <- colnames(cb)
-          colnames(original_vcov) <- colnames(cb)
-          rownames(original_vcov) <- colnames(cb)
-          
+       
           ### extract interacting covariance and variance
           if(interaction==TRUE){
             original_coefs_interact <- mod$summary.fixed$mean[grep(paste0(":",interact_var),rownames(mod$summary.fixed))]
@@ -493,7 +510,7 @@ for(gp in 1:length(gpsc_vec_sub)){
                                  vcov = vcov_high)
             
             
-            # ## Relative Risk incorporating the variance covariacne
+            ### Relative Risk incorporating the variance covariacne
             # X_high <- cp_high$coefficients
             # X_low <- cp_low$coefficients
             # vcov_model <- original_vcov_interact
@@ -556,8 +573,8 @@ for(gp in 1:length(gpsc_vec_sub)){
               
               # relative risk ratio results
               ## rename RR
-              # rr_ratiodf$var <- new_predvar
-              # rr_ratio_all <- rbind(rr_ratio_all, rr_ratiodf)
+              rr_ratiodf$var <- new_predvar
+              rr_ratio_all <- rbind(rr_ratio_all, rr_ratiodf)
               
             }else{
               print(paste("No need to rescale", cov_names[c]))
@@ -570,7 +587,7 @@ for(gp in 1:length(gpsc_vec_sub)){
               gpsc_results <- rbind(gpsc_results, df_low, df_med, df_high)
               
               # relative risk ratio results
-              # rr_ratio_all <- rbind(rr_ratio_all, rr_ratiodf)
+              rr_ratio_all <- rbind(rr_ratio_all, rr_ratiodf)
               
             }
           }else{
@@ -582,29 +599,32 @@ for(gp in 1:length(gpsc_vec_sub)){
               rownames(cp$matfit) <- new_predvar
               
               df_all <- extract_cp_gpsc_data(cp,"none","no_interaction", cov_names[c])
+              df_all$cov2 <- cov_names2[c2]
               dlnm_results <- rbind(dlnm_results,df_all)
               
             }else{
               print(paste("No need to rescale", cov_names[c]))
               df_all <- extract_cp_gpsc_data(cp,"none","no_interaction", cov_names[c])
+              df_all$cov2 <- cov_names2[c2]
               dlnm_results <- rbind(dlnm_results,df_all)
             }
           }
-          
-          # plot_crosspred_coef(cp, type = "slices", lag = 0:8)
+ 
           ########################### EXTRACT MODEL RESULTS TO SAVE ############
           cov<-mod$cov
+          cov2 <- mod$cov2
           #gof
-          gof <- eval.mod(mod,cb_df)
-          gof$rsq_int <- rsq(gof, int_mod, 1)
-          gof$rsq_re <- rsq(gof, re_mod, 1)
-          
+          gof <- eval.mod(mod,df)
+          gof$rsq <- rsq(gof, int_mod, 1)
           # fixed effects
           fixed<-mod$summary.fixed
           #random effects
           mod_spat<-mod$summary.random$id_u
           mod_y<-mod$summary.random$id_y
           mod_m<-mod$summary.random$id_m
+          if(cov_names2[c2]=="hurs_lag0"){
+            mod_hurs <- mod$summary.random$hurs_grp
+          }
           # mod hyper
           mod_sum <- summary(mod)
           # save mean and sd for each variable
@@ -613,91 +633,174 @@ for(gp in 1:length(gpsc_vec_sub)){
           ### save all
           if(interaction==TRUE){
             cp_high$cov <- cp_low$cov <- cp_med$cov <- cov_names[c]
-            # cp_list[[c]] <- list(cp = cp, cp_low = cp_low, cp_med = cp_med ,cp_high = cp_high)
-            cp_list[[c]] <- list(cp_low = cp_low, cp_med = cp_med ,cp_high = cp_high)
-            model_out[[c]]<-list(data=list(cov=cov,mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m,  mod_sum=mod_sum), cp = list(cp_low = cp_low, cp_med = cp_med, cp_high = cp_high))
+            cp_list[[c]] <- list(cp = cp, cp_low = cp_low, cp_med = cp_med ,cp_high = cp_high)
+            cp_list[[c]] <- list(cp_low = cp_low, cp_med = cp_med ,cp_high = cp_high, rr_ratio = rr_ratiodf)
+            model_out[[c]][[c2]]<-list(data=list(cov=cov,cov2 = cov2, mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m,  mod_sum=mod_sum), cp = list(cp_low = cp_low, cp_med = cp_med, cp_high = cp_high, rr_ratio = rr_ratiodf))
           }else{
             cp$cov <- cov_names[c]
             cp_list[[c]] <- cp
-            model_out[[c]]<-list(data=list(cov=cov,mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m,  mod_sum=mod_sum), cp = cp) 
-          }
+            if(cov_names2[c2]=="hurs_lag0"){
+              model_out[[c]][[c2]]<-list(data=list(cov=cov, cov2 = cov2, mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m, id_hurs=mod_hurs, mod_sum=mod_sum), cp = cp) 
+            }else{
+            model_out[[c]][[c2]]<-list(data=list(cov=cov, cov2 = cov2, mean=mean,sd=sd),gof=gof, fixed=fixed,summary.random=list(id_u=mod_spat,id_y=mod_y,id_m=mod_m, mod_sum=mod_sum), cp = cp) 
+            }
+            }
         } ### end of the loop through covariates
         
+          } ## end of second covariate bivariable interaction loop
+        
         ############## SUMMARY OF COVARIATES ###################################
-        mod_sum <- lapply(model_out, function(x) x$gof)
-        mod_sum <- do.call(rbind, mod_sum)
-        mod_sum2 <- mod_sum[,c("cov","waic","mae","cpo","rsq_int", "rsq_re")]
+        mod_sum <- do.call(rbind, lapply(model_out, function(lvl1) {
+          do.call(rbind, lapply(lvl1, function(x) {
+            # Extract gof and add cov2 as a new column
+            gof_df <- x$gof
+            gof_df$cov2 <- x$data$cov2
+            return(gof_df)
+          }))
+        }))
+        mod_sum2 <- mod_sum[,c("cov","waic","mae","cpo","rsq","cov2")]
         mod_sum2$cov <- gsub("_lag0","",mod_sum2$cov)
         mod_sum2$interact <- gsub("_count","",interact_var)
+        mod_sum2$cov2 <- gsub("_lag0","",mod_sum2$cov2)
         
         if(interaction==TRUE){
           mod_sum_all <- rbind(mod_sum_all,mod_sum2)
         }
         
         ############## SAVE FILES ##############################################
-        saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"week_",endyear,"_",prov_name,".rds"))
-        saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,"_",prov_name,".rds"))
-        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"week_",endyear,"_",prov_name,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_",max_lag,"_",endyear,"_cov2templag3humlag0.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
   } ### end of loop through gpscs
 
 
 if(interaction==TRUE){
-write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",endyear,"_",prov_name,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",endyear,"_",prov_name,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",endyear,"_",prov_name,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_cov2templag3humlag0.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_cov2templag3humlag0.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_cov2templag3humlag0.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }else{
-  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_",endyear,"_",prov_name,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",time,"_",space,"_bivariable_",max_lag,"_",endyear,"_cov2templag3humlag0.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }
+ 
+#
+# ################################################################################
+mod_sum2[order(mod_sum2$waic),]
+# ##  VISUALIZE BIVARIABLE OUTPUTS 
+st_vec <- c("weekly_adm1","weekly_adm2")
+st_vec <- c("weekly_adm2")
+
+### read in temp and humidity lag0
+stlist <- list()
+for(s in 1:length(st_vec)){
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_",max_lag,"_",endyear,"_cov2lag0.csv"))
+  m1$space_time <- st_vec[s]
+  stlist[[s]] <- m1
+}
+fit_list_biv <- rbindlist(stlist)
+fit_list_biv$cov <- gsub("_lag0","",fit_list_biv$covariate)
+fit_list_biv$cov2_lag <- "lag0"
+fit_list_biv$cov2[which(fit_list_biv$cov2 == "absh_lag0")] <- "absh_lag0 + tas_lag0"
+fit_list_biv$cov2[which(fit_list_biv$cov2 == "hurs_lag0")] <- "hurs_lag0 + tas_lag0"
+
+### read in temp lag0, humidity lag 3
+stlist <- list()
+for(s in 1:length(st_vec)){
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_",max_lag,"_",endyear,"_cov2templag0humlag3.csv"))
+  m1$space_time <- st_vec[s]
+  stlist[[s]] <- m1
+}
+fit_list_mix <- rbindlist(stlist)
+fit_list_mix <- subset(fit_list_mix, fit_list_mix$cov2 %notin% c("tas_lag0","tasmax_lag0"))
+fit_list_mix$cov <- gsub("_lag0","",fit_list_mix$covariate)
+fit_list_mix$cov2_lag <- "templag0_humlag3"
+fit_list_mix$cov2[which(fit_list_mix$cov2 == "absh_lag3")] <- "absh_lag3 + tas_lag0"
+fit_list_mix$cov2[which(fit_list_mix$cov2 == "hurs_lag3")] <- "hurs_lag3 + tas_lag0"
 
 
-############# CUMULATIVE EFFECT PLOTS ############
-max_lag <- 8
-noint <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_",max_lag,"week_",endyear,"_",prov_name,".csv"))
-noint$cov <- gsub("_lag0","",noint$covariate)
-noint$prov <- "Gauteng"
+### read in temp lag3, humidity lag 0
+stlist <- list()
+for(s in 1:length(st_vec)){
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_",max_lag,"_",endyear,"_cov2templag3humlag0.csv"))
+  m1$space_time <- st_vec[s]
+  stlist[[s]] <- m1
+}
+fit_list_mix2 <- rbindlist(stlist)
+fit_list_mix2 <- subset(fit_list_mix2, fit_list_mix2$cov2 %notin% c("tas_lag3","tasmax_lag3"))
+fit_list_mix2$cov <- gsub("_lag0","",fit_list_mix2$covariate)
+fit_list_mix2$cov2_lag <- "templag3_humlag0"
+fit_list_mix2$cov2[which(fit_list_mix2$cov2 == "absh_lag0")] <- "absh_lag0 + tas_lag3"
+fit_list_mix2$cov2[which(fit_list_mix2$cov2 == "hurs_lag0")] <- "hurs_lag0 + tas_lag3"
 
-ggplot(noint)+
-  geom_hline(yintercept=1, linetype="dashed",color="red")+
-  geom_line(aes(x = var, y = exp(cumulative_fit), group=cov))+
-  geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=cov), alpha=0.5)+
+
+### read in temp and humidity lag3
+stlist <- list()
+for(s in 1:length(st_vec)){
+  m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_",max_lag,"_",endyear,".csv"))
+  m1$space_time <- st_vec[s]
+  stlist[[s]] <- m1
+}
+fit_list <- rbindlist(stlist)
+fit_list$cov <- fit_list$covariate
+fit_list$cov <- gsub("_lag0","",fit_list$cov)
+fit_list$cov2_lag <- "lag3"
+fit_list$cov2[which(fit_list$cov2 == "absh_lag3")] <- "absh_lag3 + tas_lag3"
+fit_list$cov2[which(fit_list$cov2 == "hurs_lag3")] <- "hurs_lag3 + tas_lag3"
+
+
+fit_list <- rbind(fit_list, fit_list_biv, fit_list_mix)
+fit_list$lag_week <- paste0("Week",fit_list$lag_num)
+fit_list$lag_week <- factor(fit_list$lag_week, levels = paste0("Week",seq(0,12,1)), labels = paste0("Week",seq(0,12,1)))
+# convert to relative risks
+fit_list$rr <- exp(fit_list$fit)
+fit_list$lowerCI_rr <- exp(fit_list$lowerCI)
+fit_list$upperCI_rr <- exp(fit_list$upperCI)
+fit_list$cumrr <- exp(fit_list$cumulative_fit)
+fit_list$cumlowerCI_rr <- exp(fit_list$cum_lowerCI)
+fit_list$cumupperCI_rr <- exp(fit_list$cum_upperCI)
+
+
+############# PLOT COMPARE THE TWO LAG PERIODS FOR PM2.5 AND PM10 ###################
+# add in what these actually are
+
+
+# set labels 
+color_labels <- c("absh_lag3 + tas_lag3"="lightblue", "absh_lag0 + tas_lag0" = "darkblue","tas_lag0" = "brown","tas_lag3" = "orange", "absh_lag3 + tas_lag0" = "purple")
+color_labels <- c("absh_lag3 + tas_lag3"="lightblue", "absh + tas" = "darkblue","tas" = "brown","tas_lag3" = "orange",  "absh_lag3 + tas_lag0" = "purple")
+
+tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5","pm10") & 
+                fit_list$cov2 %in% c("absh_lag3 + tas_lag3", "absh_lag0 + tas_lag0", "absh_lag3 + tas_lag0","tas_lag3","tas_lag0") & 
+                fit_list$lag_num == 3)
+tmp$cov2 <- gsub("_lag0","",tmp$cov2)
+tmp$cov2 <- gsub("_lag3","",tmp$cov2)
+
+tmp$covfact <- factor(tmp$cov, levels = c("pm2p5","pm10"))
+## Plot 
+sens<-ggplot(tmp) +
+  geom_line(aes(x=var,y=cumrr,group=interaction(space_time, covfact,cov2,cov2_lag), color=cov2,linetype=cov2_lag),alpha=0.7)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(space_time,covfact,cov2_lag,cov2), fill=cov2),alpha=0.05)+
   theme_bw()+
+  xlab("Var")+
   ylab("Relative Risk")+
-  scale_y_continuous(trans = "log10")+
-  # ylim(0.1,3)+
-  xlab("Variable")+
-  facet_wrap(cov~., scales="free")
+  # scale_y_continuous(trans="log10")+
+  scale_y_continuous(trans="log10", limits = c(0.85,1.8), breaks = c(0.85, 1, 1.8))+
+  scale_color_manual(values = color_labels)+
+  scale_fill_manual(values = color_labels)+
+  labs(linetype = "meteorological\nconfounder lag")+
+  guides(color = "none",fill = "none") +
+  facet_grid(covfact~cov2)+
+  xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 
-## WHOLE COUNTRY
-m1 <- fread(file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_weekly_adm2_8_",endyear,".csv"))
-m1$cov <- gsub("_lag0","",m1$covariate)
-m1$prov <- "South_Africa"
-# bind
-nointall <- rbind(noint,m1)
-ggplot(nointall)+
-  geom_hline(yintercept=1, linetype="dashed",color="red")+
-  geom_line(aes(x = var, y = exp(cumulative_fit), group=interaction(cov,prov),color=prov))+
-  geom_ribbon(aes(x = var, ymin = exp(cum_lowerCI), ymax= exp(cum_upperCI), group=interaction(cov,prov), fill=prov), alpha=0.5)+
-  theme_bw()+
-  ylab("Relative Risk")+
-  scale_y_continuous(trans = "log10")+
-  # ylim(0.1,3)+
-  xlab("Variable")+
-  facet_wrap(cov~., scales="free")
-# 
-# ############# LAG EFFECT Plots ############
-# nointalltmp <- subset(nointall, nointall$cov%in%c("pm2p5","pm10","so2","hurs","absh","tasmin") & nointall$lag_num<7)
-# ggplot(nointalltmp)+
-#   geom_hline(yintercept=1, linetype="dashed",color="red")+
-#   geom_line(aes(x = var, y = exp(fit), group=interaction(cov,prov, lag_num),color=prov))+
-#   geom_ribbon(aes(x = var, ymin = exp(lowerCI), ymax= exp(upperCI), group=interaction(cov,prov,lag_num), fill=prov), alpha=0.5)+
-#   theme_bw()+
-#   ylab("Relative Risk")+
-#   # ylim(0.1,3)+
-#   xlab("Variable")+
-#   facet_wrap(cov~lag, scales="free", ncol=7)
-# 
 
-ggplot(data)+
-  geom_line(aes(x=date, y = so2_lag0, group=province ))+
-  facet_grid(province ~.)
+
+
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pollutant_meteoconfounder_lagweekSensitivity_weeklyadm2.pdf"),width = 5,height=4)
+(sens)
+dev.off()
+print(sens)
+ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/pollutant_meteoconfounder_lagweekSensitivity_weeklyadm2.png"),width = 5,height=4)
+dev.off()
+
+fit_list[which(fit_list$cov=="pm2p5"&fit_list$cov2=="absh_lag3 + tas_lag0" & fit_list$predvar==50 & fit_list$lag=="lag3"),]
+
+

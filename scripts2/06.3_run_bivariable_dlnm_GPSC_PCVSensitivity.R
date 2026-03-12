@@ -702,14 +702,21 @@ time_vec_label <- c("prePCV","postPCV")
     sensmods3 <- rbind(premod,postmod)
     sensmods3$outcome <- "pcv13"
 
+    ###PCV13
+    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_disease_weekly_",space,"_8week_prePCV.csv"))
+    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_disease_weekly_",space,"_8week_postPCV.csv"))
+    premod$type <- "prePCV"
+    postmod$type <- "postPCV"
+    sensmods4 <- rbind(premod,postmod)
+    sensmods4$outcome <- "disease"
 
 ## bind the sets
-sensmods <- rbind(sensmods1, sensmods2, sensmods3)
+sensmods <- rbind(sensmods1, sensmods2, sensmods3,sensmods4)
 sensmods$cov <- gsub("_lag0","",sensmods$covariate)
 tmps <- subset(sensmods, sensmods$cov== "pm2p5" & sensmods$interaction_level %in% c("none"))
 tmps$type <- factor(tmps$type, levels = c("prePCV","postPCV"))
 tmps$lag_week <- gsub("lag","week ",tmps$lag)
-tmps$outcome <- factor(tmps$outcome, levels = c("nvt","pcv7","pcv13"))
+tmps$outcome <- factor(tmps$outcome, levels = c("nvt","pcv7","pcv13","disease"))
 p14 <- ggplot(tmps)+
   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lag_week, type, outcome), color = type))+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -728,7 +735,7 @@ p14 <- ggplot(tmps)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45, hjust=1),
         strip.text.y = element_text(angle=0), legend.title = element_blank())
 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV_",space,".pdf"), width = 12, height = 5)
+pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV_",space,".pdf"), width = 12, height = 6.7)
 print(p14)
 dev.off()
 
