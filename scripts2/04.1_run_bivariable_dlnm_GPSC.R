@@ -23,7 +23,7 @@ interaction = FALSE
 time = "weekly"
 space = "adm2"
 ### set the time period 2005 - 2019 is precov and 2005-2023 is not precov
-precov = FALSE
+precov = TRUE
 
 ## load spatial data
 if(space == "adm1"){
@@ -224,7 +224,7 @@ for(gp in 1:length(gpsc_vec_sub)){
           # Creating a crossbasis with a vector and allow the function do the lags including the group for me
           if(time=="weekly"){
             max_lag <- 8
-            lag_knots <- c(2,4) # Log-spaced knots
+            # lag_knots <- c(2,4) # Log-spaced knots
             lag_knots <- logknots(max_lag, 2)
           }else{
             max_lag <- 3
@@ -401,7 +401,6 @@ for(gp in 1:length(gpsc_vec_sub)){
               as.formula(
                 paste(
                   "disease ~",
-                  ### only the crossbasis
                   paste(colnames(cb), collapse = " + "),  # Include all crossbasis variables
                   "+ f(id_u, model = 'bym2', graph = g, scale.model = T, adjust.for.con.comp = TRUE,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
                   "+ f(id_m, model = 'rw2', cyclic = T, scale.model = T, constr = T,  hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",

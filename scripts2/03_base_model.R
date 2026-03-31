@@ -130,6 +130,52 @@ if(precov==TRUE){
      write.table(mod_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_summary_statisics_",time,"_",space,"_",endyear,".csv"),quote=FALSE,row.names=FALSE,col.names=TRUE, sep =",")
      saveRDS(base_mod_list[[1]],file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
   
+################################################################################     
+    #### Annual rates per 100,000
+     # # Create a function to transform the spatial effects
+     # calc_spatial_rates <- function(u_summary, intercept) {
+     #   u_summary %>%
+     #     mutate(
+     #       # Calculate the Rate per 100k using the mean and quantiles
+     #       Rate_mean  = exp(intercept + mean) * 52,
+     #       Rate_lower = exp(intercept + `0.025quant`) * 52,
+     #       Rate_upper = exp(intercept + `0.975quant`) * 52
+     #     )
+     # }
+     # ### adm2 2019
+     # base_mod_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_weekly_20092011_popdens_adm2_2019.rds"))
+     # intercept <- base_mod_list$summary.fixed$mean[1]
+     # spatial_rates  <- calc_spatial_rates(base_mod_list$summary.random$id_u, intercept)
+     # seasonal_rates <- calc_spatial_rates(base_mod_list$summary.random$id_m, intercept)   
+     # write.table(spatial_rates[1:52,c("Rate_mean","Rate_lower","Rate_upper")], file = "/home/sbelman/Documents/env_sa_manuscript/models/base_models/spatial_rates_base_model_weekly_20092011_popdens_adm2_2019.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE)
+     # write.table(seasonal_rates[,c("Rate_mean","Rate_lower","Rate_upper")], file = "/home/sbelman/Documents/env_sa_manuscript/models/base_models/seasonal_rates_base_model_weekly_20092011_popdens_adm2_2019.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE)
+     # 
+     # ### adm1 2019
+     # base_mod_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_weekly_20092011_popdens_adm1_2019.rds"))
+     # intercept <- base_mod_list$summary.fixed$mean[1]
+     # spatial_rates  <- calc_spatial_rates(base_mod_list$summary.random$id_u, intercept)
+     # seasonal_rates <- calc_spatial_rates(base_mod_list$summary.random$id_m, intercept)   
+     # write.table(spatial_rates[1:52,c("Rate_mean","Rate_lower","Rate_upper")], file = "/home/sbelman/Documents/env_sa_manuscript/models/base_models/spatial_rates_base_model_weekly_20092011_popdens_adm1_2019.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE)
+     # write.table(seasonal_rates[,c("Rate_mean","Rate_lower","Rate_upper")], file = "/home/sbelman/Documents/env_sa_manuscript/models/base_models/seasonal_rates_base_model_weekly_20092011_popdens_adm1_2019.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE)
+     # 
+     # ### adm2 2023
+     # base_mod_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_weekly_20092011_popdens_adm2_2023.rds"))
+     # intercept <- base_mod_list$summary.fixed$mean[1]
+     # spatial_rates  <- calc_spatial_rates(base_mod_list$summary.random$id_u, intercept)
+     # seasonal_rates <- calc_spatial_rates(base_mod_list$summary.random$id_m, intercept)   
+     # write.table(spatial_rates[1:52,c("Rate_mean","Rate_lower","Rate_upper")], file = "/home/sbelman/Documents/env_sa_manuscript/models/base_models/spatial_rates_base_model_weekly_20092011_popdens_adm2_2023.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE)
+     # write.table(seasonal_rates[,c("Rate_mean","Rate_lower","Rate_upper")], file = "/home/sbelman/Documents/env_sa_manuscript/models/base_models/seasonal_rates_base_model_weekly_20092011_popdens_adm2_2023.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE)
+     # 
+     # 
+     # ##adm1 2023
+     # base_mod_list <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_weekly_20092011_popdens_adm1_2023.rds"))
+     # intercept <- base_mod_list$summary.fixed$mean[1]
+     # spatial_rates  <- calc_spatial_rates(base_mod_list$summary.random$id_u, intercept)
+     # seasonal_rates <- calc_spatial_rates(base_mod_list$summary.random$id_m, intercept)   
+     # write.table(spatial_rates[1:52,c("Rate_mean","Rate_lower","Rate_upper")], file = "/home/sbelman/Documents/env_sa_manuscript/models/base_models/spatial_rates_base_model_weekly_20092011_popdens_adm1_2023.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE)
+     # write.table(seasonal_rates[,c("Rate_mean","Rate_lower","Rate_upper")], file = "/home/sbelman/Documents/env_sa_manuscript/models/base_models/seasonal_rates_base_model_weekly_20092011_popdens_adm1_2023.csv", sep = ",", quote = FALSE, col.names = TRUE, row.names = FALSE)
+     
+     
      
      
      #### testing population and not population
@@ -226,5 +272,5 @@ if(precov==TRUE){
     # 
     #   saveRDS(base_test_models[[5]], file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
     #   write.table(mod_out, file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/mod_out_",time,"_intervention_test_",space,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = "," )
-
-      
+     
+     ######################################################################     

@@ -54,8 +54,41 @@ summary_table[order(-summary_table$count), ]
 
 sum(sa_adm1_weekly2019$disease)
 sum(sa_adm1_weekly2019$mening_count)+sum(sa_adm1_weekly2019$bact_count) + sum(sa_adm1_weekly2019$other_count)
-
 sum(sa_adm1_weekly2019$ag)+sum(sa_adm1_weekly2019$bact_count) + sum(sa_adm1_weekly2019$other_count)
+
+### pm2.5 and disease correlations
+get_cor <- function(data){
+  data %>%
+    summarise(
+      r = cor(pm2p5, disease, use="complete.obs"),
+      n = sum(complete.cases(pm2p5, disease))
+    )
+}
+# periods <- tibble(
+#   start = c(2005,2009,2009,2005,2011,2011,2005),
+#   end   = c(2009,2020,2023,2011,2023,2020,2020)
+# )
+periods <- list(
+  "2005-2009" = c(2005,2009),
+  "2009-2020" = c(2009,2020),
+  "2009-2023" = c(2009,2023),
+  "2005-2011" = c(2005,2011),
+  "2011-2020" = c(2011,2020),
+  "2011-2023" = c(2011,2023),
+  "2005-2020" = c(2005,2020),
+  "2005-2023" = c(2005,2023)
+)
+cor_table <- lapply(names(periods), function(p){
+
+  yrs <- periods[[p]]
+
+  sa_adm2_weekly %>%
+    filter(year >= yrs[1], year <= yrs[2]) %>%
+    get_cor() %>%
+    mutate(period = p)
+
+}) %>% bind_rows()
+
 
 ```
 
@@ -324,7 +357,7 @@ sa_adm1_monthly<-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframe
       )
     
     
-     # Plot with secondary axes using ggplot2
+# Plot with secondary axes using ggplot2
 dis_env <- ggplot(df_scaled, aes(x = date)) +
   # geom_line(aes(y = disease_smooth, color = "Disease"), linewidth = 0.8) +
   geom_line(aes(y = disease, color = "Disease"), linewidth = 0.8) +
@@ -1090,7 +1123,7 @@ plot_pm2p5 <- ggplot(tmppm2)+
   xlab("Var")+
   ylab("Relative Risk")+
   # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  scale_y_continuous(trans="log10", limits = c(0.95,1.10), breaks = c(0.95, 1, 1.10))+
   scale_color_manual(values = color_labels)+
   scale_fill_manual(values = color_labels)+
   scale_linetype_manual(values = linetype_labels)+
@@ -1233,11 +1266,13 @@ tmpabsh[which(max(tmpabsh$cumulative_fit)==tmpabsh$cumulative_fit & tmpabsh$lag=
 ## low humidity
 tmpabsh[which(tmpabsh$var>5.7&tmpabsh$var<5.8 & tmpabsh$lag=="lag3"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 
+tmpabsh[which(tmpabsh$var>=4.0&tmpabsh$var<5.8 & tmpabsh$lag%in%c("lag0","lag1","lag2","lag3")),c("lag","cov2","var","rr","lowerCI_rr","upperCI_rr","cumrr","cumlowerCI_rr","cumupperCI_rr" )]
+
 tmptas[which(tmptas$cov=="tasmin"&tmptas$lag=="lag3"&tmptas$cumlowerCI_rr>1),c("cov","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 
 tmptas[which(tmptas$cov=="tas" & tmptas$var==24),c("cov","var","lag","rr","lowerCI_rr","upperCI_rr")]
 
-tmptas[which(tmptas$cov=="tasmax"&tmptas$var==31),c("cov","lag","var","rr","lowerCI_rr","upperCI_rr")]
+tmptas[which(tmptas$cov=="tasmax"&tmptas$var==35),c("cov","lag","var","rr","lowerCI_rr","upperCI_rr")]
 
 
 ```
@@ -1276,7 +1311,7 @@ plot_temp_cum <- ggplot(tmp)+
   xlab("°C")+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "none")
+        legend.position = "right")
 
 # HURS
 tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
@@ -1346,7 +1381,7 @@ plot_pm2p5_cum <- ggplot(tmp)+
   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "none")
+        legend.position = "right")
 # PM10
 tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
 tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
@@ -1460,6 +1495,31 @@ dev.off()
 #         legend.position = "right",legend.title = element_blank())
 # plot_temp_cum
 # ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/cumulative_temperature_maxmin_weekly_adm2.png", width = 7, height = 5)
+
+# TEMPERATURE
+tmp <- subset(fit_list, fit_list$cov%in%c("tasmin") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+plot_tempmin_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov), fill=cov),alpha=0.3)+
+    geom_rug(data= data_unscaled, aes(x = tas_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  scale_color_manual(values = c("tasmin" = "#4169E1"))+
+  scale_fill_manual(values = c("tasmin" = "#4169E1"))+
+  # scale_linetype_manual(values = linetype_labels)+
+  labs(color = "Temperature Metric", fill = "Temperature Metric")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10", limits = c(0.8,1.09), breaks = c(0.8, 1, 1.1))+
+    # scale_y_continuous(trans="log10", limits = c(0.7,1.1), breaks = c(0.8, 1, 1.1))+
+  ggtitle("Temperature")+
+  xlim(-4,15)+
+  xlab("°C")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "none")
+plot_tempmin_cum
 ```
 
 ##### CUMULATIVE PLOT FOR UNIMPORTANT VARIABLES (SPEI, O3, PRLR, SFCWIND)
@@ -1603,7 +1663,71 @@ print(plot_o3_cum)
 dev.off()
 
 library(patchwork)
-(plot_wind_cum + plot_o3_cum)/(plot_prlrmean_cum + plot_prlrsum_cum + plot_spei_cum)
+  (plot_hurs_cum + plot_absh_cum + plot_temp_cum)/
+(plot_prlrmean_cum + plot_wind_cum + plot_spei_cum)
+
+
+```
+
+#### compare cumulative fit from 12 week, 8 week, and 6 week lag for PM2.5
+```{r}
+# read in each
+  lag8 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019_templag0humlag3.csv"))
+lag8$lagtotal <- "lag8"
+  lag12 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_12_2019_templag0humlag3.csv"))
+  lag12$lagtotal <- "lag12"
+  lag6 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_6_2019_templag0humlag3.csv"))
+  lag6$lagtotal <- "lag6"
+  
+  ### bind together and adjust variables
+  lagcomp <- rbind(lag8, lag12,lag6)
+  lagcomp <- lagcomp[which(lagcomp$cov2=="absh_lag3"),]
+
+  ## rrs
+  lagcomp$rr <- exp(lagcomp$fit)
+lagcomp$lowerCI_rr <- exp(lagcomp$lowerCI)
+lagcomp$upperCI_rr <- exp(lagcomp$upperCI)
+lagcomp$cumrr <- exp(lagcomp$cumulative_fit)
+lagcomp$cumlowerCI_rr <- exp(lagcomp$cum_lowerCI)
+lagcomp$cumupperCI_rr <- exp(lagcomp$cum_upperCI)
+
+### subset for cumulative
+  lagcompspec <- subset(lagcomp, lagcomp$lag_num %in% c(3))
+  
+  ##plot cumulative
+plot_lagscum <- ggplot(lagcompspec)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_num, lagtotal, covariate), color=lagtotal),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_num,lagtotal,covariate), fill=lagtotal),alpha=0.3)+
+  labs(color = "", fill = "")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  ggtitle("lag comparisons")+
+  xlab("concentration")+
+  facet_grid(. ~ covariate, scales = "free_x")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+plot_lagscum
+
+plot_lagsweekly <- ggplot(lagcomp[which(lagcomp$covariate=="so2_lag0")])+
+  geom_line(aes(x=var,y=rr,group=interaction(lag_num, lagtotal, covariate), color=lagtotal),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_num,lagtotal,covariate), fill=lagtotal),alpha=0.3)+
+  labs(color = "", fill = "")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  ggtitle("lag comparisons")+
+  xlab("concentration")+
+  facet_grid(lagtotal ~ lag_num)+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+plot_lagsweekly
 
 ```
 
@@ -2430,6 +2554,25 @@ dev.off()
 fits_sero_cum[which(fits_sero_cum$cumfit_lowerRR>0.999&fits_sero_cum$predvar==50&fits_sero_cum$lag_num==3),c("GPSC","var","cum_fitRR","cumfit_lowerRR","cumfit_upperRR")]
 age_rr[which(age_rr$RR_ratio_lower>0.99),c("GPSC","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
 
+
+##### SEROTYPE 19f ALONE
+plot19f <- ggplot(fits_sero_week[which(fits_sero_week$GPSC=="Sero19F"),]) +
+                        # color="black", alpha=0.7, linetype = "dashed")+
+              geom_line(aes(x = predvar, y = exp(fit),
+                            group = interaction(lag_week, GPSC, cov, pcv_type))) +
+              geom_ribbon(aes(x = predvar, ymin = exp(lowerCI), ymax = exp(upperCI),
+                              group = interaction(lag_week, GPSC, cov, pcv_type)), alpha = 0.1) +
+              geom_hline(yintercept = 1, linetype = "dashed", color = "red", alpha = 0.6) +
+              theme_bw() +
+              theme(axis.text = element_text(size = 11),
+                    axis.title = element_text(size = 12),
+                    strip.text = element_text(size = 9),
+                    axis.text.x = element_text(angle = 45, hjust = 1, size = 11),
+                    legend.title = element_text(size = 12)) +
+              xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')'))) +
+              ylab("Relative Risk") +
+              facet_grid(.~lag_num) + 
+              scale_y_continuous(trans = "log10", limits = c(0.7, 1.5), breaks = c(0.8,1,1.12,1.5))
 
 
 ```
