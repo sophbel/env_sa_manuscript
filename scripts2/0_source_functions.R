@@ -400,7 +400,7 @@ plot_spatial_effects<-function(mod,shp, N, structured = TRUE, title_a = "Spatial
   a<-ggplot(data = shp_a1) +
     geom_sf(aes(fill = unstructured_effects),color=NA) +
     # scale_fill_viridis_c() +
-    scale_fill_gradient2(low="blue",mid="white",high="red",midpoint = 0, limits = c(-2,4))+
+    scale_fill_gradient2(low="blue",mid="white",high="red",midpoint = 0, limits = c(-4,4))+
     theme_minimal() +
     # theme(legend.position = "none")+
     # labs(title = paste0("Spatial Random Effects: ",spvec[sp],", ",cov),
@@ -409,7 +409,7 @@ plot_spatial_effects<-function(mod,shp, N, structured = TRUE, title_a = "Spatial
          subtitle = "Full Effects")
   b<-ggplot(data = shp_a1) +
     geom_sf(aes(fill = structured_effects),color=NA) +
-    scale_fill_gradient2(low="blue",mid="white",high="red",midpoint = 0, limits = c(-2,4))+
+    scale_fill_gradient2(low="blue",mid="white",high="red",midpoint = 0, limits = c(42,4))+
     theme_minimal() +
     labs(title = "",
          fill = "Random Effect",

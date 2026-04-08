@@ -617,6 +617,7 @@ mod<-basemod
         theme(axis.text.x = element_text(angle = 45, hjust = 1), axis.text = element_text(size = 11), axis.title = element_text(size = 11))+
         xlab("Month")+
         ylab("Seasonal Effect")
+  
   yp <- basemod$summary.random$id_y
   yp$year <- 2004+ yp$ID
   year_n <- nrow(yp)/9 
@@ -1260,6 +1261,8 @@ tmphurs[which(tmphurs$cumlowerCI_rr>1 & tmphurs$lag=="lag3"),c("var")]
 tmphurs[which(tmphurs$var>74& tmphurs$var<76 & tmphurs$lag=="lag3"),c("cov2","var","lag","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 tmphurs[which(tmphurs$cumlowerCI_rr<1 &tmphurs$var>74 & tmphurs$lag=="lag3"),c("cov2","var","lag","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 
+tmphurscum <- tmphurs[which( tmphurs$lag=="lag3"),c("cov2","var","lag","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+tmphurscum[which(tmphurscum$cumupperCI_rr<1 & tmphurscum$var>40),]
 
 ### absolute humidity numbers
 tmpabsh[which(max(tmpabsh$cumulative_fit)==tmpabsh$cumulative_fit & tmpabsh$lag=="lag3"),]
@@ -1267,6 +1270,8 @@ tmpabsh[which(max(tmpabsh$cumulative_fit)==tmpabsh$cumulative_fit & tmpabsh$lag=
 tmpabsh[which(tmpabsh$var>5.7&tmpabsh$var<5.8 & tmpabsh$lag=="lag3"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 
 tmpabsh[which(tmpabsh$var>=4.0&tmpabsh$var<5.8 & tmpabsh$lag%in%c("lag0","lag1","lag2","lag3")),c("lag","cov2","var","rr","lowerCI_rr","upperCI_rr","cumrr","cumlowerCI_rr","cumupperCI_rr" )]
+tmpabsh[which(tmpabsh$cumlowerCI_rr>1 & tmpabsh$lag=="lag3"),c("var")]
+
 
 tmptas[which(tmptas$cov=="tasmin"&tmptas$lag=="lag3"&tmptas$cumlowerCI_rr>1),c("cov","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 
@@ -1837,6 +1842,19 @@ cat(sprintf("If PM2.5 reduced to <= %g ug/m3, %.1f cases (~%.2f%%) could be prev
             PM_cf, total_attr_cases_target, 100*PAF_target))
 
 ```
+#### VISUALIZE SURFACE PLOTS
+```{r}
+#PM2.5 surface plot with absolute humidity and temperature controls
+mods <- readRDS("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_weekly_adm2_dlnm_none_bivariable_8_2019_templag0humlag3.rds")
+mods1 <- mods[[1]][[2]]
+plot.crosspred(mods1$cp)
+
+## meteorlogical crosspred
+modsmet <- readRDS("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/model_out_summary_list_weekly_adm2_dlnm_none_8_2019_meteo.rds")
+
+
+```
+
 
 #### SUPPLEMENTAL FIGURES GAUTENG
 #### Gauteng Alone Compared to South Africa Sensitivity (using fit_list South Africa from section starting at line 950)
@@ -2365,6 +2383,8 @@ fits_age$cumfit_lowerRR <- exp(fits_age$cum_lowerCI)
 fits_age$cumfit_upperRR <- exp(fits_age$cum_upperCI)
 
 fits_age[which(fits_age$GPSC=="age_gt65" & fits_age$var==50 & fits_age$lag_num == 3),c("GPSC","var","cum_fitRR","cumfit_lowerRR","cumfit_upperRR")]
+fits_age[which(fits_age$GPSC=="age_lt6" & fits_age$var==100 & fits_age$lag_num == 3),c("GPSC","var","cum_fitRR","cumfit_lowerRR","cumfit_upperRR")]
+
 
 fits_age[which(fits_age$cumfit_lowerRR>1&fits_age$predvar==50&fits_age$lag_num==3),c("GPSC","var","cum_fitRR","cumfit_lowerRR","cumfit_upperRR")]
 age_rr[,c("GPSC","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
