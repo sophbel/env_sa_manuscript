@@ -1924,6 +1924,31 @@ print(p)
 dev.off()
 ```
 
+
+
+#### visualize count of sequences for Figure S14
+```{r}
+data2<- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+out <- data2 %>%
+  group_by(province,year) %>%
+  summarise(count_seq = sum(sequenced, na.rm = T))
+
+color_labels = c("Eastern Cape" = "#008080", "Free State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
+                     "Limpopo" = "#228B22", "Mpumalanga" = "#FFC000", "North West" = "#8B5A2B", "Northern Cape" = "#606060", "Western Cape" = "#1A2D6D" )
+countpyeryear <- ggplot(out[which(out$year<2020),]) + 
+  geom_line(aes(x= year, y = count_seq, group = province, color = province))+
+  theme_bw() +
+  theme(element_text(size = 15))+
+  scale_color_manual(values = color_labels)+
+  xlab("Year")+
+  ylab("Count") +
+  labs(color = "Province")
+pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/seqcountperyear.pdf", width = 8, height = 4)
+print(countpyeryear)
+dev.off()
+```
+
+
 #### VISUALIZE SURFACE PLOTS FOR SUPPLEMENT Figure S21 and Figure S22
 ```{r}
 library(GHRmodel)
