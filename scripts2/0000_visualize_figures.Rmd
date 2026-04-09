@@ -1842,17 +1842,171 @@ cat(sprintf("If PM2.5 reduced to <= %g ug/m3, %.1f cases (~%.2f%%) could be prev
             PM_cf, total_attr_cases_target, 100*PAF_target))
 
 ```
-#### VISUALIZE SURFACE PLOTS
+
+#### lags Figure S19
 ```{r}
+data <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
+
+# Make sure your data is a data.table
+setDT(data)
+
+# Define the number of lags
+lags <- 0:12
+# grep("age",colnames(data), value = TRUE)
+# grep("GPSC",colnames(data), value = TRUE)
+# grep("Sero",colnames(data), value = TRUE)
+
+## manual labels
+color_labels = c("Eastern Cape" = "#008080", "Free State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
+                     "Limpopo" = "#228B22", "Mpumalanga" = "#FFC000", "North West" = "#8B5A2B", "Northern Cape" = "#606060", "Western Cape" = "#1A2D6D" )
+## loop through a number of covariates
+cov_names_vec <- c("pm2p5","pm10","so2","o3", "hurs","absh","tas","tasmin","tasmax", "prlrmean",  "sfcWind")
+cov_names_labels <- c("PM2.5","PM10","SO2","O3", "Relative Humidity (%)","Absolute Humidity (g/m3)","Mean Temp. (C)","Min. Temp. (C)","Max. Temp. (C)", "Mean Precipitation (mm)",  "Wind Speed (km/hr)")
+p_list <- list()
+for(c in 1:length(cov_names_vec)){
+    # Create a long-format data.table for correlation results
+    corr_results <- rbindlist(lapply(unique(data$adm1_name), function(prov) {
+      prov_data <- data[adm1_name == prov]
+      
+      # For each lag, compute the Spearman correlation
+      lapply(lags, function(lag) {
+        lag_col <- paste0(cov_names_vec[c],"_lag", lag)
+        if (lag_col %in% names(prov_data)) {
+          cor_val <- cor(prov_data[[lag_col]], prov_data$disease, method = "spearman", use = "complete.obs")
+        } else {
+          cor_val <- NA
+        }
+        data.table(province = prov, lag = lag, spearman_corr = cor_val)
+      }) %>% rbindlist()
+    }))
+    
+    # Plot
+    if(c==length(cov_names_vec)){
+      p <- ggplot(corr_results, aes(x = lag, y = spearman_corr, color = province), alpha=0.8) +
+              geom_hline(yintercept = 0, linetype = "dashed", color = "red", alpha = 0.7)+
+              geom_line() +
+              theme_minimal() +
+              scale_color_manual(values = color_labels) +
+              labs(title = cov_names_labels[c],x = "Lag (weeks)",y = "Spearman Correlation",color = "Province")  +
+              theme(legend.position = "none")
+    }else{
+    p <- ggplot(corr_results, aes(x = lag, y = spearman_corr, color = province), alpha=0.8) +
+              geom_hline(yintercept = 0, linetype = "dashed", color = "red", alpha = 0.7)+
+              geom_line() +
+              theme_minimal() +
+              scale_color_manual(values = color_labels) +
+              labs(title = cov_names_labels[c],x = "Lag (weeks)",y = "Spearman Correlation",color = "Province") +
+              theme(legend.position = "none")
+    }
+    
+    p_list[[c]] <- p
+}
+
+p <- ggplot(corr_results, aes(x = lag, y = spearman_corr, color = province), alpha=0.8) +
+              geom_hline(yintercept = 0, linetype = "dashed", color = "red", alpha = 0.7)+
+              geom_line() +
+              theme_minimal() +
+              scale_color_manual(values = color_labels) +
+              labs(title = cov_names_vec[c],x = "Lag (weeks)",y = "Spearman Correlation",color = "Province") +
+              theme(legend.position = "right")
+pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/envvariablespearmanlagcorrelation.pdf", width=10, height =10)
+grid.arrange(grobs = p_list, nrow=3)
+dev.off()
+
+g <- arrangeGrob(grobs = p_list, nrow = 3)  # Create grob object
+ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/envvariablespearmanlagcorrelation.png",
+       g, width = 10, height = 10)
+
+
+
+pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/envvariablespearmanlagcorrelation_LEGEND.pdf", width=3, height =3)
+print(p)
+dev.off()
+```
+
+#### VISUALIZE SURFACE PLOTS FOR SUPPLEMENT Figure S21 and Figure S22
+```{r}
+library(GHRmodel)
+
+### air quality surface plots
+
 #PM2.5 surface plot with absolute humidity and temperature controls
 mods <- readRDS("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_weekly_adm2_dlnm_none_bivariable_8_2019_templag0humlag3.rds")
-mods1 <- mods[[1]][[2]]
-plot.crosspred(mods1$cp)
+
+## test
+# mods1 <- mods[[1]][[2]]
+# plot_coef_crosspred(
+#   crosspred = mods1$cp,  # Crosspred object containing model predictions
+#   type = "heatmap",           # Create a 2D heatmap of effects over exposure and lag values
+#   exp = TRUE,                 # Exponentiate effects to show relative risks
+#   palette = "-RdBu",          # Use the inverted "RdBu" color palette for the heatmap (blue for lower values)
+#   # title = "Effect of PM2.5 on IPD",  # Main plot title
+#   xlab = expression("PM"[2.5]*" (µg/m³)"))
+
+### plot all air pollutions in a list
+ap_plot_list <- list()
+pollutant_names <- c("PM2.5", "PM10", "SO2")
+pollutant_names <- c("PM₂.₅", "PM₁₀", "SO₂")
+
+counter <- 1
+for (p in seq_along(mods)) {
+  for (i in seq_along(mods[[p]])) {
+    cov1 <- mods[[p]][[i]]$data$cov
+    cov2 <- mods[[p]][[i]]$data$cov2
+    if(cov2%in%c("hurs_lag3","absh_lag3")){
+      ap_plot_list[[counter]] <- plot_coef_crosspred(
+      crosspred = mods[[p]][[i]]$cp,
+      type = "heatmap",
+      exp = TRUE,
+      palette = "-RdBu",
+      xlab = "Lag Week",
+      ylab = paste0(pollutant_names[p]," µg/m³ (",gsub("_lag3","",cov2), " + tas)"))
+    }else{
+      ap_plot_list[[counter]] <- plot_coef_crosspred(
+      crosspred = mods[[p]][[i]]$cp,
+      type = "heatmap",
+      exp = TRUE,
+      palette = "-RdBu",
+      xlab = "Lag Week",
+      ylab = paste0(pollutant_names[p]," µg/m³ (",gsub("_lag0","",cov2), ")"))
+    }
+    
+    
+    counter <- counter + 1
+  }
+}
+
+
+pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/airpollution_surfaces.pdf", width = 12, height = 8)
+wrap_plots(ap_plot_list)
+dev.off()
+
+wrap_plots(ap_plot_list)
+ggsave(file = "/home/sbelman/Documents/env_sa_manuscript/figures/supplement/airpollution_surfaces.png", width = 12, height = 8)
+dev.off()
 
 ## meteorlogical crosspred
 modsmet <- readRDS("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/model_out_summary_list_weekly_adm2_dlnm_none_8_2019_meteo.rds")
+## wrap plots from plot_coef_crosspred
+color_vec <- c(rep("-RdBu",3),rep("Green-Brown",3),"-RdBu",rep("Green-Brown",4))
+metplot_list <- list()
+for(i in 1:length(modsmet)){
+  metplot_list[[i]] <- plot_coef_crosspred(
+  crosspred = modsmet[[i]]$cp,  # Crosspred object containing model predictions
+  type = "heatmap",           # Create a 2D heatmap of effects over exposure and lag values
+  exp = TRUE,                 # Exponentiate effects to show relative risks
+  palette = "-RdBu",         
+  xlab = "Lag Week",
+  ylab = gsub("_lag0","",modsmet[[i]]$data$cov))
+}
 
+pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/meteorological_surfaces.pdf", width = 12, height = 6)
+wrap_plots(metplot_list)
+dev.off()
 
+wrap_plots(metplot_list)
+ggsave(file = "/home/sbelman/Documents/env_sa_manuscript/figures/supplement/meteorological_surfaces.png", width = 12, height = 6)
+dev.off()
 ```
 
 
@@ -2135,32 +2289,6 @@ plotfit50 <- ggplot(fits50) +
   print(plotfit50)
   dev.off()
   
-  
-  
-  ### not using
-  
-#### weekly lags
-# turn to factors and label so that metrics are included
-# fit_listcomp$covfact <- factor(fit_listcomp$cov, levels = c("pm2p5","pm10","so2"),
-#                               labels = c("PM2.5 (µg/m³)","PM10 (µg/m³)","SO2 (µg/m³)"))
-# aqlaggautplotno <- ggplot(fit_listcomp[which(fit_listcomp$cov %in% c("pm2p5","pm10","so2"))])+
-# aqlaggautplotno <- ggplot(fit_listcomp[which(fit_listcomp$cov %in% c("pm2p5"))])+
-#   geom_line(aes(x=var,y=rr,group=interaction(type,covfact,lag_num), color = type),alpha=0.7)+
-#   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-#   geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(type,covfact,lag_num), fill=type),alpha=0.4)+
-#   scale_color_manual(values = c("Gauteng" = "purple","NoGauteng" = "darkgreen", "South Africa" = "black"))+
-#   scale_fill_manual(values = c("Gauteng" = "purple", "NoGauteng" = "darkgreen", "South Africa" = "black"))+
-#   theme_bw()+
-#   xlab("Var")+
-#   ylab("Relative Risk")+
-#   # scale_y_continuous(trans="log10")+
-#   scale_y_continuous(trans="log10", limits = c(0.9,1.2), breaks = c(0.9, 1, 1.2))+
-#   xlim(0,150)+
-#   labs(color = "", fill = "")+
-#   xlab("Exposure Value")+
-#   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),strip.background = element_blank())+
-#   facet_grid(type ~ lag_num, scales = "free_x")
-#     # facet_wrap(type~lag_num,scales = "free", ncol = 9, labeller = labeller(lag_num = function(x) ""))
 
 ```
 
@@ -2665,6 +2793,8 @@ plot_pcv_cum
 ggsave(file="/home/sbelman/Documents/env_sa_manuscript/figures/figure4/pcv_pm2p5_cumulative.png", width = 12,height=3)
 
 ```
+
+### Figure 4
 #### plot the relative risk ratio for each sub model as compared to the main models with the cumulative effect
 ```{r}
 # Filter to just age groups (GPSC column) — adapt if needed
@@ -2755,6 +2885,98 @@ age_rr[which(age_rr$RR_ratio_lower>0.99),c("GPSC","RR_ratio","RR_ratio_lower","R
 
 ```
 
+#### plot summary of proportions of GPSCs for supplement S15
+```{r}
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(lubridate)
+library(sf)
+data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+gpscdf <- as.data.table(table(data2$GPSC))[order(-N)]
+shp <-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+
+
+#  Filter targets: N >= 100 or specific ID "8"
+target_gpscs <- gpscdf %>% 
+  filter(N >= 100 | V1 == "8") %>% 
+  pull(V1)
+
+# Prepare Panel A: Time series of proportions per week
+df_a <- data2 %>%
+  mutate(Week = floor_date(as.Date(date), "week")) %>%
+  # Step 1: Calculate total sequences per week across the whole dataset
+  group_by(Week) %>%
+  mutate(weekly_total_sequenced = sum(sequenced, na.rm = TRUE)) %>%
+  # Step 2: Filter for the lineages we want to plot (and only sequenced rows)
+  filter(sequenced == 1, GPSC %in% target_gpscs) %>%
+  # Step 3: Count instances of each GPSC per week
+  group_by(Week, GPSC, weekly_total_sequenced) %>%
+  summarise(gpsc_count = n(), .groups = "drop") %>%
+  # Step 4: Calculate the proportion
+  mutate(proportion = gpsc_count / weekly_total_sequenced,
+    GPSC_label = paste0("GPSC", GPSC))
+
+# Prepare Panel B: Spatial distribution per lineage
+# (Proportion of each GPSC found within each province)
+df_b <- data2 %>%
+  # 1. Filter to only rows that were actually sequenced
+  filter(sequenced == 1) %>%
+  # 2. Calculate the total sequences for each province across all lineages
+  group_by(province) %>%
+  mutate(province_total_sequenced = n()) %>%
+  ungroup() %>%
+  # 3. Now filter for only your target GPSCs
+  filter(GPSC %in% target_gpscs) %>%
+  # 4. Group by province and GPSC to get the numerator
+  group_by(province, GPSC, province_total_sequenced) %>%
+  summarise(gpsc_prov_count = n(), .groups = "drop") %>%
+  # 5. Calculate the proportion based on the province total we saved earlier
+  mutate(prop = gpsc_prov_count / province_total_sequenced,
+    GPSC_label = paste0("GPSC", GPSC))
+
+
+## reorder
+label_order <- paste0("GPSC", target_gpscs)
+df_a <- df_a %>%
+  mutate(GPSC = factor(GPSC, levels = target_gpscs),
+         GPSC_label = factor(GPSC_label, levels = label_order))
+
+df_b <- df_b %>%
+  mutate(GPSC = factor(GPSC, levels = target_gpscs),
+         GPSC_label = factor(GPSC_label, levels = label_order))
+
+
+
+# 4. Create Plots
+plot_a <- ggplot(df_a, aes(x = Week, y = proportion)) +
+  geom_col(width = 7, fill = "black", color = "black") + 
+  facet_wrap(~GPSC_label, scales = "free", ncol = 3) +
+  labs(y = "Proportion", x = "Date") +
+  theme_bw()+
+  theme(strip.background = element_rect(fill = "white"),axis.text.x = element_text(angle=45, hjust =1))+
+  theme(element_text(size=12))
+
+colnames(shp)[which(colnames(shp)=="NAME_1")] <- "province"
+df_b$province <- gsub("_"," ",df_b$province)
+
+shpprop <- shp %>% 
+  inner_join(df_b, by = "province") 
+shpprop$GPSC_label <- gsub("_count","",shpprop$GPSC_label)
+plot_b <- ggplot(shpprop) +
+  geom_sf(aes(fill = prop), color = "white", size = 0.1) +
+  facet_wrap(~GPSC_label, ncol = 3) +
+  scale_fill_viridis_c(option = "mako", name = "proportion") + 
+  theme_void() +
+  theme(element_text(size=12))
+
+pdf("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/gpsc_proportions_perweek.pdf",width = 6, height =6)
+print(plot_a)
+dev.off()
+pdf("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/gpsc_proportions_perprovince.pdf",width = 6, height =6)
+print(plot_b)
+dev.off()
+```
 
 #### plot GPSC21 19F and pull numbers for manuscript
 ```{r}
@@ -2804,11 +3026,11 @@ data2 <- data2 %>%
       
       plotgpsc21 <- ggplot(weekly_data2, aes(x = week, y = prop_gpsc21plot, size = prop_gpsc21plot, colour = prop_gpsc21plot)) +
           geom_point(alpha = 0.8) +
-          scale_colour_gradientn(colours = c("#d6e9f9", "#4a7bd0", "#8b2f8c", "#d7191c"),values = scales::rescale(c(0, 0.25, 0.6, 1)),limits = c(0, 1),name = "Proportion GPSC21")+
+          scale_colour_gradientn(colours = c("#d6e9f9", "#4a7bd0", "#8b2f8c", "#d7191c"),values = scales::rescale(c(0, 0.25, 0.6, 1)),limits = c(0, 1),name = "Proportion GPSC21 per week")+
           scale_size(range = c(1, 8),limits = c(0, 1),name = "Proportion GPSC21") +
           scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
           facet_wrap(~ province, ncol = 3, strip.position = "top") +
-          labs(x = "Week", y = "Proportion GPSC21") +
+          labs(x = "Week", y = "Proportion GPSC21 (per week)") +
           theme_classic(base_size = 13) +
           ylim(0,1.3)+
           theme(

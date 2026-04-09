@@ -18,7 +18,7 @@
 ####LOAD DATA & LIBRARIES ######################################################
 source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
 ### set if interaction is true or not
-interaction = FALSE
+interaction = TRUE
 ### set resolution
 time = "weekly"
 space = "adm2"
