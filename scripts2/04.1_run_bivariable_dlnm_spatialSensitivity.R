@@ -357,6 +357,8 @@ dev.off()
 
 
 
+
+
 provincedeviations <- ggplot(map_diff_data, aes(x = year, y = diff, group = district)) +
   # Add a light grey line for every district to show the bundle
   geom_line(alpha = 0.3, color = "grey40") + 
@@ -403,6 +405,31 @@ y <- ggplot(yp)+
   ylab("Annual Effect")+
   labs(fill="Province",color = "Province", title = "Interannual Effect")+
   facet_wrap(region ~.)
+
+#### plot the district level effect from both models next to each other
+ybprov_districteffect <- ggplot(data = map_diff_data) +
+  geom_sf(aes(fill = mean_total), color = "black", size = 0.05) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,name = "Yearly Deviation", limits = c(-4,4)) +
+  facet_wrap(~year, ncol = 5) +
+  theme_minimal() +
+  labs(title = "Yearly Spatial Effect from Year by Province",
+       subtitle = "Positive (Red) indicates higher risk than the yearly average for that district") +
+  theme(axis.text = element_blank(),
+        panel.grid = element_blank(),
+        strip.text = element_text(face = "bold"))
+spbyyear_districteffect <- ggplot(data = map_diff_data) +
+  geom_sf(aes(fill = mean_yearly), color = "black", size = 0.05) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,name = "Yearly Deviation", limits = c(-4,4)) +
+  facet_wrap(~year, ncol = 5) +
+  theme_minimal() +
+  labs(title = "Yearly Spatial Effect from Space by Year",
+       subtitle = "Positive (Red) indicates higher risk than the yearly average for that district") +
+  theme(axis.text = element_blank(),
+        panel.grid = element_blank(),
+        strip.text = element_text(face = "bold"))
+library(patchwork)
+ybprov_districteffect + spbyyear_districteffect
+
 
 library(patchwork)
 pdf("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/spatial_sensitivity/diffspatial_province_idmidy_weekly_adm2_2019.pdf", width = 10, height =5)

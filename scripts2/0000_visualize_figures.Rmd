@@ -1954,7 +1954,6 @@ dev.off()
 library(GHRmodel)
 
 ### air quality surface plots
-
 #PM2.5 surface plot with absolute humidity and temperature controls
 mods <- readRDS("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_weekly_adm2_dlnm_none_bivariable_8_2019_templag0humlag3.rds")
 
@@ -2032,6 +2031,38 @@ dev.off()
 wrap_plots(metplot_list)
 ggsave(file = "/home/sbelman/Documents/env_sa_manuscript/figures/supplement/meteorological_surfaces.png", width = 12, height = 6)
 dev.off()
+```
+
+#### SURFACE PLOTS FOR GPSC MODELS 
+```{r}
+library(GHRmodel)
+library(patchwork)
+gpsc_vec <- c("3","17","2","14","10","5","13","26","1","21","56","41","8")
+# gpsc_vec <- c("21","2","3")
+gpsc_vec <- paste0("GPSC", gpsc_vec)
+
+plot_list <- lapply(gpsc_vec, function(gpsc) {
+  
+  cplist <- readRDS(paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/",
+           "crosspred_list_weekly_adm1_dlnm_", gpsc, "_count_bivariable_8_2019.rds"))
+  
+  plot_coef_crosspred(
+    crosspred = cplist[[1]]$cp_high,
+    type = "heatmap",
+    exp = TRUE,
+    palette = "-RdBu",
+    xlab = "Lag Week",
+    ylab = "PM₂.₅"
+  ) + ggplot2::ggtitle(gpsc)
+})
+
+wrap_plots(plot_list)
+ggsave(file = "/home/sbelman/Documents/env_sa_manuscript/figures/supplement/airpollution_GPSC_surfaces.png", width = 15, height = 10)
+dev.off()
+pdf(file = "/home/sbelman/Documents/env_sa_manuscript/figures/supplement/airpollution_GPSC_surfaces.pdf", width = 15, height = 10)
+wrap_plots(plot_list)
+dev.off()
+
 ```
 
 

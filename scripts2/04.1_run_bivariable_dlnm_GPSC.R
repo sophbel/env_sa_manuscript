@@ -21,7 +21,7 @@ source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R"
 interaction = TRUE
 ### set resolution
 time = "weekly"
-space = "adm2"
+space = "adm1"
 ### set the time period 2005 - 2019 is precov and 2005-2023 is not precov
 precov = TRUE
 
@@ -124,9 +124,10 @@ all_gpscs <- all
 all <- grep("lag0",all, value = TRUE)
 if(interaction == TRUE){
   cov_names <- grep("pm2p5|pm10|so2", all, value = TRUE)
+  cov_names <- grep("pm2p5", all, value = TRUE)
   # cov_names <- grep("pm2p5", all, value = TRUE)
   # cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag3","tas_lag3")
-  cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag0","tas_lag0")
+  # cov_names2 <- c("hurs_lag3","absh_lag3","tasmax_lag0","tas_lag0")
   cov_names2 <- c("absh_lag3")
   
 }else{
@@ -654,23 +655,23 @@ for(gp in 1:length(gpsc_vec_sub)){
         ############## SAVE FILES ##############################################
         # save this and overwrite it each time until get to the end of the GPSCs as a stop gap
         if(interaction==TRUE){
-        write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        # write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
         }
           ## save individual gpsc files
         # saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.rds"))
-        # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,".rds"))
-        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,".rds"))
+        # write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
   } ### end of loop through gpscs
 
 
-if(interaction==TRUE){
-write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-}else{
-  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",time,"_",space,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-}
+# if(interaction==TRUE){
+# write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+# write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+# write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+# }else{
+#   write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",time,"_",space,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+# }
 
 
  
