@@ -1244,7 +1244,7 @@ cumspms10[which(cumspms10$var=="100"),]
 tmppm1[which(tmppm1$cov == "pm10"& tmppm1$cov2=="absh_lag3 + tas_lag0" & tmppm1$var==150),c("cov2","lag","var","cumrr","rr","lowerCI_rr","upperCI_rr")]
 
 ### particulate matter numbers SO2
-cumsso2 <- tmpso2[which( tmpso2$lag=="lag3" & tmpso2$cov == "so2"& tmppm1$cov2=="absh_lag3 + tas_lag0"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+cumsso2 <- tmpso2[which( tmpso2$lag=="lag3" & tmpso2$cov == "so2"& tmpso2$cov2=="absh_lag3 + tas_lag0"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 cumsso2$perc_increase_above125 <- (cumsso2$cumrr / cumsso2$cumrr[(cumsso2$var == 130 & cumsso2$cov2 == "absh_lag3 + tas_lag0")] - 1) * 100
 cumsso2[which(cumsso2$cov2=="none"),]
 cumsso2[which(cumsso2$var=="100"),]
@@ -1843,7 +1843,7 @@ cat(sprintf("If PM2.5 reduced to <= %g ug/m3, %.1f cases (~%.2f%%) could be prev
 
 ```
 
-#### lags Figure S19
+#### lags Figure S3
 ```{r}
 data <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
 
@@ -1974,6 +1974,7 @@ pollutant_names <- c("PM₂.₅", "PM₁₀", "SO₂")
 
 counter <- 1
 for (p in seq_along(mods)) {
+  heat_lim_vec <- list(c(0.94,1.05),c(0.94,1.05),c(0.9,1.09))
   for (i in seq_along(mods[[p]])) {
     cov1 <- mods[[p]][[i]]$data$cov
     cov2 <- mods[[p]][[i]]$data$cov2
@@ -1981,6 +1982,7 @@ for (p in seq_along(mods)) {
       ap_plot_list[[counter]] <- plot_coef_crosspred(
       crosspred = mods[[p]][[i]]$cp,
       type = "heatmap",
+      heat_lims = heat_lim_vec[[p]],
       exp = TRUE,
       palette = "-RdBu",
       xlab = "Lag Week",
@@ -1989,6 +1991,7 @@ for (p in seq_along(mods)) {
       ap_plot_list[[counter]] <- plot_coef_crosspred(
       crosspred = mods[[p]][[i]]$cp,
       type = "heatmap",
+      heat_lims = heat_lim_vec[[p]],
       exp = TRUE,
       palette = "-RdBu",
       xlab = "Lag Week",
@@ -2049,6 +2052,7 @@ plot_list <- lapply(gpsc_vec, function(gpsc) {
   plot_coef_crosspred(
     crosspred = cplist[[1]]$cp_high,
     type = "heatmap",
+    heat_lims = c(0.78,1.22),
     exp = TRUE,
     palette = "-RdBu",
     xlab = "Lag Week",
@@ -2061,6 +2065,10 @@ ggsave(file = "/home/sbelman/Documents/env_sa_manuscript/figures/supplement/airp
 dev.off()
 pdf(file = "/home/sbelman/Documents/env_sa_manuscript/figures/supplement/airpollution_GPSC_surfaces.pdf", width = 15, height = 10)
 wrap_plots(plot_list)
+dev.off()
+
+print(plot_list[[10]] + plot_list[[9]]+plot_list[[1]] )
+ggsave(file = "/home/sbelman/Documents/env_sa_manuscript/figures/supplement/airpollution_GPSC21_1_surfaces.png", width = 15, height = 5)
 dev.off()
 
 ```
@@ -2941,7 +2949,7 @@ age_rr[which(age_rr$RR_ratio_lower>0.99),c("GPSC","RR_ratio","RR_ratio_lower","R
 
 ```
 
-#### plot summary of proportions of GPSCs for supplement S15
+#### plot summary of proportions of GPSCs for supplement S12
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -3019,6 +3027,7 @@ df_b$province <- gsub("_"," ",df_b$province)
 shpprop <- shp %>% 
   inner_join(df_b, by = "province") 
 shpprop$GPSC_label <- gsub("_count","",shpprop$GPSC_label)
+shpprop$GPSC_label <- factor(shpprop$GPSC_label, levels = paste0("GPSC",target_gpscs))
 plot_b <- ggplot(shpprop) +
   geom_sf(aes(fill = prop), color = "white", size = 0.1) +
   facet_wrap(~GPSC_label, ncol = 3) +
@@ -3300,6 +3309,10 @@ dev.off()
 
 #### cumulative dose response curves for all GPSCs
 ```{r}
+data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+dtgpsc <- data.table(table(data2$GPSC))[which(data.table(table(data2$GPSC))$N>100 | data.table(table(data2$GPSC))$V1%in%c("8","41"))]
+gpsc_vec <- c(paste0("GPSC",dtgpsc[order(-N)]$V1))
+
 space = "adm1"
 tmps <- subset(allfits, allfits$cov== "pm2p5" & allfits$interaction_level %in% c("low","high","none") & allfits$lag_num==3 & allfits$space_time==paste0("weekly_",space))
 
@@ -3320,7 +3333,8 @@ ggplot(allfits_pivoted[which(allfits_pivoted$interaction_level=="high"),])+
   geom_line(aes(x=var, y= cumulative_fit_noint, group = interaction(GPSC,cov)))
 allfits_pivoted[which(allfits_pivoted$interaction_level=="high"&allfits_pivoted$GPSC=="GPSC1"&allfits_pivoted$predvar==50),]
 ##
-
+## reorder
+allfits_pivoted$GPSC <- factor(allfits_pivoted$GPSC, levels = gpsc_vec)
 p14 <- ggplot(allfits_pivoted)+
   geom_line(aes(x=var,y=exp(cumulative_fit), group=interaction(cov, GPSC, interaction_level,lag),  color=interaction_level))+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -3364,6 +3378,8 @@ allfits_pivoted <- main_gpsc %>%
 
 allfits_pivoted$lagweek <- paste0("week ",allfits_pivoted$lag_num)
 allfits_pivoted$lagweek <- factor(allfits_pivoted$lagweek, levels = c("week 0", "week 1","week 2","week 3","week 4","week 5","week 6","week 7","week 8"))
+allfits_pivoted$GPSC <- factor(allfits_pivoted$GPSC, levels = gpsc_vec)
+
 p14 <- ggplot(allfits_pivoted)+
   geom_line(aes(x=var,y=exp(fit), group=interaction(cov, GPSC, interaction_level,lagweek),  color=interaction_level))+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
