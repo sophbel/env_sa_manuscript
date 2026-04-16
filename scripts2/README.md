@@ -45,6 +45,13 @@ This script stratifies the interaction model with each GPSC to run only on 2005-
 
 This script runs a sensitivity analysis to compare inclusion of an interannual effect replicated by province as compared to a spatial effect replicated by year to test for fine scale spatiotemporal confounding.
 
+*07_run_dlnm2x_confounderinteraction.R*
+
+This tests inclusion of a second cross basis for temperature to control for meteorological confounder of air pollution variables.
+
+*07_run_univariable_confounderinteraction.R*
+
+This tests inclusion of an interaction with a temperature vector to modify the air pollution effect and control for meteorological confounding.
 ## Running Models with outcome specific disease types ##
 *06_run_univariable_dlnm_multioutcomes.R*
 
