@@ -11,7 +11,7 @@ These bring together the epidemiological, genomic, sociodemographic, environment
 *02_write_formulas.R* 
 
 Creates lists of formulas to use in different model configurations.
-## Testing base models (no environmental covariates) ##
+## Testing sociodemographic base models (no environmental covariates) ##
 *03_base_model.R* 
 
 This reads in formulas from a list in the previous script and runs base models. There are 2 flags which can be set in lines 15 and 16 respecitively specifying the time and space resolution whereby time can either be "weekly" or "monthly" and space is either "adm1" or "adm2". This dictates which dataframes are read in and where model outputs are saved.
@@ -23,17 +23,28 @@ This runs more base models testing different integrations of the antiretroviral 
 These scripts include a base model with seasonal, spatial, interannual (province replicate) random effects, as well as vaccination period and population density covariates. They iteratively run across environmental factors of choice and save the goodness-of-fit metrics, summary of the model outputs, and the fits. The bivariable script includes an additional loop which allows the addition of a second environmental covariate.
 Both scripts allow modifications to run models including invasive disease cases from 2005-2019 and 2005-2023, district or province level, and weekly or monthly models.
 
+### meteorological models
 *04_run_univariable_dlnm_GPSC.R* This includes a DLNM of each environmental factor iteratively including the random effects (seasonal, spatial, and interannual) as well as vaccination period and population density.
 
+### air pollution models
 *04.1_run_bivariable_dlnm_GPSC.R* This script allows inclusion of two environmental factors. One DLNM for the air pollutants and the best lag from the previous script to account for the confounding effects of temperature and absoulte humidity. Some exploratory plots are included.
 ## Running Models with Sensitivity Modifications ##
-*06.1_run_univariable_dlnm_GPSC_singleprovinces.R*
+*06.2_run_bivariable_dlnm_GPSC_singleprovinces.R*
 
 This is the same as the above run_univariable_dlnm_GPSC script but allows a subset by just the Gauteng province or Western Cape province either at adm1 (province) or adm2 (district) level.
+
+*06.2_run_bivariable_dlnm_GPSC_excludesingleprovinces.R*
+
+This is the same as the above run_univariable_dlnm_GPSC script but allows exclusion of Gauteng province.
 
 *06.3_run_univariable_dlnm_GPSC_PCVSensitivity.R*
 
 This script stratifies the interaction model with each GPSC to run only on 2005-2008 (prePCV) and 2009-2019 or 2009-2023 to determine whether the exposure response curves are a result of the vaccine intervention or something that persists across both periods for the GPSCs or serotypes. This script includes summary plots of the pre-PCV and post-PCV periods.
+
+*04.1_run_bivariable_dlnm_spatialSensitivity.R*
+
+This script runs a sensitivity analysis to compare inclusion of an interannual effect replicated by province as compared to a spatial effect replicated by year to test for fine scale spatiotemporal confounding.
+
 ## Running Models with outcome specific disease types ##
 *06_run_univariable_dlnm_multioutcomes.R*
 
