@@ -787,7 +787,7 @@ write.table(matres, file = paste0("/home/sbelman/Documents/env_sa_manuscript/fig
 ```
 
 
-#### FIGURE S2
+#### FIGURE S4
 ##### ENVIRONMENTAL DATA SUMMARY PLOTS
 #### days with particulate matter of 100ug/m3
 ```{r}
@@ -1043,7 +1043,7 @@ linetype_labels <- c("absh_lag3 + tas_lag0"="solid", "hurs_lag3 + tas_lag0" = "s
 # linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid","absh"="solid", "hurs" = "solid","tasmax" = "solid", "tas" = "solid", "tasmin" = "solid", "none" = "longdash")
 
 ```
-### FIGURE S6 
+### FIGURE S5
 ### Plot with lags across 8 weeks
 ```{r}
 # Temperature
@@ -1949,7 +1949,7 @@ dev.off()
 ```
 
 
-#### VISUALIZE SURFACE PLOTS FOR SUPPLEMENT Figure S21 and Figure S22
+#### Figure S12 and S22 VISUALIZE SURFACE PLOTS FOR SUPPLEMENT Figure S12 and Figure S22
 ```{r}
 library(GHRmodel)
 
@@ -2035,8 +2035,7 @@ wrap_plots(metplot_list)
 ggsave(file = "/home/sbelman/Documents/env_sa_manuscript/figures/supplement/meteorological_surfaces.png", width = 12, height = 6)
 dev.off()
 ```
-
-#### SURFACE PLOTS FOR GPSC MODELS 
+## Figure S22: SURFACE PLOTS FOR GPSC MODELS 
 ```{r}
 library(GHRmodel)
 library(patchwork)
@@ -2074,10 +2073,10 @@ dev.off()
 ```
 
 
-#### SUPPLEMENTAL FIGURES GAUTENG
-#### Gauteng Alone Compared to South Africa Sensitivity (using fit_list South Africa from section starting at line 950)
-#### Combine Univariable results for each for meteorological covariates and then only include the South Africa model with tas+absh for PM
+## Figures S9-S11:  SUPPLEMENTAL FIGURES GAUTENG 
+# Gauteng Alone Compared to South Africa Sensitivity (using fit_list South Africa from section starting at line 950)
 ```{r}
+#Combine Univariable results for each for meteorological covariates and then only include the South Africa model with tas+absh for PM
 time = "weekly"
 space = "adm2"
 max_lag = 8
@@ -2298,67 +2297,7 @@ pdf("/home/sbelman/Documents/env_sa_manuscript/figures/figure3/gautengsouthAfric
 print(aqlaggautplot)
 dev.off() 
 ```
-
-####### PLOT WITH GAUTENG ALONE, NO GAUTENG, AND ALL OF SOUTH AFRICA. RELIES ON TOP PART OF CHUNK ABOVE
-```{r}
-fit_listcompcum$type <- factor(fit_listcompcum$type, levels = c("NoGauteng","Gauteng","South Africa"))
-cumplotsno <- ggplot(fit_listcompcum[which(fit_listcompcum$cov%in%c("pm2p5","pm10","so2"))])+
-  geom_line(aes(x=var,y=cumrr,group=interaction(type,covfact), color = type),alpha=0.7)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(type,covfact), fill=type),alpha=0.4)+
-  scale_color_manual(values = c("Gauteng" = "purple","NoGauteng" = "darkgreen", "South Africa" = "black"))+
-  scale_fill_manual(values = c("Gauteng" = "purple", "NoGauteng" = "darkgreen", "South Africa" = "black"))+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  scale_y_continuous(trans="log10")+
-  # scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
-  labs(color = "", fill = "")+
-  facet_grid(type~covfact, scales = "free_x")+
-  xlab("Exposure Value")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=11), axis.text.x = element_text(angle = 45,hjust=1, size=13))
-
-  pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/NOgautengsouthAfrica_adm2_cumulative.pdf", width = 6, height = 4)
-  print(cumplotsno)
-  dev.off()
-
-
-
-#### point plot of each lag and cumulative for all 3 types
-fitsweeks50 <- fit_listcomp[which(fit_listcomp$cov%in%c("pm2p5")&fit_listcomp$predvar==50),
-                       c("rr","lowerCI_rr","upperCI_rr","cov","covfact","type","lag_num","lag_week")]
-fitscum50 <- fit_listcompcum[which(fit_listcompcum$cov%in%c("pm2p5")&fit_listcompcum$predvar==50),
-                             c("cumrr","cumlowerCI_rr","cumupperCI_rr","cov","covfact","type","lag_num","lag_week")]
-fitscum50$lag_num <- 10
-fitscum50$lag_week <- "cumulative"
-colnames(fitscum50) <-  c("rr","lowerCI_rr","upperCI_rr","cov","covfact","type","lag_num","lag_week")
-fits50 <- rbind(fitsweeks50,fitscum50)
-fits50$modtype <- "weekly"
-fits50$modtype[which(fits50$lag_num==10)] <- "cumulative"
-fits50$modtype <- factor(fits50$modtype,levels=c("weekly","cumulative"))
-
-plotfit50 <- ggplot(fits50) +
-      geom_hline(yintercept=1,color="red",linetype="dashed",alpha=0.6) +
-      geom_pointrange(aes(x=lag_num,ymin=lowerCI_rr,ymax=upperCI_rr,y=rr,color=type,group=type),alpha=0.8,position=position_dodge(width=0.45)) +
-      scale_color_manual(values=c("Gauteng"="purple","NoGauteng"="darkgreen","South Africa"="black")) +
-      scale_y_continuous(trans="log10") +
-      ylab(expression("Relative Risk at 50 "*mu*"g/m"^3*" PM2.5")) +
-      scale_x_continuous(breaks=0:8,labels=paste0("week",1:9)) +
-      facet_grid(.~modtype,scales="free_x",space="free_x",labeller=labeller(modtype=c("weekly"="Weekly lag","cumulative"="Cumulative"))) +
-      theme_bw() +
-      theme(strip.background=element_rect(fill="white"),strip.text=element_text(size = 9),axis.title.x=element_blank(),
-            axis.text = element_text(size=12), axis.text.x = element_text(angle = 45, hjust =1),legend.title = element_blank())
-
-  pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/NOgautengsouthAfrica_adm2_50ugm3weekly.pdf", width = 9, height = 3)
-  print(plotfit50)
-  dev.off()
-  
-
-```
-
-
-
-##### FIGURE S3 AND S4
+##### FIGURE S9 and S10
 ###### GAUTENG VS SOUTH AFRICA
 ```{r}
 ############# CUMULATIVE EFFECT PLOTS ############
@@ -2430,8 +2369,66 @@ pdf("/home/sbelman/Documents/env_sa_manuscript/figures/gauteng_vs_southafrica_la
 print(laggaut)
 dev.off()
 ```
+## Figure S11: PLOT WITH GAUTENG ALONE, NO GAUTENG, AND ALL OF SOUTH AFRICA. RELIES ON TOP PART OF CHUNK ABOVE
+```{r}
+fit_listcompcum$type <- factor(fit_listcompcum$type, levels = c("NoGauteng","Gauteng","South Africa"))
+cumplotsno <- ggplot(fit_listcompcum[which(fit_listcompcum$cov%in%c("pm2p5","pm10","so2"))])+
+  geom_line(aes(x=var,y=cumrr,group=interaction(type,covfact), color = type),alpha=0.7)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(type,covfact), fill=type),alpha=0.4)+
+  scale_color_manual(values = c("Gauteng" = "purple","NoGauteng" = "darkgreen", "South Africa" = "black"))+
+  scale_fill_manual(values = c("Gauteng" = "purple", "NoGauteng" = "darkgreen", "South Africa" = "black"))+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  # scale_y_continuous(trans="log10", limits = c(0.85,1.15), breaks = c(0.85, 1, 1.15))+
+  labs(color = "", fill = "")+
+  facet_grid(type~covfact, scales = "free_x")+
+  xlab("Exposure Value")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=11), axis.text.x = element_text(angle = 45,hjust=1, size=13))
 
-#### FIGURE 4
+  pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/NOgautengsouthAfrica_adm2_cumulative.pdf", width = 6, height = 4)
+  print(cumplotsno)
+  dev.off()
+
+
+
+#### point plot of each lag and cumulative for all 3 types
+fitsweeks50 <- fit_listcomp[which(fit_listcomp$cov%in%c("pm2p5")&fit_listcomp$predvar==50),
+                       c("rr","lowerCI_rr","upperCI_rr","cov","covfact","type","lag_num","lag_week")]
+fitscum50 <- fit_listcompcum[which(fit_listcompcum$cov%in%c("pm2p5")&fit_listcompcum$predvar==50),
+                             c("cumrr","cumlowerCI_rr","cumupperCI_rr","cov","covfact","type","lag_num","lag_week")]
+fitscum50$lag_num <- 10
+fitscum50$lag_week <- "cumulative"
+colnames(fitscum50) <-  c("rr","lowerCI_rr","upperCI_rr","cov","covfact","type","lag_num","lag_week")
+fits50 <- rbind(fitsweeks50,fitscum50)
+fits50$modtype <- "weekly"
+fits50$modtype[which(fits50$lag_num==10)] <- "cumulative"
+fits50$modtype <- factor(fits50$modtype,levels=c("weekly","cumulative"))
+
+plotfit50 <- ggplot(fits50) +
+      geom_hline(yintercept=1,color="red",linetype="dashed",alpha=0.6) +
+      geom_pointrange(aes(x=lag_num,ymin=lowerCI_rr,ymax=upperCI_rr,y=rr,color=type,group=type),alpha=0.8,position=position_dodge(width=0.45)) +
+      scale_color_manual(values=c("Gauteng"="purple","NoGauteng"="darkgreen","South Africa"="black")) +
+      scale_y_continuous(trans="log10") +
+      ylab(expression("Relative Risk at 50 "*mu*"g/m"^3*" PM2.5")) +
+      scale_x_continuous(breaks=0:8,labels=paste0("week",1:9)) +
+      facet_grid(.~modtype,scales="free_x",space="free_x",labeller=labeller(modtype=c("weekly"="Weekly lag","cumulative"="Cumulative"))) +
+      theme_bw() +
+      theme(strip.background=element_rect(fill="white"),strip.text=element_text(size = 9),axis.title.x=element_blank(),
+            axis.text = element_text(size=12), axis.text.x = element_text(angle = 45, hjust =1),legend.title = element_blank())
+
+  pdf("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/NOgautengsouthAfrica_adm2_50ugm3weekly.pdf", width = 9, height = 3)
+  print(plotfit50)
+  dev.off()
+```
+
+
+
+
+
+## FIGURE 4
 #### SUBSET BY MULTIPLE OUTCOME MODELS
 ```{r}
 ## multiple outcomes
