@@ -1052,6 +1052,7 @@ dev.off()
     fits_sero$pcv_type <- factor(fits_sero$pcv_type, levels = c("PCV7","PCV13","NVT"))
     fits_sero$GPSC <- gsub("_count","",fits_sero$GPSC)
 ```
+
 #### Figure 4 and Figure S15 age distributions
 ```{r}
   fits_age_cum <- fits_age[which(fits_age$lag_num==3),]
@@ -1408,9 +1409,9 @@ age_rr[which(age_rr$RR_ratio_lower>0.99),c("GPSC","RR_ratio","RR_ratio_lower","R
 plot19f <- ggplot(fits_sero_week[which(fits_sero_week$GPSC=="Sero19F"),]) +
                         # color="black", alpha=0.7, linetype = "dashed")+
               geom_line(aes(x = predvar, y = exp(fit),
-                            group = interaction(lag_week, GPSC, cov, pcv_type))) +
+                            group = interaction(lag_week, GPSC, cov, pcv_type)), color = "darkgreen") +
               geom_ribbon(aes(x = predvar, ymin = exp(lowerCI), ymax = exp(upperCI),
-                              group = interaction(lag_week, GPSC, cov, pcv_type)), alpha = 0.1) +
+                              group = interaction(lag_week, GPSC, cov, pcv_type)),fill = "darkgreen", alpha = 0.1) +
               geom_hline(yintercept = 1, linetype = "dashed", color = "red", alpha = 0.6) +
               theme_bw() +
               theme(axis.text = element_text(size = 11),
@@ -1424,6 +1425,27 @@ plot19f <- ggplot(fits_sero_week[which(fits_sero_week$GPSC=="Sero19F"),]) +
               scale_y_continuous(trans = "log10", limits = c(0.7, 1.5), breaks = c(0.8,1,1.12,1.5))
 
 
+### cumulative 19f
+plot_seropcv7 <- ggplot(fits_sero_cum[which(fits_sero_cum$pcv_type=="PCV7"& fits_sero_cum$GPSC=="Sero19F"),]) +
+              geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC)), 
+                        color="black", alpha=0.7, linetype = "dashed")+
+              geom_line(aes(x = predvar, y = exp(cumulative_fit),
+                            group = interaction(lag_week, GPSC, cov, pcv_type)), color = "darkgreen", alpha = 0.7) +
+              geom_ribbon(aes(x = predvar, ymin = exp(cum_lowerCI), ymax = exp(cum_upperCI),
+                              group = interaction(lag_week, GPSC, cov, pcv_type)), fill="darkgreen", alpha = 0.1) +
+              geom_hline(yintercept = 1, linetype = "dashed", color = "red", alpha = 0.6) +
+              facet_grid(GPSC ~ pcv_type) +
+              labs(color = "Serotype", fill = "Serotype") +
+              theme_bw() +
+              theme(axis.text = element_text(size = 13),
+                    axis.title = element_text(size = 13),
+                    strip.text = element_text(size = 9),
+                    axis.text.x = element_text(angle = 45, hjust = 1, size = 13),
+                    legend.title = element_text(size = 12)) +
+              xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')'))) +
+              ylab("Relative Risk") +
+              ggtitle("PM2.5") +
+              scale_y_continuous(trans = "log10")
 ```
 #### Figure 4D and Figure S16 vt vs nvt distributions
 ```{r}
@@ -2549,15 +2571,15 @@ library(GHRmodel)
 #PM2.5 surface plot with absolute humidity and temperature controls
 mods <- readRDS("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_weekly_adm2_dlnm_none_bivariable_8_2019_templag0humlag3.rds")
 
-## test
-# mods1 <- mods[[1]][[2]]
-# plot_coef_crosspred(
-#   crosspred = mods1$cp,  # Crosspred object containing model predictions
-#   type = "heatmap",           # Create a 2D heatmap of effects over exposure and lag values
-#   exp = TRUE,                 # Exponentiate effects to show relative risks
-#   palette = "-RdBu",          # Use the inverted "RdBu" color palette for the heatmap (blue for lower values)
-#   # title = "Effect of PM2.5 on IPD",  # Main plot title
-#   xlab = expression("PM"[2.5]*" (µg/m³)"))
+## main model surface plot
+mods1 <- mods[[1]][[2]]
+pmabshtmp <- plot_coef_crosspred(
+  crosspred = mods1$cp,  # Crosspred object containing model predictions
+  type = "heatmap",           # Create a 2D heatmap of effects over exposure and lag values
+  exp = TRUE,
+  heat_lims = c(0.78,1.21),
+  palette = "-RdBu",
+  xlab = expression("PM"[2.5]*" (µg/m³)"))
 
 ### plot all air pollutions in a list
 ap_plot_list <- list()
