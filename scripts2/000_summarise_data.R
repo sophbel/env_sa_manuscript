@@ -11,9 +11,12 @@ library(tidygeocoder)
 library(osmdata)
 library(gridExtra)
 
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ################ RENAME AND SELECT COLUMNS REQUIRED FROM GERMS-SA ##########
 '%notin%'<-Negate('%in%')
-setwd("/home/sbelman/Documents/BRD/SouthAfrica/disease/germs/")
+# setwd("/home/sbelman/Documents/BRD/SouthAfrica/disease/germs/")
+### read in raw data file
+setwd("input_datasets/disease/germs/")
 data<-fread("./GERMS_SP_2003-2023_5Jul2024.csv")
 data<-data.frame(data)
 data<-data[,c("Lane_id","YEAR","COLLECTDTE",colnames(data)[grep("HOSPITAL",colnames(data))],"SSEROTYPE","AGEMONTHS","AGEYEARS","SPECIMENTYPE","SPECDIAG","SPEN", "PREGNA", "SMOKER", "SEX")]
@@ -44,10 +47,10 @@ data$laneid[which(data$laneid=="")]<-NA
 ## SAVE NAME MATCHED SHAPE FILES 
 ################################################################################
 # LOAD SHAPE FILES
-data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point.csv")
+data<-fread("input_datasets/disease/SA_disease_point_share.csv")
 
 ######## district level
-shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_ZAF_2.shp")
+shp<-st_read("input_datasets/shps/gadm41_ZAF_2.shp")
 shp_name_vec<-shp$NAME_2
 dist_vec<-unique(data$district)
 table(dist_vec%in%shp_name_vec)
@@ -69,18 +72,18 @@ shp <- shp %>%
     NAME_2 == "Cacadu" ~ "Sarah Baartman",
     TRUE ~ NAME_2  # retain original value if no match
   )) 
-st_write(shp, "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp", delete_dsn=FALSE)
+st_write(shp, "input_datasets/shps/gadm41_namematch_ZAF_2.shp", delete_dsn=FALSE)
 
 
 ######## repeat for province level 
-shp1<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_ZAF_1.shp")
+shp1<-st_read("input_datasets/shps/gadm41_ZAF_1.shp")
 shp_name_vec<-shp1$NAME_1
 prov_vec<-unique(data$province)
 table(prov_vec%in%shp_name_vec)
 prov_vec[prov_vec %notin% shp_name_vec]
 shp_name_vec[shp_name_vec %notin% prov_vec]
 
-st_write(shp1, "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp", delete_dsn=FALSE)
+st_write(shp1, "input_datasets/shps/gadm41_namematch_ZAF_1.shp", delete_dsn=FALSE)
 
 
 
@@ -101,7 +104,7 @@ geocoded_hospitals <- hospitals %>%
   geocode(address, method = 'osm', full_results = TRUE)
 
 ## save province level geocode
-saveRDS(geocoded_hospitals, file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/germs/geocoded_hospitals.rds" )
+saveRDS(geocoded_hospitals, file="input_datasets/germs/geocoded_hospitals.rds" )
 
 
 ##### prepare district level geocode
@@ -140,7 +143,7 @@ nas[is.na(nas$long),"long"]<-28.240528
 
 ## merge all lats and longs
 geocoded_hospitals_dists<-rbind(nas,geocoded_hospitals[!is.na(geocoded_hospitals$lat),])
-saveRDS(geocoded_hospitals_dists, file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/germs/geocoded_hospitals_districts.rds" )
+saveRDS(geocoded_hospitals_dists, file="input_datasets/germs/geocoded_hospitals_districts.rds" )
 
 
 
