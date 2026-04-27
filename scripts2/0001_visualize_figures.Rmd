@@ -1231,7 +1231,7 @@ age_rr[which(age_rr$GPSC=="other invasive disease" ),c("GPSC","RR","RR_lower","R
 age_rr[which(age_rr$GPSC=="Sero14" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio", "RR_ratio_lower","RR_ratio_upper")]
 
 
-# data2<- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 # table(data2[which(data2$serotype=="23F")]$GPSC)/sum(table(data2[which(data2$serotype=="23F")]$GPSC))
 # table(data2[which(data2$serotype=="8")]$GPSC)/sum(table(data2[which(data2$serotype=="8")]$GPSC))
 # table(data2[which(data2$serotype=="8")]$GPSC)
@@ -2516,9 +2516,9 @@ mean(summary_by_year[which(summary_by_year$year>2015&summary_by_year$year<=2023)
 ## FIGURE S8: SENSITIVITY ACROSS CONFOUNDERS IN AIR POLLUTION MODELS
 ```{r}
 ##### compare CBpm2p5 + CBtas + absh model TO CBpm2p5 + tas + absh model
-dfth1 <- fread("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019.csv")
-dfth <- subset(dfth , dfth$covariate == "pm2p5_lag0" & dfth$cov2 == "absh_lag3")
-dfthC <- subset(dfth , dfth$lag_num == 3)
+dfth1 <- fread("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019_templag0humlag3.csv")
+dfth2 <- subset(dfth1 , dfth1$covariate == "pm2p5_lag0" & dfth1$cov2 == "absh_lag3")
+dfthC <- subset(dfth2 , dfth2$lag_num == 3)
 dfthC$cumrr <- exp(dfthC$cumulative_fit)
 dfthC$cumlowerCI_rr <- exp(dfthC$cum_lowerCI)
 dfthC$cumupperCI_rr <- exp(dfthC$cum_upperCI)
@@ -2590,8 +2590,8 @@ dfintC[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr"
 
 #### Figure S14: visualize count of sequences for Figure S14
 ```{r}
-data2<- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
-# data2<- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 out <- data2 %>%
   group_by(province,year) %>%
   summarise(count_seq = sum(sequenced, na.rm = T))
