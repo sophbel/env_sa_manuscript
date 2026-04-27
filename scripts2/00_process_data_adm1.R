@@ -20,23 +20,25 @@ library(ggplot2)
 library(INLA)
 library(spdep)
 library(ISOweek)
-
-source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
+setwd("")
+source("scripts2/0_source_functions.R")
 
 ## merge province data with shape file area ids
 ## dist_id, prov_id, dist_name, prov_name
 ## load disease data
-data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point.csv")
+# data<-fread("input_datasets/disease/SA_disease_point.csv")
+data<-fread("input_datasets/disease/SA_disease_point_share.csv")
+
 unknowns<-data[which(data$laneid!=""),]
 ## load shape for adm2 so that I can index and aggreagte the populations to province level
-shp_adm1 <-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
-shp_adm2 <-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+shp_adm1 <-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+shp_adm2 <-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
 adm_idx <- shp_adm2[,c("GID_1","GID_2","NAME_1")]
 adm_idx <- st_drop_geometry(adm_idx)
 
 ## load population size raster from landscan
-landscan_raster <- raster("/home/sbelman/Documents/env_sa_manuscript/input_datasets/sociodemographic/landscan-global-2022.tif")
-population_data<- fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/sociodemographic/ZAF_worldpop_2000_2023.csv")
+landscan_raster <- raster("input_datasets/sociodemographic/landscan-global-2022.tif")
+population_data<- fread("input_datasets/sociodemographic/ZAF_worldpop_2000_2023.csv")
 
 ###### TABLE OF CONTENTS #######
 ############# LINE 543: CLIMATE DATA DEVELOPMENT
@@ -180,12 +182,13 @@ cog_meta<-cog_meta[,cols,with = FALSE]
 data3<-left_join(data3,cog_meta,by="laneid")
 # }else{
 
-# write.table(data3, file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
+# write.table(data3, file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
 # }
 ################################################################################
 ######  CREATE DAILY AGGREGATED DATA FRAME WITH 9 (province=9) NUMBERS FOR EACH DATE ######
 ################################################################################ 
-data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 
 
 # select which GPSCs and R to include
@@ -689,10 +692,10 @@ df_complete_month <- re_id2(df_complete_month, "month")
 ################################################################################
 ######  SOCIODEMOGRAPHIC DATA MERGE ######
 ################################################################################  
-# df_complete_week<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_weekly_province.csv")
-# df_complete_month<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_monthly_province.csv")
+# df_complete_week<-fread("input_datasets/disease/SA_disease_weekly_province.csv")
+# df_complete_month<-fread("input_datasets/disease/SA_disease_monthly_province.csv")
 
-sociodemographic_df <- readRDS(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/sociodemographic/statsZA_sociodemographic_data.rds")
+sociodemographic_df <- readRDS(file="input_datasets/sociodemographic/statsZA_sociodemographic_data.rds")
 sociodemograph_sub <- sociodemographic_df[,c("year","month","NAME_1","GID_1","flu_positivity","rsv_positivity",
                                              "Incidence_in_youth_15_24", "Total_people_living_with_HIV","ART_coverage","Total_on_ART", "Dependency_ratio",
                                              "Aging_index","percent_children_under15","percent_elderly","in_migration_5year","net_migration_5year","out_migration_5year",
@@ -704,9 +707,9 @@ df_complete_month <- left_join(df_complete_month,sociodemograph_sub,by=c("GID_1"
 df_complete_day <- left_join(df_complete_day,sociodemograph_sub,by=c("GID_1","year","month"))
 
 # ## save as base data frame
-write.table(df_complete_day, file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_daily_province.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
-write.table(df_complete_week, file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_weekly_province.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
-write.table(df_complete_month, file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_monthly_province.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
+write.table(df_complete_day, file="input_datasets/disease/SA_disease_daily_province.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
+write.table(df_complete_week, file="input_datasets/disease/SA_disease_weekly_province.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
+write.table(df_complete_month, file="input_datasets/disease/SA_disease_monthly_province.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
 
 ################################################################################
 ###### CLIMATE DATA MERGE  ######
@@ -804,7 +807,7 @@ climate_data <- left_join(clim_hum_aq_wind,tmp,by=c("adm1_id","month","year"))
 ## change the name so it matches
 colnames(climate_data)[which(colnames(climate_data)=="adm1_id")]<-"GID_1"
 # save
-write.table(climate_data,file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/climate/env_adm1_daily.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(climate_data,file="input_datasets/climate/env_adm1_daily.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
 ##########WEEKLY DATA MERGE ############
 ## load climatic and humidity and merge by the day
@@ -952,7 +955,7 @@ climate_data_weekly <- left_join(clim_hum_aq,tmp,by=c("adm1_id","month","year"))
 colnames(climate_data_weekly)[which(colnames(climate_data_weekly)=="adm1_id")]<-"GID_1"
 
 # save
-write.table(climate_data_weekly,file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/climate/env_adm1_weekly.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(climate_data_weekly,file="input_datasets/climate/env_adm1_weekly.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
 ######## MONTHLY DATA MERGE ####################
 ## load climatic and humidity and merge by the day
@@ -1053,7 +1056,7 @@ tmp<-spi_adm1_monthly[,-c("adm1_name")]
 climate_data_monthly <- left_join(clim_hum_aq_monthly,tmp,by=c("adm1_id","month","year"))
 ## change the name so it matches
 colnames(climate_data_monthly)[which(colnames(climate_data_monthly)=="adm1_id")]<-"GID_1"
-write.table(climate_data_monthly,file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/climate/env_adm1_monthly.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(climate_data_monthly,file="input_datasets/climate/env_adm1_monthly.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
 
 ################################################################################
@@ -1061,19 +1064,19 @@ write.table(climate_data_monthly,file="/home/sbelman/Documents/env_sa_manuscript
 ################################################################################  
 
 #########CHECK SHAPE FILE INDEX ORDER #########
-shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
 adm_idx <- shp[,c("GID_1","NAME_1")]
 adm_idx <- st_drop_geometry(adm_idx)
 idx <- unique(shp$GID_1)
 ## save adjacency matrix
 nb <- poly2nb(shp_adm1)
-nb2INLA(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_adm1.adj", nb)
+nb2INLA(file="input_datasets/shps/sa_adjacency_map_adm1.adj", nb)
 
-seq_month <- fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/number_sequenced_monthly.csv")
+seq_month <- fread("input_datasets/disease/number_sequenced_monthly.csv")
 
 ########DAILY DATA#############
-disease_data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_daily_province.csv")
-climate_data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/climate/env_adm1_daily.csv")
+disease_data<-fread("input_datasets/disease/SA_disease_daily_province.csv")
+climate_data<-fread("input_datasets/climate/env_adm1_daily.csv")
 # ## merge climate and disease data
 sa_adm1_daily<-left_join(climate_data,disease_data,by=c("date","year","month","GID_1"))
 # 
@@ -1100,12 +1103,12 @@ if(all(table_y[row(table_y) != col(table_y)] == 0)){print("All off diagonals are
 sa_adm1_daily <- left_join(sa_adm1_daily, seq_month, by= c("year","month"))
 # 
 # ######## SAVE
-write.table(sa_adm1_daily,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_daily.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(sa_adm1_daily,file="dataframes/sa_adm1_daily.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 # 
 # 
 ########WEEKLY DATA############
-disease_data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_weekly_province.csv")
-climate_data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/climate/env_adm1_weekly.csv")
+disease_data<-fread("input_datasets/disease/SA_disease_weekly_province.csv")
+climate_data<-fread("input_datasets/climate/env_adm1_weekly.csv")
 ## merge climate and disease data
 sa_adm1_weekly<-left_join(climate_data,disease_data,by=c("week","month","GID_1","year"))
 
@@ -1145,11 +1148,11 @@ if(all(table_y[row(table_y) != col(table_y)] == 0)){print("All off diagonals are
 df2 <- left_join(df, seq_month, by= c("year","month"))
 
 ########save
-write.table(df2,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(df2,file="dataframes/sa_adm1_weekly.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
 ########MONTHLY DATA#############
-disease_data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_monthly_province.csv")
-climate_data<-fread("/home/sbelman/Documents/env_sa_manuscript/input_datasets/climate/env_adm1_monthly.csv")
+disease_data<-fread("input_datasets/disease/SA_disease_monthly_province.csv")
+climate_data<-fread("input_datasets/climate/env_adm1_monthly.csv")
 colnames(climate_data)[colnames(climate_data)=="year_month"]<-"date"
 table(climate_data$date%in%disease_data$date)
 table(disease_data$date%in%climate_data$date)
@@ -1182,7 +1185,7 @@ if(all(table_m[row(table_m) != col(table_m)] == 0)){print("All off diagonals are
 if(all(table_y[row(table_y) != col(table_y)] == 0)){print("All off diagonals are zero for the years")}
 
 ########save
-write.table(df,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(df,file="dataframes/sa_adm1_monthly.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
 
 
@@ -1190,7 +1193,7 @@ write.table(df,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm
 ### TEST DISTRIBUTION OF VARIABLES AND SCALE IF NON NORMAL ######
 ################################################################################ 
 
-sa_adm1_weekly<-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly.csv")
+sa_adm1_weekly<-fread(file="dataframes/sa_adm1_weekly.csv")
 all_names<- colnames(sa_adm1_weekly)
 cov_names<-c(grep("tas",all_names,value=TRUE),grep("sp",all_names,value=TRUE),"hurs","absh","prlrsum","prlrmax","prlrmean","pm2p5","pm10", "o3", "so2","sfcWind")
 
@@ -1218,10 +1221,10 @@ sa_adm1_weekly_sc<-sa_adm1_weekly
 scale_covs<-c("hurs","absh","prlrsum","prlrmax","prlrmean" )
 # Scale the specified columns using .SD and lapply
 sa_adm1_weekly_sc[, (scale_covs) := lapply(.SD, scale), .SDcols = scale_covs]
-write.table(sa_adm1_weekly_sc,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_sc.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(sa_adm1_weekly_sc,file="dataframes/sa_adm1_weekly_sc.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
 ##################### MONTHLY SCALING
-sa_adm1_monthly<-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly.csv")
+sa_adm1_monthly<-fread(file="dataframes/sa_adm1_monthly.csv")
 all_names<- colnames(sa_adm1_monthly)
 cov_names<-c(grep("tas",all_names,value=TRUE),grep("sp",all_names,value=TRUE),"hurs","absh","prlrsum","prlrmax","prlrmean","pm2p5","pm10" ,"o3","so2")
 # dist_list<-lapply(cov_names, function(x) test_distribution(sa_adm1_monthly,x))
@@ -1231,7 +1234,7 @@ cov_names<-c(grep("tas",all_names,value=TRUE),grep("sp",all_names,value=TRUE),"h
 sa_adm1_monthly_sc<-sa_adm1_monthly
 scale_covs<-c("hurs","absh","prlrsum","prlrmax","prlrmean")
 sa_adm1_monthly_sc[, (scale_covs) := lapply(.SD, scale), .SDcols = scale_covs]
-write.table(sa_adm1_monthly_sc,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_sc.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(sa_adm1_monthly_sc,file="dataframes/sa_adm1_monthly_sc.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 # dist_list<-lapply(cov_names, function(x) test_distribution(sa_adm1_monthly_sc,x))
 # grid.arrange(grobs=dist_list)
 
@@ -1240,33 +1243,33 @@ write.table(sa_adm1_monthly_sc,file="/home/sbelman/Documents/env_sa_manuscript/d
 ################################################################################
 ### LAG ENVIRONMENTAL VARIABLES ######,"o3","so2"
 ################################################################################       
-sa_adm1_weekly<-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly.csv")
+sa_adm1_weekly<-fread(file="dataframes/sa_adm1_weekly.csv")
 all_names<- colnames(sa_adm1_weekly)
 cov_names_lag<-c(grep("tas",all_names,value=TRUE),grep("sp",all_names,value=TRUE),"hurs","absh","prlrsum","prlrmax","prlrmean","pm2p5","pm10","o3","so2","sfcWind",grep("monthly_count",all_names,value=TRUE))
 sa_adm1_weekly_lag<-lag_dataframe(sa_adm1_weekly,cov_names_lag, 12)
 colnames(sa_adm1_weekly_lag)[which(colnames(sa_adm1_weekly_lag)%in%cov_names_lag)] <- paste0(colnames(sa_adm1_weekly_lag)[which(colnames(sa_adm1_weekly_lag)%in%cov_names_lag)],"_lag0")
-write.table(sa_adm1_weekly_lag,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(sa_adm1_weekly_lag,file="dataframes/sa_adm1_weekly_lag.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
-sa_adm1_weekly_sc<-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_sc.csv")
+sa_adm1_weekly_sc<-fread(file="dataframes/sa_adm1_weekly_sc.csv")
 all_names<- colnames(sa_adm1_weekly_sc)
 cov_names_lag<-c(grep("tas",all_names,value=TRUE),grep("sp",all_names,value=TRUE),"hurs","absh","prlrsum","prlrmax","prlrmean","pm2p5","pm10","o3","so2","sfcWind",grep("monthly_count",all_names,value=TRUE))
 sa_adm1_weekly_lag_sc<-lag_dataframe(sa_adm1_weekly_sc,cov_names_lag, 12)
 colnames(sa_adm1_weekly_lag_sc)[which(colnames(sa_adm1_weekly_lag_sc)%in%cov_names_lag)] <- paste0(colnames(sa_adm1_weekly_lag_sc)[which(colnames(sa_adm1_weekly_lag_sc)%in%cov_names_lag)],"_lag0")
-write.table(sa_adm1_weekly_lag_sc,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(sa_adm1_weekly_lag_sc,file="dataframes/sa_adm1_weekly_lag_sc.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
-sa_adm1_monthly_sc<-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_sc.csv")
+sa_adm1_monthly_sc<-fread(file="dataframes/sa_adm1_monthly_sc.csv")
 all_names<- colnames(sa_adm1_monthly_sc)
 cov_names_lag<-c(grep("tas",all_names,value=TRUE),grep("sp",all_names,value=TRUE),"hurs","absh","prlrsum","prlrmax","prlrmean","pm2p5","pm10","o3","so2","sfcWind",grep("monthly_count",all_names,value=TRUE))
 sa_adm1_monthly_lag_sc<-lag_dataframe(sa_adm1_monthly_sc,cov_names_lag, 6)
 colnames(sa_adm1_monthly_lag_sc)[which(colnames(sa_adm1_monthly_lag_sc)%in%cov_names_lag)] <- paste0(colnames(sa_adm1_monthly_lag_sc)[which(colnames(sa_adm1_monthly_lag_sc)%in%cov_names_lag)],"_lag0")
-write.table(sa_adm1_monthly_lag_sc,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag_sc.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(sa_adm1_monthly_lag_sc,file="dataframes/sa_adm1_monthly_lag_sc.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
-sa_adm1_monthly<-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly.csv")
+sa_adm1_monthly<-fread(file="dataframes/sa_adm1_monthly.csv")
 all_names<- colnames(sa_adm1_monthly)
 cov_names_lag<-c(grep("tas",all_names,value=TRUE),grep("sp",all_names,value=TRUE),"hurs","absh","prlrsum","prlrmax","prlrmean","pm2p5","pm10","o3","so2","sfcWind",grep("monthly_count",all_names,value=TRUE))
 sa_adm1_monthly_lag<-lag_dataframe(sa_adm1_monthly,cov_names_lag, 6)
 colnames(sa_adm1_monthly_lag)[which(colnames(sa_adm1_monthly_lag)%in%cov_names_lag)] <- paste0(colnames(sa_adm1_monthly_lag)[which(colnames(sa_adm1_monthly_lag)%in%cov_names_lag)],"_lag0")
-write.table(sa_adm1_monthly_lag,file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
+write.table(sa_adm1_monthly_lag,file="dataframes/sa_adm1_monthly_lag.csv", quote=FALSE , row.names = FALSE, col.names = TRUE,sep=",")
 
 
 ### check the order according to the shape files
@@ -1368,7 +1371,7 @@ idx4 <- unique(sa_adm1_monthly_lag_sc$id_u)
 # ############################### 
 # ### explore weekly ###
 # 
-# sa_adm1_weekly_lag_sc <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv")
+# sa_adm1_weekly_lag_sc <- fread(file="dataframes/sa_adm1_weekly_lag_sc.csv")
 # table(table(sa_adm1_weekly_lag_sc$date))
 # df_sum <- sa_adm1_weekly_lag_sc %>%
 #   group_by(GID_1,adm1_name,date) %>%
@@ -1379,7 +1382,7 @@ idx4 <- unique(sa_adm1_monthly_lag_sc$id_u)
 #   theme(legend.position = "none")+
 #   facet_grid(GID_1 ~. )
 # 
-# sa_adm1_weekly_lag <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
+# sa_adm1_weekly_lag <- fread(file="dataframes/sa_adm1_weekly_lag.csv")
 # 
 # df_sum <- sa_adm1_weekly_lag %>%
 #   group_by(GID_1,adm1_name,date) %>%
