@@ -30,3 +30,20 @@ Saved as three separate tar.gz files which can be unzipped locally into the appr
 __Genomic Data__
 
 The microbial genomic data used in this study were previously published in Lekhuleni et al., 2024 (doi: https://doi.org/10.1038/s41467-024-52459-3) and the accession numbers are included here in Supplementary Dataset 1. 
+
+__R Libraries__
+
+```
+if (!require("yaml")) install.packages("yaml")
+if (!require("remotes")) install.packages("remotes")
+
+# Read the YAML file
+env <- yaml::read_yaml("r_environment.yml")
+
+# Install the packages via 'remotes' to ensure version matching
+invisible(lapply(names(env$packages), function(pkg) {
+  version <- env$packages[[pkg]]
+  message(paste("Installing", pkg, "version", version))
+  remotes::install_version(pkg, version = version, upgrade = "never")
+}))
+```
