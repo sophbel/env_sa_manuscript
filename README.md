@@ -15,7 +15,7 @@
 
 
 ## Data Availability ##
-__Epidemiological, Environmental Data, and Models__
+__Data and Models__
 
 Available on Zenodo at 10.5281/zenodo.17877255
 
