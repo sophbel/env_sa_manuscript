@@ -15,9 +15,17 @@
 
 
 ## Data Availability ##
-__Epidemiological and Environmental Data__
+__Epidemiological, Environmental Data, and Models__
 
 Available on Zenodo at 10.5281/zenodo.17877255
+
+Saved as three separate tar.gz files which can be unzipped locally into the appropriate folders at:
+
+**input files:** input_datasets.tar.gz
+
+**main harmonized dataframes:** dataframes.tar.gz
+
+**model outputs:** models.tar.gz
 
 __Genomic Data__
 
