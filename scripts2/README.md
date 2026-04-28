@@ -52,14 +52,14 @@ This script stratifies the interaction model with each GPSC to run only on 2005-
 
 This script runs a sensitivity analysis to compare inclusion of an interannual effect replicated by province as compared to a spatial effect replicated by year to test for fine scale spatiotemporal confounding.
 
-## Running Models with outcome specific disease types ##
+## Running Models with outcome specific disease types (demographic, disease outcome, serotype) ##
 *06_run_univariable_dlnm_multioutcomes.R*
 
 This script allows the outcome to be modified given demographic, or serotype variables specified in a vector. Includes space time modifications and only including 2005-2019 or including all of 2005-2023. 
 
 ## Visualization ##
 
-*0000_visualize_figures.Rmd*
+*0001_visualize_figures.Rmd*
 
 This is a markdown script which includes the code for the figures throughout the manuscript. 
 
