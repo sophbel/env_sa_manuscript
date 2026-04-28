@@ -3392,5 +3392,33 @@ plot_lagsweekly <- ggplot(lagcomp[which(lagcomp$covariate=="so2_lag0")])+
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
         legend.position = "right")
 plot_lagsweekly
-
 ```
+
+Save YAML of entire pipeline environments
+```{r}
+# 1. Load the yaml package
+if (!require("yaml")) install.packages("yaml")
+
+# 2. Capture the session information
+session <- sessionInfo()
+
+# 3. Build a list of package versions
+# This includes base R and all loaded "other" packages
+env_list <- list(
+  name = "pneumo_reproducibility_env",
+  r_version = session$R.version$version.string,
+  platform = session$platform,
+  packages = c(
+    # Pulls version strings for all currently attached packages
+    lapply(session$otherPkgs, function(x) x$Version),
+    # Optional: include loaded but not attached namespaces
+    lapply(session$loadedOnly, function(x) x$Version)
+  )
+)
+
+# 4. Write to YAML file
+yaml::write_yaml(env_list, "/home/sbelman/Documents/env_sa_manuscript/scripts2/r_environment.yml")
+
+print("YAML file 'r_environment.yml' has been created in your working directory.")
+```
+
