@@ -5,18 +5,18 @@ library(tidyr)
 library(lubridate)
 library(ggplot2)
 
-
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ################################################################################
 ## COMPARE MERRA AND CAMS DATA SETS
 ################################################################################
-aq_adm2_weekly_cams<-fread("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/reanalysis/aq_adm2_weekly_cams.csv")
-aq_adm2_weekly_merra<-fread("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/reanalysis/aq_adm2_weekly_merra.csv")
-aq_adm2_weekly_merraadj<-fread("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/reanalysis/aq_adm2_weekly_merra_adjusted.csv")
-aq_adm2_weekly_ml1km<-fread("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/reanalysis/aq_adm2_weekly_ml1km.csv")
+aq_adm2_weekly_cams<-fread("input_datasets/airquality/data/reanalysis/aq_adm2_weekly_cams.csv")
+aq_adm2_weekly_merra<-fread("input_datasets/airquality/data/reanalysis/aq_adm2_weekly_merra.csv")
+aq_adm2_weekly_merraadj<-fread("input_datasets/airquality/data/reanalysis/aq_adm2_weekly_merra_adjusted.csv")
+aq_adm2_weekly_ml1km<-fread("input_datasets/airquality/data/reanalysis/aq_adm2_weekly_ml1km.csv")
 
 ### compare across regions of South Africa using shp file
-shp<-st_read("/home/sbelman/Documents/BRD/SouthAfrica/shps/gadm41_ZAF_2.shp")
-shp1<-st_read("/home/sbelman/Documents/BRD/SouthAfrica/shps/gadm41_ZAF_1.shp")
+shp<-st_read("input_datasets/shps/gadm41_ZAF_2.shp")
+shp1<-st_read("input_datasets/shps/gadm41_ZAF_1.shp")
 
 ## turn the shp file into an index for province
 prov_idx <- shp[,c("GID_2","NAME_2","GID_1","NAME_1")]
@@ -144,7 +144,7 @@ tmp_long <- tmp %>%
 ##############################################################
 ### COMPARE MERRA AND CAMS WITH AN OBSERVATION STATION
 ##############################################################
-files <- list.files("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/observations/")
+files <- list.files("input_datasets/airquality/data/observations/")
 files<-files[-grep("pull",files)]
 obs_meta <- matrix(nrow=length(files),ncol=4)
 # Split by commas and remove extra spaces
@@ -185,8 +185,9 @@ colnames(result_table) <- c("Municipality","District","Province")
 result_table$file_names <- files
 
 ### save result table list of locations so that it can be read in later
-# saveRDS(result_table, file = "/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/observation_file_list.rds")
-
+# saveRDS(result_table, file = "input_datasets/airquality/data/observation_file_list.rds")
+result_table <- readRDS("input_datasets/airquality/data/observation_file_list.rds")
+files <- result_table$file_names
 ############# GERT SIBANDE MPUMALANGA ##############
 ## assign names to provinces
 aq_gertsibande_monthly <- aq_adm2_monthly[grep("gert", aq_adm2_monthly$adm2_name, ignore.case = TRUE),]
@@ -195,7 +196,9 @@ GS_files <- grep("gert", files, value=TRUE)
 sites <- sub(",.*", "", GS_files)
 obs_gs_list<-list()
 for(s in 1:length(sites)){
-  obs<- fread(paste0("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/observations/",GS_files[s]))
+  path <- file.path("input_datasets/airquality/data/observations", GS_files[s])
+  obs <- fread(file = path)
+  # obs<- fread(paste0("input_datasets/airquality/observations/",GS_files[s]))
   obs$site <- sites[s]
   obs<-obs[,c("date","pm25","pm10","o3","so2","site")]
   obs_gs_list[[s]]<-obs
@@ -233,7 +236,7 @@ aq_gertsibande_monthly<-rbind(aq_gertsibande_monthly,gs_observations)
 aq_gertsibande_monthly$location <- "Gert_Sibande"
 aq_gertsibande_monthly$adm2_name <- gsub(" ","_", aq_gertsibande_monthly$adm2_name)
 
-# write.table(aq_gertsibande_monthly, file= "/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/aq_gertsibande_monthly_obsreanalysis.csv", quote=FALSE, sep="," ,col.names = TRUE,row.names = FALSE)
+# write.table(aq_gertsibande_monthly, file= "input_datasets/airquality/data/aq_gertsibande_monthly_obsreanalysis.csv", quote=FALSE, sep="," ,col.names = TRUE,row.names = FALSE)
 
 
 # ## plot all together 
@@ -247,7 +250,7 @@ tmp_long <- aq_gertsibande_monthly %>%
 
 # ## subset by the minimum from the observations
 obs_min <- min(gs_observations$year_month)
-# png("/home/sbelman/Documents/BRD/SouthAfrica/airquality/plots/gert_sibande_pm2p5_comparison.png", width=600,height=300)
+# png("input_datasets/airquality/plots/gert_sibande_pm2p5_comparison.png", width=600,height=300)
 tmp_long<- subset(tmp_long, tmp_long$year_month>=obs_min & year(tmp_long$year_month)<2021)
 mpm_pm2 <- ggplot(tmp_long)+
   geom_point(aes(x=year_month, y=value, group=variable,   group= NAME_1, color=dataset, shape=dataset),alpha=0.7, size=3)+
@@ -286,7 +289,7 @@ mpm_pm2 <- ggplot(tmp_long)+
     gaut_mat<- result_table[which(result_table$Province=="Gauteng"),]
     obs_gaut_list<-list()
     for(s in 1:length(gaut_files)){
-      obs<- fread(paste0("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/observations/",gaut_files[s]))
+      obs<- fread(paste0("input_datasets/airquality/data/observations/",gaut_files[s]))
       obs$site <- gaut_mat[s,"Municipality"]
       if("pm25"%notin%colnames(obs)){
         obs$pm25 <- NA
@@ -323,7 +326,7 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## bind observations with reanalysis
     aq_gaut_monthly<-rbind(aq_gaut_monthly,gaut_observations)
     aq_gaut_monthly$location <- "Gauteng"
-    # write.table(aq_gaut_monthly , file= "/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/aq_gaut_monthly_obsreanalysis.csv", quote=FALSE, col.names = TRUE,row.names = FALSE)
+    # write.table(aq_gaut_monthly , file= "input_datasets/airquality/data/aq_gaut_monthly_obsreanalysis.csv", quote=FALSE, col.names = TRUE,row.names = FALSE)
     
     
     ########## plots #############
@@ -357,7 +360,7 @@ mpm_pm2 <- ggplot(tmp_long)+
       facet_grid(variable ~ ., scales="free")+
       theme(legend.position = "none")
     # 
-    # png("/home/sbelman/Documents/BRD/SouthAfrica/airquality/plots/gauteng_pm2p5_comparison.png", width=600,height=300)
+    # png("input_datasets/airquality/plots/gauteng_pm2p5_comparison.png", width=600,height=300)
     # ggplot(subset(tmp_long,tmp_long$variable=="pm2p5"))+
     #   geom_point(aes(x=year_month, y=value, group=variable, shape=dataset, color=dataset),alpha=0.7,size=4)+
     #   theme_bw()+
@@ -425,7 +428,7 @@ mpm_pm2 <- ggplot(tmp_long)+
     kzn_mat<- result_table[which(result_table$Province=="KwaZulu Natal"),]
     obs_kzn_list<-list()
     for(s in 1:length(kzn_files)){
-      obs<- fread(paste0("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/observations/",kzn_files[s]))
+      obs<- fread(paste0("input_datasets/airquality/data/observations/",kzn_files[s]))
       obs$site <- kzn_mat[s,"Municipality"]
       if("pm25"%notin%colnames(obs)){
         obs$pm25 <- NA
@@ -464,7 +467,7 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## bind observations with reanalysis
     aq_kzn_monthly<-rbind(aq_kzn_monthly,kzn_observations)
     aq_kzn_monthly$location <- "KwaZulu-Natal"
-    # write.table(aq_kzn_monthly , file= "/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/aq_kzn_monthly_obsreanalysis.csv", quote=FALSE, col.names = TRUE,row.names = FALSE)
+    # write.table(aq_kzn_monthly , file= "input_datasets/airquality/data/aq_kzn_monthly_obsreanalysis.csv", quote=FALSE, col.names = TRUE,row.names = FALSE)
     
     
 ##### PLOT #####
@@ -479,7 +482,7 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## subset by the minimum from the observations
     obs_min <- min(kzn_observations$year_month)
     tmp_long<- subset(tmp_long, tmp_long$year_month>=obs_min & year(tmp_long$year_month)<2021 & tmp_long$value<400)
-    # png("/home/sbelman/Documents/BRD/SouthAfrica/airquality/plots/kzn_pm2p5_comparison.png", width=600,height=300)
+    # png("input_datasets/airquality/plots/kzn_pm2p5_comparison.png", width=600,height=300)
     kzn_pm2 <- ggplot(tmp_long[which(tmp_long$variable=="pm2p5"),])+
       geom_point(aes(x=year_month, y=value, group=variable,  color=dataset, shape=dataset),size=3,alpha=0.7)+
       theme_bw()+
@@ -517,7 +520,7 @@ mpm_pm2 <- ggplot(tmp_long)+
     wesc_mat<- result_table[which(result_table$Province=="Western Cape"),]
     obs_wesc_list<-list()
     for(s in 1:length(wesc_files)){
-      obs<- fread(paste0("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/observations/",wesc_files[s]))
+      obs<- fread(paste0("input_datasets/airquality/data/observations/",wesc_files[s]))
       obs$site <- wesc_mat[s,"Municipality"]
       if("pm25"%notin%colnames(obs)){
         obs$pm25 <- NA
@@ -556,7 +559,7 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## bind observations with reanalysis
     aq_wesc_monthly<-rbind(aq_wesc_monthly,wesc_observations)
     aq_wesc_monthly$location <- "Western_Cape"
-    # write.table(aq_wesc_monthly , file= "/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/aq_wesc_monthly_obsreanalysis.csv", quote=FALSE, col.names = TRUE,row.names = FALSE)
+    # write.table(aq_wesc_monthly , file= "input_datasets/airquality/data/aq_wesc_monthly_obsreanalysis.csv", quote=FALSE, col.names = TRUE,row.names = FALSE)
     
     
     ##### PLOT #####
@@ -571,7 +574,7 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## subset by the minimum from the observations
     obs_min <- min(wesc_observations$year_month)
     tmp_long<- subset(tmp_long, tmp_long$year_month>=obs_min & year(tmp_long$year_month)<2021 & tmp_long$value<400)
-    # png("/home/sbelman/Documents/BRD/SouthAfrica/airquality/plots/wesc_pm2p5_comparison.png", width=600,height=300)
+    # png("input_datasets/airquality/plots/wesc_pm2p5_comparison.png", width=600,height=300)
     wesc_pm2 <- ggplot(tmp_long[which(tmp_long$variable=="pm2p5"),])+
       geom_point(aes(x=year_month, y=value, group=variable,  color=dataset, shape=dataset),size=3,alpha=0.7)+
       theme_bw()+
@@ -595,21 +598,21 @@ mpm_pm2 <- ggplot(tmp_long)+
     
     library(patchwork)
     
-    pdf("/home/sbelman/Documents/BRD/SouthAfrica/airquality/plots/obs_versus_reanalysis_4sites.pdf", width = 7, height =5)
+    pdf("input_datasets/airquality/plots/obs_versus_reanalysis_4sites.pdf", width = 7, height =5)
     print((gaut_pm2 + mpm_pm2)/(kzn_pm2 + wesc_pm2))
     dev.off()
     
-    pdf("/home/sbelman/Documents/BRD/SouthAfrica/airquality/plots/obs_versus_reanalysis_wecsites.pdf", width = 4, height =4)
+    pdf("input_datasets/airquality/plots/obs_versus_reanalysis_wecsites.pdf", width = 4, height =4)
     print(wesc_pm2)
     dev.off()
     
 ################################################################################
     ## load reanalysis versus observation data
 ################################################################################
-    aq_kzn_monthly <- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/aq_kzn_monthly_obsreanalysis.csv")
-    aq_gertsibande_monthly <- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/aq_gertsibande_monthly_obsreanalysis.csv")
-    aq_gaut_monthly <- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/aq_gaut_monthly_obsreanalysis.csv")
-    aq_wesc_monthly <- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/aq_wesc_monthly_obsreanalysis.csv")
+    aq_kzn_monthly <- fread(file="input_datasets/airquality/data/aq_kzn_monthly_obsreanalysis.csv")
+    aq_gertsibande_monthly <- fread(file="input_datasets/airquality/data/aq_gertsibande_monthly_obsreanalysis.csv")
+    aq_gaut_monthly <- fread(file="input_datasets/airquality/data/aq_gaut_monthly_obsreanalysis.csv")
+    aq_wesc_monthly <- fread(file="input_datasets/airquality/data/aq_wesc_monthly_obsreanalysis.csv")
     
 
     aq_list <- list(aq_kzn_monthly,aq_gertsibande_monthly,aq_gaut_monthly,aq_wesc_monthly)
@@ -671,7 +674,7 @@ mpm_pm2 <- ggplot(tmp_long)+
 
     color_labels = c("Eastern Cape" = "#008080", "Free State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
                      "Limpopo" = "#228B22", "Mpumalanga" = "#FFC000", "North West" = "#8B5A2B", "Northern Cape" = "#606060", "Western Cape" = "#1A2D6D" )
-    # png("/home/sbelman/Documents/BRD/SouthAfrica/airquality/plots/air_quality_observations_map.png", width=500,height=300)
+    # png("input_datasets/airquality/plots/air_quality_observations_map.png", width=500,height=300)
     ggplot(shp) +
       geom_sf(aes(fill=NAME_1))+
       geom_point(data=geo_data,aes(x=long,y=lat), size=2, fill = "#FF6961", color= "red") +
@@ -692,7 +695,7 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## read in disease data
     data <- fread(file="/home/sbelman/Documents/BRD/SouthAfrica/data/sa_adm1_weekly_lag.csv")
     prov_vec <- c("Gauteng", "Mpumalanga", "KwaZulu-Natal")
-    result_table <- readRDS(file = "/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/observation_file_list.rds")
+    result_table <- readRDS(file = "input_datasets/airquality/data/observation_file_list.rds")
     result_table$Province[which(result_table$Province=="KwaZulu Natal")] <- "KwaZulu-Natal"
     obs_aq_list <- list()
     for(i in 1:length(prov_vec)){
@@ -720,7 +723,7 @@ mpm_pm2 <- ggplot(tmp_long)+
           gaut_mat<- result_table[which(result_table$Province==prov_vec[i]),]
           obs_gaut_list<-list()
           for(s in 1:length(gaut_files)){
-            obs<- fread(paste0("/home/sbelman/Documents/BRD/SouthAfrica/airquality/data/observations/",gaut_files[s]))
+            obs<- fread(paste0("input_datasets/airquality/data/observations/",gaut_files[s]))
             obs$site <- gaut_mat[s,"Municipality"]
             if("pm25"%notin%colnames(obs)){
               obs$pm25 <- NA
