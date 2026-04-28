@@ -13,6 +13,24 @@
  ## Code Availability ##
  Purpose of manuscript is investigating the impact of environmental factors (meteorological and air pollution), while accounting for underlying microbial diversity in invasive pneumococcal disease. 
 
+All code for analysis is included in this repository and the associated packages can be installed with the yaml file.
+
+__R Libraries__
+
+```
+if (!require("yaml")) install.packages("yaml")
+if (!require("remotes")) install.packages("remotes")
+
+# Read the YAML file
+env <- yaml::read_yaml("r_environment.yml")
+
+# Install the packages via 'remotes' to ensure version matching
+invisible(lapply(names(env$packages), function(pkg) {
+  version <- env$packages[[pkg]]
+  message(paste("Installing", pkg, "version", version))
+  remotes::install_version(pkg, version = version, upgrade = "never")
+}))
+```
 
 ## Data Availability ##
 __Data and Models__
@@ -31,19 +49,4 @@ __Genomic Data__
 
 The microbial genomic data used in this study were previously published in Lekhuleni et al., 2024 (doi: https://doi.org/10.1038/s41467-024-52459-3) and the accession numbers are included here in Supplementary Dataset 1. 
 
-__R Libraries__
 
-```
-if (!require("yaml")) install.packages("yaml")
-if (!require("remotes")) install.packages("remotes")
-
-# Read the YAML file
-env <- yaml::read_yaml("r_environment.yml")
-
-# Install the packages via 'remotes' to ensure version matching
-invisible(lapply(names(env$packages), function(pkg) {
-  version <- env$packages[[pkg]]
-  message(paste("Installing", pkg, "version", version))
-  remotes::install_version(pkg, version = version, upgrade = "never")
-}))
-```
