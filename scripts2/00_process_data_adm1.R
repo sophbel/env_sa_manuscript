@@ -20,7 +20,7 @@ library(ggplot2)
 library(INLA)
 library(spdep)
 library(ISOweek)
-setwd("")
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 source("scripts2/0_source_functions.R")
 
 ## merge province data with shape file area ids

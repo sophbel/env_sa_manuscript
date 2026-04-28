@@ -11,9 +11,9 @@
 ## allows stratification by the prePCV and postPCV period to determine whether the effects
 ## are a response to the interventions or more intrinsic.
 
-
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ####LOAD DATA & LIBRARIES #####################################################
-source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
+source("scripts2/0_source_functions.R")
 ### set if interaction is true or not
 interaction = FALSE
 ### set resolution
@@ -22,35 +22,35 @@ space = "adm2"
 
 ## load spatial data
 if(space == "adm1"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_adm1.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map_adm1.adj")
 }
 if(space == "adm2"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map.adj")
 }
 
 # load  data depending on aggregations
-# data <-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv"))
-# data_unscaled <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv"))
+# data <-fread(file=paste0("dataframes/sa_adm1_weekly_lag_sc.csv"))
+# data_unscaled <- fread(file=paste0("dataframes/sa_adm1_weekly_lag.csv"))
 
 if(time == "weekly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_weekly_lag.csv")
 }
 if(time == "weekly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_weekly_lag.csv")
 }
 if(time == "monthly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_monthly_lag.csv")
 }
 if(time == "monthly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_monthly_lag.csv")
 }
 
 ### set variables and rename appropriately
@@ -139,7 +139,7 @@ for(pcvcut in 1:length(time_vec_label)){
         cov_names_labels <- gsub("_lag0", "", cov_names)
         
         ### select some serotypes to include
-        # data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+        # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
         # dtsero <- data.table(table(data2$serotype))[data.table(table(data2$serotype))$N>800]
         # pcv_vec <- c("4","6B","9V","14","18C","19F","23F","1","3","5","6A","7F","19A")
         # dtsero[which(dtsero$V1%notin%pcv_vec)]
@@ -183,8 +183,8 @@ for(pcvcut in 1:length(time_vec_label)){
         
         ##### LOAD INTERCEPT MODELS FOR R2 CALCULATION ##################################
         if(interaction == TRUE){
-        int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_2019.rds"))
-        re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_2019.rds"))
+        int_mod <- readRDS(file=paste0("models/base_models/base_model_main_",time,"_intercept_",space,"_2019.rds"))
+        re_mod <- readRDS(file=paste0("models/base_models/base_model_",time,"_20092011_popdens_",space,"_2019.rds"))
         }
         ##### SET UP LOOPS FOR MODELS    ###############################################
         ## define loop length
@@ -217,8 +217,8 @@ for(pcvcut in 1:length(time_vec_label)){
         forms$cov <- 're'
         re_mod <- inla.mod(form = forms, fam = "nbinomial", df, nthreads = 4, config = FALSE)
         
-        saveRDS(int_mod, file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/intercept_model_",outcomes[o],"_",time,"_",space,"_2019.rds"))
-        saveRDS(re_mod, file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/re_only_model_",outcomes[o],"_",time,"_",space,"_2019.rds"))
+        saveRDS(int_mod, file = paste0("models/dlnms/suboutcomes/intercept_model_",outcomes[o],"_",time,"_",space,"_2019.rds"))
+        saveRDS(re_mod, file = paste0("models/dlnms/suboutcomes/re_only_model_",outcomes[o],"_",time,"_",space,"_2019.rds"))
         }
         
         
@@ -372,7 +372,7 @@ for(pcvcut in 1:length(time_vec_label)){
                   mod$cov <- cov_names[c]
                   
                   if(cov_names[c] %in% c("hurs_lag0","pm2p5_lag0","pm10_lag0")){
-                    # saveRDS(mod, file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/models/dlnm_model_univariable_",gsub("_lag0","",cov_names[c]),"_",space,"_",time,".rds"))
+                    # saveRDS(mod, file = paste0("models/dlnms/sensitivity/models/dlnm_model_univariable_",gsub("_lag0","",cov_names[c]),"_",space,"_",time,".rds"))
                   }
                 
                 ######## CROSSPREDICTION AND PLOT ##############################################
@@ -584,22 +584,22 @@ for(pcvcut in 1:length(time_vec_label)){
                 
                 ############## SAVE FILES ##############################################
                 if(interaction == TRUE){
-                saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"week_",time_vec_label[pcvcut],".rds"))
-                # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"week.rds"))
-                write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+                saveRDS(model_out,file=paste0("models/dlnms/sensitivity/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"week_",time_vec_label[pcvcut],".rds"))
+                # saveRDS(cp_list,file=paste0("models/dlnms/sensitivity/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"week.rds"))
+                write.table(mod_sum2, file=paste0("models/dlnms/sensitivity/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
                 }else{
-                  saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/model_out_summary_list",outcomes[o],"_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"week_",time_vec_label[pcvcut],".rds"))
-                  write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/mod_gof_dlnm",outcomes[o],"_",time,"_",space,"_",interact_var,"_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+                  saveRDS(model_out,file=paste0("models/dlnms/sensitivity/model_out_summary_list",outcomes[o],"_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"week_",time_vec_label[pcvcut],".rds"))
+                  write.table(mod_sum2, file=paste0("models/dlnms/sensitivity/mod_gof_dlnm",outcomes[o],"_",time,"_",space,"_",interact_var,"_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
                 }
           } ### end of loop through gpscs
         
         
         if(interaction==TRUE){
-        write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-        write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-        write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        write.table(rr_ratio_all, file=paste0("models/dlnms/sensitivity/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        write.table(gpsc_results, file=paste0("models/dlnms/sensitivity/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        write.table(mod_sum_all, file=paste0("models/dlnms/sensitivity/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
         }else{
-          write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_",outcomes[o],"_",time,"_",space,"_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+          write.table(dlnm_results, file=paste0("models/dlnms/sensitivity/nointeraction_results_fits_",outcomes[o],"_",time,"_",space,"_",max_lag,"week_",time_vec_label[pcvcut],".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
         }
 
 
@@ -607,9 +607,9 @@ for(pcvcut in 1:length(time_vec_label)){
 # # ################################################################################
 space = "adm1"
 time_vec_label <- c("prePCV","postPCV")
-premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/gpsc_results_fits_weekly_",space,"_allGPSCs_propprov_8week_prePCV.csv"))
+premod <- fread(file=paste0("models/dlnms/sensitivity/gpsc_results_fits_weekly_",space,"_allGPSCs_propprov_8week_prePCV.csv"))
 premod$type <- "prePCV"
-postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/gpsc_results_fits_weekly_",space,"_allGPSCs_propprov_8week_postPCV.csv"))
+postmod <- fread(file=paste0("models/dlnms/sensitivity/gpsc_results_fits_weekly_",space,"_allGPSCs_propprov_8week_postPCV.csv"))
 postmod$type <- "postPCV"
 ## bind the sets
 sensmods <- rbind(premod,postmod)
@@ -635,7 +635,7 @@ p14 <- ggplot(tmpssub)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13),
         strip.text.y = element_text(angle=0))
 #
-# pdf("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/cumulative_prepostGPSCsensitivity_adm1.pdf")
+# pdf("figures/figure5/cumulative_prepostGPSCsensitivity_adm1.pdf")
 # print(p14)
 # dev.off()
 # 
@@ -664,12 +664,12 @@ p14 <- ggplot(tmps[which(tmps$GPSC%in%c("GPSC21")),])+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45, hjust=1),
         strip.text.y = element_text(angle=0))
 # 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/weeklyGPSC21_prepostGPSCsensitivity_",space,".pdf"), width = 10, height =2)
+pdf(paste0("figures/figure5/weeklyGPSC21_prepostGPSCsensitivity_",space,".pdf"), width = 10, height =2)
 print(p14)
 dev.off()
 # 
 print(p14)
-ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/figure5/weeklyGPSC21_prepostGPSCsensitivity_",space,".png"), width = 10, height =4)
+ggsave(paste0("figures/figure5/weeklyGPSC21_prepostGPSCsensitivity_",space,".png"), width = 10, height =4)
 dev.off()
 
 
@@ -681,30 +681,30 @@ space = "adm2"
 time_vec_label <- c("prePCV","postPCV")
 
 ###NVT
-    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_nvt_weekly_",space,"_8week_prePCV.csv"))
-    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_nvt_weekly_",space,"_8week_postPCV.csv"))
+    premod <- fread(file=paste0("models/dlnms/sensitivity/nointeraction_results_fits_nvt_weekly_",space,"_8week_prePCV.csv"))
+    postmod <- fread(file=paste0("models/dlnms/sensitivity/nointeraction_results_fits_nvt_weekly_",space,"_8week_postPCV.csv"))
     premod$type <- "prePCV"
     postmod$type <- "postPCV"
     sensmods1 <- rbind(premod,postmod)
     sensmods1$outcome <- "nvt"
 ###PCV7
-    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv7_weekly_",space,"_8week_prePCV.csv"))
-    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv7_weekly_",space,"_8week_postPCV.csv"))
+    premod <- fread(file=paste0("models/dlnms/sensitivity/nointeraction_results_fits_pcv7_weekly_",space,"_8week_prePCV.csv"))
+    postmod <- fread(file=paste0("models/dlnms/sensitivity/nointeraction_results_fits_pcv7_weekly_",space,"_8week_postPCV.csv"))
     premod$type <- "prePCV"
     postmod$type <- "postPCV"
     sensmods2 <- rbind(premod,postmod)
     sensmods2$outcome <- "pcv7"
 ###PCV13
-    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv13_weekly_",space,"_8week_prePCV.csv"))
-    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_pcv13_weekly_",space,"_8week_postPCV.csv"))
+    premod <- fread(file=paste0("models/dlnms/sensitivity/nointeraction_results_fits_pcv13_weekly_",space,"_8week_prePCV.csv"))
+    postmod <- fread(file=paste0("models/dlnms/sensitivity/nointeraction_results_fits_pcv13_weekly_",space,"_8week_postPCV.csv"))
     premod$type <- "prePCV"
     postmod$type <- "postPCV"
     sensmods3 <- rbind(premod,postmod)
     sensmods3$outcome <- "pcv13"
 
     ###PCV13
-    premod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_disease_weekly_",space,"_8week_prePCV.csv"))
-    postmod <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/nointeraction_results_fits_disease_weekly_",space,"_8week_postPCV.csv"))
+    premod <- fread(file=paste0("models/dlnms/sensitivity/nointeraction_results_fits_disease_weekly_",space,"_8week_prePCV.csv"))
+    postmod <- fread(file=paste0("models/dlnms/sensitivity/nointeraction_results_fits_disease_weekly_",space,"_8week_postPCV.csv"))
     premod$type <- "prePCV"
     postmod$type <- "postPCV"
     sensmods4 <- rbind(premod,postmod)
@@ -735,12 +735,12 @@ p14 <- ggplot(tmps)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), strip.text = element_text(size=13), axis.text.x = element_text(angle = 45, hjust=1),
         strip.text.y = element_text(angle=0), legend.title = element_blank())
 
-pdf(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV_",space,".pdf"), width = 12, height = 6.7)
+pdf(paste0("figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV_",space,".pdf"), width = 12, height = 6.7)
 print(p14)
 dev.off()
 
 print(p14)
-ggsave(paste0("/home/sbelman/Documents/env_sa_manuscript/figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV_",space,".png"), width = 12, height = 5)
+ggsave(paste0("figures/supplement/sensitivity_multioutcomeVTtypes_prepostPCV_",space,".png"), width = 12, height = 5)
 dev.off()
 
 

@@ -1,8 +1,9 @@
 library(dlnm)
 library(INLA)
 
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ####LOAD DATA & LIBRARIES #####################################################
-source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
+source("scripts2/0_source_functions.R")
 ### set if timing is precovid is true or not
 precov = TRUE
 ### set resolution
@@ -11,35 +12,35 @@ space = "adm2"
 
 ## load spatial data
 if(space == "adm1"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_adm1.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map_adm1.adj")
 }
 if(space == "adm2"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map.adj")
 }
 
 # load  data depending on aggregations
-# data <-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv"))
-# data_unscaled <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv"))
+# data <-fread(file=paste0("dataframes/sa_adm1_weekly_lag_sc.csv"))
+# data_unscaled <- fread(file=paste0("dataframes/sa_adm1_weekly_lag.csv"))
 
 if(time == "weekly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_weekly_lag.csv")
 }
 if(time == "weekly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_weekly_lag.csv")
 }
 if(time == "monthly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_monthly_lag.csv")
 }
 if(time == "monthly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_monthly_lag.csv")
 }
 
 ### set variables and rename appropriately
@@ -107,8 +108,8 @@ absh_grp <- inla.group(df$absh_lag3, n = 5)  # You can adjust 'n' (number of gro
 df$absh_grp <- absh_grp
 
 ##### LOAD INTERCEPT MODELS FOR R2 CALCULATION ##################################
-int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
-re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
+int_mod <- readRDS(file=paste0("models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
+re_mod <- readRDS(file=paste0("models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
 
 dlnm_results <- NULL
 
@@ -239,22 +240,22 @@ gof <- eval.mod(mod,df)
 gof$rsq <- rsq(gof, int_mod, 1)
 gof <- gof[,c("cov","waic","mae","cpo","rsq")]
 
-write.table(gof, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/mod_gof_dlnm2X_tasabsh",time,"_",space,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(df_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_dlnm2x_results_fits_",time,"_",space,"_tasabsh_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(gof, file=paste0("models/dlnms/modifiers/mod_gof_dlnm2X_tasabsh",time,"_",space,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(df_all, file=paste0("models/dlnms/modifiers/nointeraction_dlnm2x_results_fits_",time,"_",space,"_tasabsh_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
 
 
 # ##### compare CBpm2p5 + CBtas + absh model TO CBpm2p5 + tas + absh model
-# dfth <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019.csv")
+# dfth <- fread("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019.csv")
 # dfth <- subset(dfth , dfth$covariate == "pm2p5_lag0" & dfth$cov2 == "absh_lag3")
 # dfthC <- subset(dfth , dfth$lag_num == 3)
 # ## read in double cross basis
-# dfCB2 <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_dlnm2x_results_fits_weekly_adm2_tasabsh_8_2019.csv")
+# dfCB2 <- fread("models/dlnms/modifiers/nointeraction_dlnm2x_results_fits_weekly_adm2_tasabsh_8_2019.csv")
 # dfCB2 <- subset(dfCB2 , dfCB2$covariate == "pm2p5" )
 # dfCB2C <- subset(dfCB2 , dfCB2$covariate == "pm2p5" & dfCB2$lag_num == 3)
 # 
 # ## interaction version
-# dfint <- fread("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/envmod_results_fits_weekly_adm2_allmodifiers_propprov_8_2019.csv")
+# dfint <- fread("models/dlnms/modifiers/envmod_results_fits_weekly_adm2_allmodifiers_propprov_8_2019.csv")
 # dfint <- subset(dfint , dfint$covariate == "pm2p5_lag0" &  dfint$interaction_level =="med")
 # dfintC <- subset(dfint , dfint$lag_num == 3 )
 # 

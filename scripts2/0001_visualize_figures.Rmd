@@ -1802,8 +1802,6 @@ exp(nointer[which(nointer$lag_num==1 & nointer$var==50),c("fit","lowerCI","upper
 # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 
-# data3 <- data2[,c("date","year","province","district","sequenced","GPSC","serotype","WGS_PEN_SIR_Nonmeningitis")]
-# write.table(data3, "input_datasets/disease/SA_disease_point_base_share.csv",quote = FALSE, col.names = TRUE, row.names = FALSE)
 # Convert date to week start (ISO week)
 data2 <- data2 %>% 
   mutate(week = floor_date(date, "week"))

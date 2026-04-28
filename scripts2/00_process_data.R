@@ -207,12 +207,16 @@ source("scripts2/0_source_functions.R")
   
   ## drop unknown district and province
   data3 <- subset(data3, data3$district!="unknown")
-  write.table(data3, file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
+  
+  
+  # data3 <- data2[,c("date","year","province","district","ageyears","sequenced","serotype","spec_type","spec_diagnosis","epi_week","epi_year","vaccine_status_phen","Manifestation","Source","NAME_1","GID_1","Region","City","GPSC","In_silico_serotype","WGS_PEN_SIR_Nonmeningitis")]
+  # write.table(data3, "input_datasets/disease/SA_disease_point_base_share.csv", col.names = TRUE, row.names = FALSE)
+  write.table(data3, file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE,row.names = FALSE, col.names = TRUE)
 ################################################################################
 ######  CREATE DAILY AGGREGATED DATA FRAME WITH 52 (DISTRICT_N=52) NUMBERS FOR EACH DATE ######
 ################################################################################ 
-  # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-  data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
+  # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv")
+  data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv")
   
     # ### test case count per year
   # test <- data2

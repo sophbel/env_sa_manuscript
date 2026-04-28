@@ -14,9 +14,9 @@
 ## including a multiplicative effect of multiple environmental covariates in the same model (bivariable)
 ## allows models from 2005-2019 and 2005-2023
 ## also can run with and without the interaction of the GPSC and at all spatial and temporal levels
-
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ####LOAD DATA & LIBRARIES ######################################################
-source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
+source("scripts2/0_source_functions.R")
 ### set if interaction is true or not
 interaction = TRUE
 ### set resolution
@@ -27,35 +27,35 @@ precov = TRUE
 
 ## load spatial data
 if(space == "adm1"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_adm1.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map_adm1.adj")
 }
 if(space == "adm2"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map.adj")
 }
 
 # load  data depending on aggregations
-# data <-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv"))
-# data_unscaled <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv"))
+# data <-fread(file=paste0("dataframes/sa_adm1_weekly_lag_sc.csv"))
+# data_unscaled <- fread(file=paste0("dataframes/sa_adm1_weekly_lag.csv"))
 
 if(time == "weekly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_weekly_lag.csv")
 }
 if(time == "weekly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_weekly_lag.csv")
 }
 if(time == "monthly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_monthly_lag.csv")
 }
 if(time == "monthly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_monthly_lag.csv")
 }
 
 ### set variables and rename appropriately
@@ -151,7 +151,9 @@ gpsc_vec <- grep("GPSC", all_gpscs, value = TRUE)
 gpsc_vec <- grep("count", gpsc_vec, value = TRUE) ## if including the proportions 
 
 ### select some serotypes to include
-# data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
+
 # dtsero <- data.table(table(data2$serotype))[data.table(table(data2$serotype))$N>800]
 # pcv_vec <- c("4","6B","9V","14","18C","19F","23F","1","3","5","6A","7F","19A")
 # dtsero[which(dtsero$V1%notin%pcv_vec)]
@@ -192,8 +194,8 @@ df$absh_grp <- absh_grp
 # grid.arrange(grobs=gpsc_annual_plot)
 
 ##### LOAD INTERCEPT MODELS FOR R2 CALCULATION ##################################
-int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
-re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
+int_mod <- readRDS(file=paste0("models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
+re_mod <- readRDS(file=paste0("models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
 
 ##### SET UP LOOPS FOR MODELS    ###############################################
 
@@ -655,22 +657,22 @@ for(gp in 1:length(gpsc_vec_sub)){
         ############## SAVE FILES ##############################################
         # save this and overwrite it each time until get to the end of the GPSCs as a stop gap
         if(interaction==TRUE){
-        # write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        # write.table(gpsc_results, file=paste0("models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
         }
           ## save individual gpsc files
-        # saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.rds"))
-        saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,".rds"))
-        # write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        # saveRDS(model_out,file=paste0("models/dlnms/bivariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.rds"))
+        saveRDS(cp_list,file=paste0("models/dlnms/bivariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_",max_lag,"_",endyear,".rds"))
+        # write.table(mod_sum2, file=paste0("models/dlnms/bivariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
   } ### end of loop through gpscs
 
 
 # if(interaction==TRUE){
-# write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-# write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-# write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+# write.table(rr_ratio_all, file=paste0("models/dlnms/bivariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+# write.table(gpsc_results, file=paste0("models/dlnms/bivariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+# write.table(mod_sum_all, file=paste0("models/dlnms/bivariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 # }else{
-#   write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",time,"_",space,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+#   write.table(dlnm_results, file=paste0("models/dlnms/bivariable/nointeraction_results_fits_",time,"_",space,"_bivariable_",max_lag,"_",endyear,"_templag0humlag3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 # }
 
 
@@ -683,7 +685,7 @@ for(gp in 1:length(gpsc_vec_sub)){
 # ### read in bivariable
 # stlist <- list()
 # for(s in 1:length(st_vec)){
-#   m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_",max_lag,"_",endyear,".csv"))
+#   m1 <- fread(file=paste0("models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_",max_lag,"_",endyear,".csv"))
 #   m1$space_time <- st_vec[s]
 #   stlist[[s]] <- m1
 # }
@@ -694,7 +696,7 @@ for(gp in 1:length(gpsc_vec_sub)){
 # ### read in univariable
 # stlist <- list()
 # for(s in 1:length(st_vec)){
-#   m1 <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_",st_vec[s],"_",max_lag,"_",endyear,".csv"))
+#   m1 <- fread(file=paste0("models/dlnms/univariable/nointeraction_results_fits_",st_vec[s],"_",max_lag,"_",endyear,".csv"))
 #   m1$space_time <- st_vec[s]
 #   stlist[[s]] <- m1
 # }

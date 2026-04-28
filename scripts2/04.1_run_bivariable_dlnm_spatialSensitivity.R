@@ -1,14 +1,15 @@
 ################## test spatial replicate by year versus interannual replicate by province ##############
 ####LOAD DATA##########
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ################################################################################
-source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
+source("scripts2/0_source_functions.R")
 # weekly=FALSE
 precov=TRUE ### set whether the run ends in 2020 or 2023
 time = "weekly"
 space="adm2"
 threads = 4
 ## load disease data
-data<-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_",space,"_",time,"_lag_sc.csv"))
+data<-fread(file=paste0("dataframes/sa_",space,"_",time,"_lag_sc.csv"))
 
 ## subset by only pre covid
 if(precov==TRUE){
@@ -21,12 +22,12 @@ if(precov==TRUE){
 # landscan_raster <- raster("/home/sbelman/Documents/BRD/SouthAfrica/sociodemographic/landscan_2022/landscan-global-2022.tif")
 ## read adjacency matrix
 if(space=="adm1"){
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_adm1.adj")
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map_adm1.adj")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
   
 }else{
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map.adj")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
 }
 
 #### Prepare effects to account for vaccination
@@ -227,7 +228,7 @@ cumpm25diff <- ggplot(curve_df, aes(x = x, y = fit, color = model, fill = model)
   theme(legend.position = "bottom", legend.title = element_blank())
 
 
-pdf("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/spatial_sensitivity/cumpm2p5_spatialsens_weekly_adm2_2019.pdf", width = 4, height =4)
+pdf("models/dlnms/sensitivity/spatial_sensitivity/cumpm2p5_spatialsens_weekly_adm2_2019.pdf", width = 4, height =4)
 print(cumpm25diff)
 dev.off()
 
@@ -245,7 +246,7 @@ pmsum <- df %>%
 #### examine the spatial effects in detail and their deviation ##############################
 ###### plot #### spatial effects  
 plotinterrep <- plot_spatial_effects(models$ybyprov,shp,N=52, structured = FALSE)
-pdf("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/spatial_sensitivity/spatialstatic_yearbyprov_weekly_adm2_2019.pdf", width = 6, height =4)
+pdf("models/dlnms/sensitivity/spatial_sensitivity/spatialstatic_yearbyprov_weekly_adm2_2019.pdf", width = 6, height =4)
 print(plotinterrep)
 dev.off()
 
@@ -283,7 +284,7 @@ spacebyyear <- ggplot(data = filter(map_data, type == "Structured")) +
   theme(axis.text = element_blank(),
     panel.grid = element_blank(),
     strip.text = element_text(face = "bold"))
-pdf("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/spatial_sensitivity/spatialdynamic_weekly_adm2_2019.pdf", width = 8, height =5)
+pdf("models/dlnms/sensitivity/spatial_sensitivity/spatialdynamic_weekly_adm2_2019.pdf", width = 8, height =5)
 print(spacebyyear)
 dev.off()
 
@@ -351,7 +352,7 @@ spacbyyeardiff <- ggplot(data = map_diff_data) +
   theme(axis.text = element_blank(),
     panel.grid = element_blank(),
     strip.text = element_text(face = "bold"))
-pdf("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/spatial_sensitivity/diffspacebyyear_idmidy_weekly_adm2_2019.pdf", width = 8, height =5)
+pdf("models/dlnms/sensitivity/spatial_sensitivity/diffspacebyyear_idmidy_weekly_adm2_2019.pdf", width = 8, height =5)
 print(spacbyyeardiff)
 dev.off()
 
@@ -432,15 +433,15 @@ ybprov_districteffect + spbyyear_districteffect
 
 
 library(patchwork)
-pdf("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/spatial_sensitivity/diffspatial_province_idmidy_weekly_adm2_2019.pdf", width = 10, height =5)
+pdf("models/dlnms/sensitivity/spatial_sensitivity/diffspatial_province_idmidy_weekly_adm2_2019.pdf", width = 10, height =5)
 print(provincedeviations + y)
 dev.off()
 
-pdf("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/spatial_sensitivity/spatialinterann_province_weekly_adm2_2019.pdf", width = 10, height =5)
+pdf("models/dlnms/sensitivity/spatial_sensitivity/spatialinterann_province_weekly_adm2_2019.pdf", width = 10, height =5)
 print(y + provinceeffects )
 dev.off()
 
-pdf("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/sensitivity/spatial_sensitivity/diffspatial_provincewrap_weekly_adm2_2019.pdf", width = 5, height =5)
+pdf("models/dlnms/sensitivity/spatial_sensitivity/diffspatial_provincewrap_weekly_adm2_2019.pdf", width = 5, height =5)
 print(provincedeviations)
 dev.off()
 
@@ -513,7 +514,7 @@ ggplot(shpcor) +
 # mods <- lapply(model_specs, run)
 # 
 # 
-# int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
+# int_mod <- readRDS(file=paste0("models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
 # gof <- eval.mod(mods$ybyprov,dftest)
 # gof$rsq <- rsq(gof, int_mod, 1)
 # gof$type <- "ybprov"

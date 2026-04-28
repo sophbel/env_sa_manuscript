@@ -8,8 +8,9 @@
 ## allows models from 2005-2019 and 2005-2023
 ## also can run with and without the interaction of the environmental effects and at all spatial and temporal levels
 
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ####LOAD DATA & LIBRARIES #####################################################
-source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
+source("scripts2/0_source_functions.R")
 ### set if interaction is true or not
 interaction = TRUE
 ### set resolution
@@ -19,35 +20,35 @@ precov = TRUE
 permute = FALSE
 ## load spatial data
 if(space == "adm1"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_adm1.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map_adm1.adj")
 }
 if(space == "adm2"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map.adj")
 }
 
 # load  data depending on aggregations
-# data <-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv"))
-# data_unscaled <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv"))
+# data <-fread(file=paste0("dataframes/sa_adm1_weekly_lag_sc.csv"))
+# data_unscaled <- fread(file=paste0("dataframes/sa_adm1_weekly_lag.csv"))
 
 if(time == "weekly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_weekly_lag.csv")
 }
 if(time == "weekly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_weekly_lag.csv")
 }
 if(time == "monthly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_monthly_lag.csv")
 }
 if(time == "monthly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_monthly_lag.csv")
 }
 
 ### set variables and rename appropriately
@@ -135,7 +136,7 @@ cov_names_labels <- gsub("_lag0", "", cov_names)
 
 # 
 # ### select some serotypes to include
-# data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 # dtsero <- data.table(table(data2$serotype))[data.table(table(data2$serotype))$N>800]
 # pcv_vec <- c("4","6B","9V","14","18C","19F","23F","1","3","5","6A","7F","19A")
 # dtsero[which(dtsero$V1%notin%pcv_vec)]
@@ -148,8 +149,8 @@ envint_vec <- c("tas")
 envint_vec <- paste0(envint_vec,"_lag3")
 
 ##### LOAD INTERCEPT MODELS FOR R2 CALCULATION ##################################
-int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
-re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
+int_mod <- readRDS(file=paste0("models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
+re_mod <- readRDS(file=paste0("models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
 
 ##### SET UP LOOPS FOR MODELS    ###############################################
 ## define loop length
@@ -331,7 +332,7 @@ for(gp in 1:length(envint_vec_sub)){
           mod$cov <- cov_names[c]
           
           if(cov_names[c] %in% c("hurs_lag0","pm2p5_lag0","pm10_lag0")){
-            # saveRDS(mod, file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/dlnm_model_univariable_",gsub("_lag0","",cov_names[c]),"_",space,"_",time,".rds"))
+            # saveRDS(mod, file = paste0("models/dlnms/modifiers/dlnm_model_univariable_",gsub("_lag0","",cov_names[c]),"_",space,"_",time,".rds"))
           }
         
         ######## CROSSPREDICTION AND PLOT ##############################################
@@ -543,18 +544,18 @@ for(gp in 1:length(envint_vec_sub)){
           
         }else{
         ############## SAVE FILES ##############################################
-        # saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
-        # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"_",endyear,".rds"))
-        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        # saveRDS(model_out,file=paste0("models/dlnms/modifiers/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
+        # saveRDS(cp_list,file=paste0("models/dlnms/modifiers/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"_",endyear,".rds"))
+        write.table(mod_sum2, file=paste0("models/dlnms/modifiers/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }
   } ### end of loop through modifier
 
 
 if(interaction==TRUE){
-write.table(envint_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/envmod_results_fits_",time,"_",space,"_allmodifiers_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = ",")
-write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/mod_gof_dlnm",time,"_",space,"_allmodifiers_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = ",")
+write.table(envint_results, file=paste0("models/dlnms/modifiers/envmod_results_fits_",time,"_",space,"_allmodifiers_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = ",")
+write.table(mod_sum_all, file=paste0("models/dlnms/modifiers/mod_gof_dlnm",time,"_",space,"_allmodifiers_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = ",")
 }else{
-  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_results_fits_",time,"_",space,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = ",")
+  write.table(dlnm_results, file=paste0("models/dlnms/modifiers/nointeraction_results_fits_",time,"_",space,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = FALSE, sep = ",")
 }
 
 ################################################################################
@@ -564,10 +565,10 @@ max_lag = 8
 endyear = 2019
 ## PLOTS ##
 ## pm2.5 effect with temperature variables (min and max)
-dlnm_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/nointeraction_results_fits_",time,"_",space,"_",max_lag,"_",endyear,".csv"))
+dlnm_results <- fread(file=paste0("models/dlnms/modifiers/nointeraction_results_fits_",time,"_",space,"_",max_lag,"_",endyear,".csv"))
 colnames(dlnm_results)[which(colnames(dlnm_results)=="GPSC")] <- "envmodifier"
 dlnm_results$envmodifier_val <- NA
-envint_results <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/modifiers/envmod_results_fits_",time,"_",space,"_allmodifiers_propprov_",max_lag,"_",endyear,".csv"))
+envint_results <- fread(file=paste0("models/dlnms/modifiers/envmod_results_fits_",time,"_",space,"_allmodifiers_propprov_",max_lag,"_",endyear,".csv"))
 ### bind them as if they're the same
 outdf <- rbind(dlnm_results,envint_results)
 ### join them so I can plot on the same graph
@@ -621,15 +622,15 @@ envmodifier_table2 <- envmodifier_table %>%   # replace df with your object name
   arrange(envmodifier)
 
 
-write.table(envmodifier_table2, file = "/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/modifier_proportions.csv", sep = ",",quote = FALSE, row.names = FALSE, col.names = TRUE)
+write.table(envmodifier_table2, file = "figures/revision_figs/modifier_proportions.csv", sep = ",",quote = FALSE, row.names = FALSE, col.names = TRUE)
 ##### save sensitivity plots
-pdf("/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/cum_meteomodplot.pdf", width = 8, height =5)
+pdf("figures/revision_figs/cum_meteomodplot.pdf", width = 8, height =5)
 print(cummod_plot)
-ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/cum_meteomodplot.png", width = 8, height =5)
+ggsave("figures/revision_figs/cum_meteomodplot.png", width = 8, height =5)
 dev.off()
-pdf("/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/weekly_meteomodplot.pdf", width = 10, height =6)
+pdf("figures/revision_figs/weekly_meteomodplot.pdf", width = 10, height =6)
 print(mod_lagsplot)
-ggsave("/home/sbelman/Documents/env_sa_manuscript/figures/revision_figs/weekly_meteomodplot.png", width = 10, height =6)
+ggsave("figures/revision_figs/weekly_meteomodplot.png", width = 10, height =6)
 dev.off()
 
 

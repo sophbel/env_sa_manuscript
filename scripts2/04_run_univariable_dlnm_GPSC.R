@@ -11,9 +11,9 @@
 
 ## allows models from 2005-2019 and 2005-2023
 ## also can run with and without the interaction of the GPSC and at all spatial and temporal levels
-
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ####LOAD DATA & LIBRARIES #####################################################
-source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
+source("scripts2/0_source_functions.R")
 ### set if interaction is true or not
 interaction = FALSE
 ### set resolution
@@ -23,35 +23,35 @@ precov = FALSE
 permute = FALSE
 ## load spatial data
 if(space == "adm1"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_adm1.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map_adm1.adj")
 }
 if(space == "adm2"){
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map.adj")
 }
 
 # load  data depending on aggregations
-# data <-fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv"))
-# data_unscaled <- fread(file=paste0("/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv"))
+# data <-fread(file=paste0("dataframes/sa_adm1_weekly_lag_sc.csv"))
+# data_unscaled <- fread(file=paste0("dataframes/sa_adm1_weekly_lag.csv"))
 
 if(time == "weekly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_weekly_lag.csv")
 }
 if(time == "weekly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_weekly_lag.csv")
 }
 if(time == "monthly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_monthly_lag.csv")
 }
 if(time == "monthly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_monthly_lag.csv")
 }
 
 ### set variables and rename appropriately
@@ -141,7 +141,7 @@ cov_names_labels <- gsub("_lag0", "", cov_names)
 
 
 ### select some serotypes to include
-data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 dtsero <- data.table(table(data2$serotype))[data.table(table(data2$serotype))$N>800]
 pcv_vec <- c("4","6B","9V","14","18C","19F","23F","1","3","5","6A","7F","19A")
 dtsero[which(dtsero$V1%notin%pcv_vec)]
@@ -182,7 +182,8 @@ gpsc_vec <- paste0("GPSC",dtgpsc$V1,"_count")
 
 ###### TO DELETE - TRYING TO UNDERSTAND ART EFFECT WHICH EMERGES IN 2019-2023 BUT NOT BEFORE 2019 - MUST BE COVID RELATED TRENDS IN DATA ###
 ###### how many NVTs are in each age group from 2005-2019 and 2005-2023 ######
-# data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 # 
 # tmp <- data2 
 # tmp$age_group <- ifelse(data2$ageyears<=5, "agelt6", ifelse(
@@ -200,8 +201,8 @@ gpsc_vec <- paste0("GPSC",dtgpsc$V1,"_count")
 # apply(table(tmp3$age_group, tmp3$vaccine_status_phen), 2, function(x) x/colSums(table(tmp3$age_group, tmp3$vaccine_status_phen)))
 
 ##### LOAD INTERCEPT MODELS FOR R2 CALCULATION ##################################
-int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
-re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
+int_mod <- readRDS(file=paste0("models/base_models/base_model_main_",time,"_intercept_",space,"_",endyear,".rds"))
+re_mod <- readRDS(file=paste0("models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
 
 
 ##### SET UP LOOPS FOR MODELS    ###############################################
@@ -358,7 +359,7 @@ for(gp in 1:length(gpsc_vec_sub)){
           mod$cov <- cov_names[c]
           
           if(cov_names[c] %in% c("hurs_lag0","pm2p5_lag0","pm10_lag0")){
-            # saveRDS(mod, file = paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/dlnm_model_univariable_",gsub("_lag0","",cov_names[c]),"_",space,"_",time,".rds"))
+            # saveRDS(mod, file = paste0("models/dlnms/univariable/dlnm_model_univariable_",gsub("_lag0","",cov_names[c]),"_",space,"_",time,".rds"))
           }
         
         ######## CROSSPREDICTION AND PLOT ##############################################
@@ -567,19 +568,19 @@ for(gp in 1:length(gpsc_vec_sub)){
         
  
         ############## SAVE FILES ##############################################
-        saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
-        # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"_",endyear,".rds"))
-        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        saveRDS(model_out,file=paste0("models/dlnms/univariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
+        # saveRDS(cp_list,file=paste0("models/dlnms/univariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"_",endyear,".rds"))
+        write.table(mod_sum2, file=paste0("models/dlnms/univariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
   } ### end of loop through gpscs
 
 
 if(interaction==TRUE){
-write.table(rr_ratio_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(gpsc_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
-write.table(mod_sum_all, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(rr_ratio_all, file=paste0("models/dlnms/univariable/rr_ratio_all_",time,"_",space,"_allGPSCs_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(gpsc_results, file=paste0("models/dlnms/univariable/gpsc_results_fits_",time,"_",space,"_allGPSCs_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+write.table(mod_sum_all, file=paste0("models/dlnms/univariable/mod_gof_dlnm",time,"_",space,"_allGPSCs_propprov_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }else{
-  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/univariable/nointeraction_results_fits_",time,"_",space,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+  write.table(dlnm_results, file=paste0("models/dlnms/univariable/nointeraction_results_fits_",time,"_",space,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 }
 
 

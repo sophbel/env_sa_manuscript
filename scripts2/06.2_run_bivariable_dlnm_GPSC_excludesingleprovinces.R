@@ -9,15 +9,15 @@
 ## We are running this at weekly administrative region 1 to
 ## maximize the power of the temporal effect but not reducing the power too much.
 
-
+setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ####LOAD DATA & LIBRARIES #####################################################
-path_to_package <- "/home/sbelman/Documents/Extra_Projects/IDExtremes/GHRmodel/ghrmodel_0.0.0.9000.tar.gz"
+# path_to_package <- "/home/sbelman/Documents/Extra_Projects/IDExtremes/GHRmodel/ghrmodel_0.0.0.9000.tar.gz"
+# install.packages(patch_to_package , 
+                 # repos = NULL, type = "source", INSTALL_opts = c("--no-multiarch", "--no-test-load"))
+# library(ghrmodel)
 
-install.packages(path_to_package , 
-                 repos = NULL, type = "source", INSTALL_opts = c("--no-multiarch", "--no-test-load"))
-library(ghrmodel)
 library(spdep)
-source("/home/sbelman/Documents/env_sa_manuscript/scripts2/0_source_functions.R")
+source("scripts2/0_source_functions.R")
 ### set if interaction is true or not
 interaction = FALSE
 ### set resolution
@@ -29,37 +29,37 @@ precov = TRUE
 ## load spatial data
 if(space == "adm1"){
   print("WARNING: MAKE SURE TO REMOVE SPATIAL EFFECT AS WE'RE ONLY RUNNING THIS ON A SINGLE PROVINCE")
-  shp<-st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+  shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
   ## read adjacency matrix
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_adm1.adj")
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map_adm1.adj")
 }
 if(space == "adm2"){
-  shp <- st_read("/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+  shp <- st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
   shp <- shp[which(shp$NAME_1 != gsub("_"," ", prov_name)),]
   adm_idx <- shp[,c("GID_1","GID_2","NAME_2")]
   adm_idx <- st_drop_geometry(adm_idx)
   idx <- unique(shp$GID_2)
   ## save adjacency matrix
   nb <- poly2nb(shp)
-  nb2INLA(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_excludesingleprov.adj", nb)
-  g <- inla.read.graph(filename = "/home/sbelman/Documents/env_sa_manuscript/input_datasets/shps/sa_adjacency_map_excludesingleprov.adj")
+  nb2INLA(file="input_datasets/shps/sa_adjacency_map_excludesingleprov.adj", nb)
+  g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map_excludesingleprov.adj")
 }
 
 if(time == "weekly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_weekly_lag.csv")
 }
 if(time == "weekly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_weekly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_weekly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_weekly_lag.csv")
 }
 if(time == "monthly" & space == "adm1"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm1_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm1_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm1_monthly_lag.csv")
 }
 if(time == "monthly" & space == "adm2"){
-  data <-fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag_sc.csv")
-  data_unscaled <- fread(file="/home/sbelman/Documents/env_sa_manuscript/dataframes/sa_adm2_monthly_lag.csv")
+  data <-fread(file="dataframes/sa_adm2_monthly_lag_sc.csv")
+  data_unscaled <- fread(file="dataframes/sa_adm2_monthly_lag.csv")
 }
 
 
@@ -157,7 +157,7 @@ if(interaction == TRUE){
 cov_names_labels <- gsub("_lag0", "", cov_names)
 
 ### select some serotypes to include
-data2<- fread(file="/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 data2prov <- subset(data2, data2$province!=prov_name)
 dtsero <- data.table(table(data2prov$serotype))[data.table(table(data2prov$serotype))$N>800]
 pcv_vec <- c("4","6B","9V","14","18C","19F","23F","1","3","5","6A","7F","19A")
@@ -213,9 +213,9 @@ var(df$disease)/mean(df$disease)
 ##### LOAD INTERCEPT MODELS FOR R2 CALCULATION ##################################
 ##### LOAD INTERCEPT MODELS FOR R2 CALCULATION ##################################
 ### run intercept only model
-base_form_list<-readRDS("/home/sbelman/Documents/env_sa_manuscript/formulas/base_form_list.rds")
+base_form_list<-readRDS("formulas/base_form_list.rds")
 int_mod <- inla.mod(base_form_list[[1]], fam = "nbinomial", df = df, nthreads=4, config=FALSE)
-saveRDS(int_mod, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/base_model_main_",time,"_intercept_",space,"_exclude",prov_name,"_",endyear,".rds"))
+saveRDS(int_mod, file=paste0("models/dlnms/suboutcomes/province/base_model_main_",time,"_intercept_",space,"_exclude",prov_name,"_",endyear,".rds"))
 
 ## run random effect only model
 base_form<-list()
@@ -228,11 +228,11 @@ form <- reformulate(c(1,
 base_form$formula <- as.formula(form)
 base_form$covs<-paste0("spatial, seasonal, and annual (province replication) accounting for both vaccination, and population density")
 re_mod <- inla.mod(base_form, fam = "nbinomial", df = df, nthreads=4, config=FALSE)
-saveRDS(re_mod, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/base_model_",time,"_20092011_popdens_",space,"_exclude",prov_name,"_",endyear,".rds"))
+saveRDS(re_mod, file=paste0("models/dlnms/suboutcomes/province/base_model_",time,"_20092011_popdens_",space,"_exclude",prov_name,"_",endyear,".rds"))
 
 
-# int_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/base_model_main_",time,"_intercept_",space,"_exclude",prov_name,"_",endyear,".rds"))
-# re_mod <- readRDS(file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/base_model_",time,"_20092011_popdens_",space,"_exclude",prov_name,"_",endyear,".rds"))
+# int_mod <- readRDS(file=paste0("models/dlnms/suboutcomes/province/base_model_main_",time,"_intercept_",space,"_exclude",prov_name,"_",endyear,".rds"))
+# re_mod <- readRDS(file=paste0("models/dlnms/suboutcomes/province/base_model_",time,"_20092011_popdens_",space,"_exclude",prov_name,"_",endyear,".rds"))
 
 ##### SET UP LOOPS FOR MODELS    ###############################################
 
@@ -771,15 +771,15 @@ for(gp in 1:length(gpsc_vec_sub)){
         }
         
         ############## SAVE FILES ##############################################
-        saveRDS(model_out,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_8week_",endyear,"_exclude",prov_name,"_temp0hum3.rds"))
-        # saveRDS(cp_list,file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_8week_",endyear,"_exclude",prov_name,".rds"))
-        write.table(mod_sum2, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_8week_",endyear,"_exclude",prov_name,"_temp0hum3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+        saveRDS(model_out,file=paste0("models/dlnms/suboutcomes/province/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_8week_",endyear,"_exclude",prov_name,"_temp0hum3.rds"))
+        # saveRDS(cp_list,file=paste0("models/dlnms/suboutcomes/province/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_bivariable_8week_",endyear,"_exclude",prov_name,".rds"))
+        write.table(mod_sum2, file=paste0("models/dlnms/suboutcomes/province/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_bivariable_8week_",endyear,"_exclude",prov_name,"_temp0hum3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
   } ### end of loop through gpscs
 
 
 
-  write.table(dlnm_results, file=paste0("/home/sbelman/Documents/env_sa_manuscript/models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_bivariable_8week_",endyear,"_exclude",prov_name,"_temp0hum3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
+  write.table(dlnm_results, file=paste0("models/dlnms/suboutcomes/province/nointeraction_results_fits_",time,"_",space,"_bivariable_8week_",endyear,"_exclude",prov_name,"_temp0hum3.csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
  
 # 

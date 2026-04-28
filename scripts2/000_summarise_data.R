@@ -41,7 +41,7 @@ data<- data %>% separate(district, into= "district", sep= " District Municipalit
 data$sequenced <- ifelse(data$laneid=="",0,1)
 data$laneid[which(data$laneid=="")]<-NA
 # Save processed file including disease
-# write.table(data,"/home/sbelman/Documents/env_sa_manuscript/input_datasets/disease/SA_disease_point.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
+# write.table(data,"input_datasets/disease/SA_disease_point.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
 
 ################################################################################
 ## SAVE NAME MATCHED SHAPE FILES 
