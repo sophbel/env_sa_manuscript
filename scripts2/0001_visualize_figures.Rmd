@@ -620,6 +620,25 @@ plot_temp_cum <- ggplot(tmp)+
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
         legend.position = "right")
 
+#### mean temperature alone
+tmp <- subset(fit_list, fit_list$cov%in%c("tasmin") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+plot_temptasmin_cum <- ggplot(tmp)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov)),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov)),alpha=0.3)+
+    geom_rug(data= data_unscaled, aes(x = tas_lag0), sides = "b", alpha = 0.03, length = unit(0.05, "npc"), color = "grey40") +
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  # scale_y_continuous(trans="log10", limits = c(0.4,1.1), breaks = c(0.4, 1, 1.1))+
+    scale_y_continuous(trans="log10", limits = c(0.6,1.2), breaks = c(0.8, 1, 1.2))+
+  ggtitle("Temperature")+
+  xlab("°C")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+
 # HURS
 tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
 # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
@@ -765,6 +784,8 @@ pdf(paste0("figures/figure3/tas_cumulative_additive_sa_",space_time_str,".pdf"),
 print(plot_temp_cum)
 dev.off()
 
+
+
 ### save together
 pdf(paste0("figures/figure3/cumulative_additive_sa_",space_time_str,".pdf"),width  =10,height=7)
 (plot_pm2p5_cum + plot_pm10_cum + plot_so2_cum)/
@@ -836,7 +857,7 @@ plot_tempmin_cum
 tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
 tmp <- subset(tmp, tmp$cov2%in%c("absh_lag3 + tas_lag0"))
 
-plot_pm2p5_cum <- ggplot(tmp)+
+plot_pm2p5main_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time)),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
   geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_week,space_time,cov2)),alpha=0.4)+
@@ -854,6 +875,20 @@ plot_pm2p5_cum <- ggplot(tmp)+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
         legend.position = "right")
+
+
+### PNG versions
+print(plot_absh_cum)
+ggsave(paste0("figures/figure3/absh_cumulative_additive_sa_",space_time_str,".png"),width  =3.5,height=3.5)
+dev.off()
+
+print(plot_temptasmin_cum)
+ggsave(paste0("figures/figure3/tasmin_cumulative_additive_sa_",space_time_str,".png"),width  =3.5,height=3.5)
+dev.off()
+
+print(plot_pm2p5main_cum)
+ggsave(paste0("figures/figure3/pm2p5_cumulative_additivMAIN_sa_",space_time_str,".png"),width  =3.5,height=3.5)
+dev.off()
 ```
 
 
@@ -2698,7 +2733,7 @@ ggsave(file = "figures/supplement/meteorological_surfaces.png", width = 12, heig
 dev.off()
 
 
- ap_plot_list[[2]] + metplot_list[[1]] + metplot_list[[8]]
+ ap_plot_list[[2]] + metplot_list[[2]] + metplot_list[[8]]
 ```
 
 ## Figures S9-S11:  SUPPLEMENTAL FIGURES GAUTENG 
@@ -3173,7 +3208,7 @@ wrap_plots(plot_list)
 dev.off()
 
 print(plot_list[[10]] + plot_list[[9]]+plot_list[[1]] )
-ggsave(file = "figures/supplement/airpollution_GPSC21_1_surfaces.png", width = 15, height = 5)
+ggsave(file = "figures/supplement/airpollution_GPSC21_1_surfaces.png", width = 9, height = 2.65)
 dev.off()
 
 ```
