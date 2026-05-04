@@ -3213,6 +3213,85 @@ dev.off()
 
 ```
 
+Random effects from final PM2.5 model
+```{r}
+time = "weekly"
+space = "adm2"
+endyear = 2019
+data<-fread(file=paste0("dataframes/sa_",space,"_",time,"_lag_sc.csv"))
+g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map.adj")
+shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+modlist <- readRDS(file=paste0("models/dlnms/bivariable/model_out_summary_list_weekly_adm2_dlnm_none_bivariable_8_2019_templag0humlag3.rds"))
+mmod <- modlist[[1]][[2]]
+## spatial effects
+N=52
+mod<-mmod
+  shp_a1<-shp
+  if(is.null(shp_a1$areaid)){
+    if(N==52){
+    shp_a1$areaid <- shp_a1$GID_2
+    }else{
+      shp_a1$areaid <- shp_a1$GID_1
+      
+    }
+  }
+  shp_a1 <- shp_a1[order(shp_a1$areaid), ]
+  cov<-mod$cov
+  unstructured_effects <- mod$summary.random$id_u$mean[1:N]
+  shp_a1$unstructured_effects<-unstructured_effects
+  
+  spat<-ggplot(data = shp_a1) +
+    geom_sf(aes(fill = unstructured_effects),color=NA) +
+    scale_fill_gradient2(low="blue",mid="white",high="red",midpoint = 0)+
+    theme_classic() +
+    labs(fill = "Random Effect")
+
+  
+##### do the same but for basemod
+  basemod <- readRDS(file=paste0("models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
+## seasonal effects
+  month_names <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", 
+                         "October", "November", "December")
+  mp <- mmod$summary.random$id_m
+  mpbase <- basemod$summary.random$id_m
+  mpbase$month_name <- mp$month_name<-month_names
+  mpbase$month_name <- mp$month_name <- factor(mp$month_name, levels = c(month_names))
+  colnames(mpbase)[grep("quant",colnames(mpbase))] <- colnames(mp)[grep("quant",colnames(mp))] <- c("lowerCI","median","upperCI")
+  m <- ggplot(mp)+
+        geom_line(aes(x = month_name, y = median, group=1))+
+        geom_hline(yintercept=0, linetype="dashed", color="red")+
+        geom_ribbon(aes(x = month_name, ymin = lowerCI, ymax = upperCI, group =1), alpha = 0.5)+
+        geom_line(data = mpbase, aes(x = month_name, y = median, group=1), color = "blue",linetype="dashed" )+
+        theme_bw()+
+        theme(axis.text.x = element_text(angle = 45, hjust = 1), axis.text = element_text(size = 11), axis.title = element_text(size = 11))+
+        xlab("Month")+
+        ylab("Seasonal Effect")
+  
+  yp <- mmod$summary.random$id_y
+  yp$year <- 2004+ yp$ID
+  year_n <- nrow(yp)/9 
+  colnames(yp)[grep("quant",colnames(yp))] <- c("lowerCI","median","upperCI")
+  reg_month_year <- rep(c("Eastern_Cape", "Free_State", "Gauteng",
+                                                       "KwaZulu-Natal", "Limpopo", "Mpumalanga",
+                                                       "North_West", "Northern_Cape", "Western_Cape"), each = year_n)
+  yp$region <- factor(reg_month_year)
+      y <- ggplot(yp)+
+        geom_hline(yintercept=0, linetype="dashed", color="red")+
+        geom_ribbon(aes(x = year, ymin = lowerCI, ymax = upperCI, group = region, ), alpha = 0.3)+
+        geom_line(aes(x = year, y = median, group=region))+
+        theme_bw()+
+        theme(axis.text.x = element_text(angle = 45, hjust = 1), axis.text = element_text(size = 11), axis.title = element_text(size = 11))+
+        xlab("Year")+
+        ylab("Annual Effect")+
+        labs(fill="Province",color = "Province")+
+        facet_wrap(region ~.)
+      
+      library(patchwork)
+      
+     print(spat + m + y)
+     
+### compare seasonal effect from each.
+```
 
 Calculate Numbers for Manuscripts and Tables
 #### calculate N for each sub-group for Tables
