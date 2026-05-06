@@ -150,6 +150,55 @@ saveRDS(geocoded_hospitals_dists, file="input_datasets/germs/geocoded_hospitals_
 
 
 
+################################################################################
+### SUMMARISE DISTRICT COUNCIL PROJECTIONS FROM MID-YEAR POPULATION ESTIMATES FROM STATISTICS SOUTH AFRICA
+################################################################################
+
+population_statsZA <- read.xlsx2("input_datasets/sociodemographic/District_Council_projection_by_sex_and_age_2002-2024.xlsx",  sheetIndex = 1 , header = TRUE)
+population_long <- population_statsZA %>%
+  pivot_longer(
+    cols = starts_with("X"),
+    names_to = "year",
+    values_to = "population_size"
+  ) %>%
+  mutate(
+    year = str_remove(year, "^X"),
+    population_size = as.numeric(population_size)
+  )
+colnames(population_long)<- c("district","sex","age","year","population_size")
+population_long <- population_long %>%
+  mutate(
+    district_clean = district %>%
+      # 1. Strip prefixes and suffixes
+      str_remove("^[A-Z]{2,3}\\s*-\\s*") %>%         # remove province code prefix
+      str_remove_all("\\(DC[0-9]+\\)") %>%           # remove (DCxx)
+      str_remove_all("\\(MAN\\)") %>%                # remove (MAN) from Mangaung
+      str_remove_all("District Municipality") %>%    # drop "District Municipality"
+      str_remove_all("Metropolitan Municipality") %>%# drop "Metropolitan Municipality"
+      str_remove_all("DM") %>%                       # drop "DM"
+      str_squish() %>%                               # trim extra spaces
+      # 2. Handle known mismatches with landscan
+      str_replace("^Garden Route$", "Eden") %>%
+      str_replace("^ZF Mgcawu$", "Siyanda") %>%
+      str_replace("^King Cetshwayo$", "uThungulu")
+  )
+
+population_long <- subset(population_long, population_long$district_clean !="")
+population_long$district_clean[which(population_long$district_clean=="MP - Ehlanzeni")] <- "Ehlanzeni"
+population_long$district_clean[which(population_long$district_clean=="Thabo Mofutsanyane")] <- "Thabo Mofutsanyana"
+
+population_data <- population_long %>%
+  group_by(district_clean,year) %>%
+  summarise(population_size = sum(population_size, na.rm = T))
+
+## merge with shp for the GID values
+colnames(population_data)[which(colnames(population_data)=="district_clean")] <- "district"
+population_data <- left_join(population_data,st_drop_geometry(shp[,c("district","GID_1","GID_2")]), by = "district")
+population_data$population_size <- as.numeric(population_data$population_size)
+population_data$year <- as.numeric(population_data$year)
+population_data <- data.table(population_data)
+
+write.table(population_data, file = "input_datasets/sociodemographic/population_2000_2023_statsZA.csv", sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
 
 
 
