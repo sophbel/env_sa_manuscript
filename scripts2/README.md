@@ -26,6 +26,8 @@ Both scripts allow modifications to run models including invasive disease cases 
 ### meteorological models
 *03_run_univariable_dlnm_GPSC.R* This includes a DLNM of each environmental factor iteratively including the random effects (seasonal, spatial, and interannual) as well as vaccination period and population density.
 
+*03_run_univariable_dlnm_met_splineSens.R* This includes a sensitivity analysis of each univariable environmental factor across different variable and lag knots for the DLNM splines.
+
 ### air pollution models
 *04_run_bivariable_dlnm_GPSC.R* This script allows inclusion of two environmental factors. One DLNM for the air pollutants and the best lag from the previous script to account for the confounding effects of temperature and absoulte humidity. Some exploratory plots are included.
 
