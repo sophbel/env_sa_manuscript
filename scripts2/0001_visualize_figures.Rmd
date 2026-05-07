@@ -599,7 +599,10 @@ data_unscaled_aggregate <- data_unscaled %>%
             so2 = mean(so2_lag0, na.rm=T))
 # TEMPERATURE
 tmp <- subset(fit_list, fit_list$cov%in%c("tas","tasmax","tasmin") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
-# tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+
+# set limit at 0.6 for plot
+tmp$cumlowerCI_rr[which(tmp$cumlowerCI_rr<=0.6)] <- 0.6
+
 plot_temp_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -612,13 +615,13 @@ plot_temp_cum <- ggplot(tmp)+
   theme_bw()+
   xlab("Var")+
   ylab("Relative Risk")+
-  # scale_y_continuous(trans="log10", limits = c(0.4,1.1), breaks = c(0.4, 1, 1.1))+
-    scale_y_continuous(trans="log10", limits = c(0.7,1.2), breaks = c(0.8, 1, 1.2))+
+  # scale_y_continuous(trans="log10")+
+    scale_y_continuous(trans="log10", limits = c(0.6,1.2), breaks = c(0.6, 1, 1.2), labels = c("\u2264 0.6","1.0","1.2"))+
   ggtitle("Temperature")+
   xlab("°C")+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
+        legend.position = "none")
 
 #### mean temperature alone
 tmp <- subset(fit_list, fit_list$cov%in%c("tasmin") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
@@ -689,7 +692,7 @@ plot_absh_cum <- ggplot(tmp)+
 tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
 tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
 
-
+tmp$cumlowerCI_rr[which(tmp$cumlowerCI_rr<=0.8)] <- 0.8
 plot_pm2p5_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -702,16 +705,19 @@ plot_pm2p5_cum <- ggplot(tmp)+
   xlab("Var")+
   ylab("Relative Risk")+
   # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+  # scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+  scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8), labels = c("\u2264 0.8","1.0","1.8"))+
   ggtitle("PM2.5")+
   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
   # facet_wrap(.~lag_week, nrow = 1)+
   xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
   theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
         strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
+        legend.position = "none")
 # PM10
 tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+tmp$cumlowerCI_rr[which(tmp$cumlowerCI_rr<=0.8)] <- 0.8
+
 tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
 plot_pm10_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
@@ -725,7 +731,8 @@ plot_pm10_cum <- ggplot(tmp)+
   xlab("Var")+
   ylab("Relative Risk")+
   # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+  # scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+    scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8), labels = c("\u2264 0.8","1.0","1.8"))+
   ggtitle("PM10")+
   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
   # facet_wrap(.~lag_week, nrow = 1)+
@@ -736,6 +743,8 @@ plot_pm10_cum <- ggplot(tmp)+
 
 # Sulfur Dioxide
 tmp <- subset(fit_list, fit_list$cov%in%c("so2") &  fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
+tmp$cumlowerCI_rr[which(tmp$cumlowerCI_rr<=0.8)] <- 0.8
+
 tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
 plot_so2_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
@@ -749,7 +758,8 @@ plot_so2_cum <- ggplot(tmp)+
   xlab("Var")+
   ylab("Relative Risk")+
   # scale_y_continuous(trans="log10")+
-  scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+  # scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8))+
+    scale_y_continuous(trans="log10", limits = c(0.8,1.9), breaks = c(0.8, 1, 1.8), labels = c("\u2264 0.8","1.0","1.8"))+
   ggtitle("Sulfur Dioxide")+
   labs(linetype = "additive variable", color = "additive variable", fill = "additive variable")+
   # facet_wrap(.~lag_week, nrow = 1)+
@@ -760,15 +770,15 @@ plot_so2_cum <- ggplot(tmp)+
 
 
 ### save each individually
-pdf(paste0("figures/figure3/pm2p5_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
+cairo_pdf(paste0("figures/figure3/pm2p5_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_pm2p5_cum)
 dev.off()
 
-pdf(paste0("figures/figure3/so2_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
+cairo_pdf(paste0("figures/figure3/so2_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_so2_cum)
 dev.off()
 
-pdf(paste0("figures/figure3/pm10_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
+cairo_pdf(paste0("figures/figure3/pm10_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_pm10_cum)
 dev.off()
 
@@ -780,7 +790,7 @@ pdf(paste0("figures/figure3/hurs_cumulative_additive_sa_",space_time_str,".pdf")
 print(plot_hurs_cum)
 dev.off()
 
-pdf(paste0("figures/figure3/tas_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
+cairo_pdf(paste0("figures/figure3/tas_cumulative_additive_sa_",space_time_str,".pdf"),width  =3.5,height=3.5)
 print(plot_temp_cum)
 dev.off()
 
@@ -1129,7 +1139,8 @@ dev.off()
   
 
   plot_age <- ggplot(fits_age_cum)+
-          geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC,cov)), color="black", alpha=0.7, linetype = "dashed")+
+          geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC,cov)), color="black", alpha=0.7, linetype = "dashed") +
+          # geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI_dis),ymax=exp(cum_upperCI_dis), group=interaction(lag_week,GPSC,cov)), fill = "black",alpha=0.2)+
           geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
       geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
       geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(lag_week,GPSC,cov), fill = GPSC),alpha=0.2)+
@@ -1302,7 +1313,9 @@ age_rr[,c("GPSC","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
 
   plot_dis <- ggplot(fits_distypes_cum)+
       geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7, linetype = "dashed")+
-      geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
+              # geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI_dis),ymax=exp(cum_upperCI_dis), group=interaction(lag_week,GPSC,cov)), fill = "black",alpha=0.2)+
+
+      geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.2)+
       geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
       geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(lag_week,GPSC,cov), fill = GPSC),alpha=0.1)+
       theme_bw()+
@@ -3213,85 +3226,6 @@ dev.off()
 
 ```
 
-Random effects from final PM2.5 model
-```{r}
-time = "weekly"
-space = "adm2"
-endyear = 2019
-data<-fread(file=paste0("dataframes/sa_",space,"_",time,"_lag_sc.csv"))
-g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map.adj")
-shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
-modlist <- readRDS(file=paste0("models/dlnms/bivariable/model_out_summary_list_weekly_adm2_dlnm_none_bivariable_8_2019_templag0humlag3.rds"))
-mmod <- modlist[[1]][[2]]
-## spatial effects
-N=52
-mod<-mmod
-  shp_a1<-shp
-  if(is.null(shp_a1$areaid)){
-    if(N==52){
-    shp_a1$areaid <- shp_a1$GID_2
-    }else{
-      shp_a1$areaid <- shp_a1$GID_1
-      
-    }
-  }
-  shp_a1 <- shp_a1[order(shp_a1$areaid), ]
-  cov<-mod$cov
-  unstructured_effects <- mod$summary.random$id_u$mean[1:N]
-  shp_a1$unstructured_effects<-unstructured_effects
-  
-  spat<-ggplot(data = shp_a1) +
-    geom_sf(aes(fill = unstructured_effects),color=NA) +
-    scale_fill_gradient2(low="blue",mid="white",high="red",midpoint = 0)+
-    theme_classic() +
-    labs(fill = "Random Effect")
-
-  
-##### do the same but for basemod
-  basemod <- readRDS(file=paste0("models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
-## seasonal effects
-  month_names <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", 
-                         "October", "November", "December")
-  mp <- mmod$summary.random$id_m
-  mpbase <- basemod$summary.random$id_m
-  mpbase$month_name <- mp$month_name<-month_names
-  mpbase$month_name <- mp$month_name <- factor(mp$month_name, levels = c(month_names))
-  colnames(mpbase)[grep("quant",colnames(mpbase))] <- colnames(mp)[grep("quant",colnames(mp))] <- c("lowerCI","median","upperCI")
-  m <- ggplot(mp)+
-        geom_line(aes(x = month_name, y = median, group=1))+
-        geom_hline(yintercept=0, linetype="dashed", color="red")+
-        geom_ribbon(aes(x = month_name, ymin = lowerCI, ymax = upperCI, group =1), alpha = 0.5)+
-        geom_line(data = mpbase, aes(x = month_name, y = median, group=1), color = "blue",linetype="dashed" )+
-        theme_bw()+
-        theme(axis.text.x = element_text(angle = 45, hjust = 1), axis.text = element_text(size = 11), axis.title = element_text(size = 11))+
-        xlab("Month")+
-        ylab("Seasonal Effect")
-  
-  yp <- mmod$summary.random$id_y
-  yp$year <- 2004+ yp$ID
-  year_n <- nrow(yp)/9 
-  colnames(yp)[grep("quant",colnames(yp))] <- c("lowerCI","median","upperCI")
-  reg_month_year <- rep(c("Eastern_Cape", "Free_State", "Gauteng",
-                                                       "KwaZulu-Natal", "Limpopo", "Mpumalanga",
-                                                       "North_West", "Northern_Cape", "Western_Cape"), each = year_n)
-  yp$region <- factor(reg_month_year)
-      y <- ggplot(yp)+
-        geom_hline(yintercept=0, linetype="dashed", color="red")+
-        geom_ribbon(aes(x = year, ymin = lowerCI, ymax = upperCI, group = region, ), alpha = 0.3)+
-        geom_line(aes(x = year, y = median, group=region))+
-        theme_bw()+
-        theme(axis.text.x = element_text(angle = 45, hjust = 1), axis.text = element_text(size = 11), axis.title = element_text(size = 11))+
-        xlab("Year")+
-        ylab("Annual Effect")+
-        labs(fill="Province",color = "Province")+
-        facet_wrap(region ~.)
-      
-      library(patchwork)
-      
-     print(spat + m + y)
-     
-### compare seasonal effect from each.
-```
 
 Calculate Numbers for Manuscripts and Tables
 #### calculate N for each sub-group for Tables
@@ -3447,65 +3381,177 @@ write.table(matres, file = paste0("figures/random_effects/res_",space,"_",time,"
 ```
 
 
-## OTHER EXPLORATORY FIGURES NOT IN THE PAPER
+
+
+### Supplementary Figure XX
+### Marginal Lag Curves Meteorological Variables
 ```{r}
-# read in each
-  lag8 <- fread(file=paste0("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019_templag0humlag3.csv"))
-lag8$lagtotal <- "lag8"
-  lag12 <- fread(file=paste0("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_12_2019_templag0humlag3.csv"))
-  lag12$lagtotal <- "lag12"
-  lag6 <- fread(file=paste0("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_6_2019_templag0humlag3.csv"))
-  lag6$lagtotal <- "lag6"
-  
-  ### bind together and adjust variables
-  lagcomp <- rbind(lag8, lag12,lag6)
-  lagcomp <- lagcomp[which(lagcomp$cov2=="absh_lag3"),]
+library(data.table)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
 
-  ## rrs
-  lagcomp$rr <- exp(lagcomp$fit)
-lagcomp$lowerCI_rr <- exp(lagcomp$lowerCI)
-lagcomp$upperCI_rr <- exp(lagcomp$upperCI)
-lagcomp$cumrr <- exp(lagcomp$cumulative_fit)
-lagcomp$cumlowerCI_rr <- exp(lagcomp$cum_lowerCI)
-lagcomp$cumupperCI_rr <- exp(lagcomp$cum_upperCI)
+# --- 1. Load and Clean Data ---
+lags_to_load <- c(6, 8, 12)
+files <- paste0("models/dlnms/univariable/nointeraction_results_fits_weekly_adm2_",lags_to_load,"_2019.csv")
 
-### subset for cumulative
-  lagcompspec <- subset(lagcomp, lagcomp$lag_num %in% c(3))
-  
-  ##plot cumulative
-plot_lagscum <- ggplot(lagcompspec)+
-  geom_line(aes(x=var,y=cumrr,group=interaction(lag_num, lagtotal, covariate), color=lagtotal),alpha=0.5)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_num,lagtotal,covariate), fill=lagtotal),alpha=0.3)+
-  labs(color = "", fill = "")+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  scale_y_continuous(trans="log10")+
-  ggtitle("lag comparisons")+
-  xlab("concentration")+
-  facet_grid(. ~ covariate, scales = "free_x")+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
-        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
-plot_lagscum
+# Load all and bind at once
+lag_data <- lapply(seq_along(lags_to_load), function(i) {
+  df <- fread(files[i])
+  df$lag_max_choice <- paste0("Max Lag: ", lags_to_load[i])
+  return(df)
+}) %>% bind_rows()
 
-plot_lagsweekly <- ggplot(lagcomp[which(lagcomp$covariate=="so2_lag0")])+
-  geom_line(aes(x=var,y=rr,group=interaction(lag_num, lagtotal, covariate), color=lagtotal),alpha=0.5)+
-  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_num,lagtotal,covariate), fill=lagtotal),alpha=0.3)+
-  labs(color = "", fill = "")+
-  theme_bw()+
-  xlab("Var")+
-  ylab("Relative Risk")+
-  scale_y_continuous(trans="log10")+
-  ggtitle("lag comparisons")+
-  xlab("concentration")+
-  facet_grid(lagtotal ~ lag_num)+
-  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
-        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
-        legend.position = "right")
-plot_lagsweekly
+lag_data <- subset(lag_data, lag_data$covariate%notin%paste0(c("pm2p5","pm10","o3","so2"),"_lag0"))
+# Basic RR calculations
+lag_data <- lag_data %>%
+  mutate(
+    rr = exp(fit),
+    rr_low = exp(lowerCI),
+    rr_high = exp(upperCI),
+    cum_rr = exp(cumulative_fit),
+    cum_low = exp(cum_lowerCI),
+    cum_high = exp(cum_upperCI)
+  )
+
+#  pick a representative concentration (e.g.,75th pct)
+# We find the 75th percentile, then pick the actual 'var' value closest to it
+spec_values75 <- lag_data %>%
+  group_by(covariate) %>%
+  summarize(
+    target_75th = quantile(var, 0.75, na.rm = TRUE),
+    varspec = var[which.min(abs(var - target_75th))]
+  ) %>%
+  dplyr::select(covariate, varspec)
+lag_data_pct75 <- lag_data %>%
+  inner_join(spec_values75, by = "covariate") %>%
+  filter(var == varspec)%>%
+  mutate(facet_label = paste0(gsub("_lag0","", covariate), "\n(", round(varspec, 2), ")")) 
+plot_lag_structure75 <- ggplot(lag_data_pct75, 
+                             aes(x = lag_num, y = rr, color = lag_max_choice, fill = lag_max_choice)) +
+  geom_ribbon(aes(ymin = rr_low, ymax = rr_high), alpha = 0.1, color = NA) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red", alpha = 0.5) +
+  # Facet by covariate so each has its own lag-response curve
+  facet_wrap(~facet_label, scales = "free_y") + 
+  scale_x_continuous(breaks = seq(0, 12, by = 2)) +
+  theme_minimal() +
+  labs(title = "Lag-Response (75th Percentile)",
+    x = "Lag (Weeks)", y = "Relative Risk", color = "Model Specification", fill = "Model Specification") +
+  theme(legend.position = "bottom")
+
+############################3
+### 25th percentile plot
+# We find the 25th percentile, then pick the actual 'var' value closest to it
+spec_values25 <- lag_data %>%
+  group_by(covariate) %>%
+  summarize(
+    target_25th = quantile(var, 0.25, na.rm = TRUE),
+    varspec = var[which.min(abs(var - target_25th))]) %>%
+  mutate(facet_label = paste0(gsub("_lag0","", covariate), "\n(", round(varspec, 2), ")")) 
+lag_data_pct25 <- lag_data %>%
+  inner_join(spec_values25, by = "covariate") %>%
+  filter(var == varspec)
+plot_lag_structure25 <- ggplot(lag_data_pct25, 
+                             aes(x = lag_num, y = rr, color = lag_max_choice, fill = lag_max_choice)) +
+  geom_ribbon(aes(ymin = rr_low, ymax = rr_high), alpha = 0.1, color = NA) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red", alpha = 0.5) +
+  facet_wrap(~facet_label, scales = "free_y") + 
+  scale_x_continuous(breaks = seq(0, 12, by = 2)) +
+  theme_minimal() +
+  labs(title = "Lag-Response (25th Percentile)",
+    x = "Lag (Weeks)", y = "Relative Risk", color = "Model Specification", fill = "Model Specification") +
+  theme(legend.position = "bottom")
+
+
+
+pdf(file = "figures/supplement/met_marginallags_25.pdf", width = 10, height = 8)
+print(plot_lag_structure25)
+dev.off()
+
+pdf(file = "figures/supplement/met_marginallags_75.pdf", width = 10, height = 8)
+print(plot_lag_structure75)
+dev.off()
+
+```
+
+
+
+### Marginal Lag Curves Air Pollution Variables
+```{r}
+library(data.table)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+
+lags_to_load <- c(6, 8, 12)
+files <- paste0("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_",lags_to_load,"_2019_templag0humlag3.csv")
+
+# Load all and bind at once
+lag_data <- lapply(seq_along(lags_to_load), function(i) {
+  df <- fread(files[i])
+  df$lag_max_choice <- paste0("Max Lag: ", lags_to_load[i])
+  return(df)
+}) %>% bind_rows()
+lag_data <- subset(lag_data, lag_data$cov2%in%c("absh_lag3"))
+
+# Basic RR calculations
+lag_data <- lag_data %>%
+  mutate(
+    rr = exp(fit),
+    rr_low = exp(lowerCI),
+    rr_high = exp(upperCI),
+    cum_rr = exp(cumulative_fit),
+    cum_low = exp(cum_lowerCI),
+    cum_high = exp(cum_upperCI)
+  )
+
+#  pick a representative concentration (e.g.,75th pct)
+# We find the 75th percentile, then pick the actual 'var' value closest to it
+spec_values <- lag_data %>%
+  group_by(covariate) %>%
+  summarize(
+    target_val = case_when(
+      covariate == "pm2p5_lag0" ~ 48,
+      covariate == "pm10_lag0"  ~ 90,
+      covariate == "so2_lag0"   ~ 150
+    ),
+    varspec = var[which.min(abs(var - target_val))][1],
+    .groups = "drop"
+  )
+lag_data_pct <- lag_data %>%
+  inner_join(spec_values, by = "covariate") %>%
+  filter(var == varspec)%>%
+  mutate(facet_label = paste0(gsub("_lag0","", covariate), "\n(", round(varspec, 2), ")")) 
+
+lag_data_pct$facet_label <- factor(lag_data_pct$facet_label, levels = c("pm2p5\n(50)","pm10\n(90)","so2\n(150)"))
+# lag_data_pct$lag_max_choice <- factor(lag_data_pct$lag_max_choice, levels = c("Max Lag: 6","Max Lag: 8","Max Lag: 12"), labels = c("Max Lag: 6","Max Lag: 8","Max Lag: 12") )
+
+plot_aplag_structure <- ggplot(lag_data_pct, 
+                             aes(x = lag_num, y = rr, color = lag_max_choice, fill = lag_max_choice)) +
+  geom_ribbon(aes(ymin = rr_low, ymax = rr_high), alpha = 0.1, color = NA) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red", alpha = 0.5) +
+  # Facet by covariate so each has its own lag-response curve
+  facet_wrap(~facet_label, scales = "free_y") + 
+  scale_x_continuous(breaks = seq(0, 12, by = 2)) +
+  theme_minimal() +
+  labs(x = "Lag (Weeks)", y = "Relative Risk", color = "Model Specification", fill = "Model Specification") +
+  theme(legend.position = "bottom")
+
+plot_aplag_structure
+
+pdf(file = "figures/supplement/ap_marginallags.pdf", width = 8, height = 3)
+print(plot_aplag_structure)
+dev.off()
+
+print(plot_aplag_structure)
+ggsave(file = "figures/supplement/ap_marginallags.png", width = 8, height = 3)
+dev.off()
+
+
+
 ```
 
 Save YAML of entire pipeline environments
@@ -3536,3 +3582,155 @@ yaml::write_yaml(env_list, "/home/sbelman/Documents/env_sa_manuscript/scripts2/r
 print("YAML file 'r_environment.yml' has been created in your working directory.")
 ```
 
+
+
+## OTHER EXPLORATORY FIGURES NOT IN THE PAPER
+```{r}
+# read in each
+  lag8 <- fread(file=paste0("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019_templag0humlag3.csv"))
+  lag8$lagtotal <- "lag8"
+  lag12 <- fread(file=paste0("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_12_2019_templag0humlag3.csv"))
+  lag12$lagtotal <- "lag12"
+  lag6 <- fread(file=paste0("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_6_2019_templag0humlag3.csv"))
+  lag6$lagtotal <- "lag6"
+  
+  ### bind together and adjust variables
+  lagcomp <- rbind(lag8, lag12,lag6)
+  lagcomp <- lagcomp[which(lagcomp$cov2=="absh_lag3"),]
+
+  ## rrs
+  lagcomp$rr <- exp(lagcomp$fit)
+lagcomp$lowerCI_rr <- exp(lagcomp$lowerCI)
+lagcomp$upperCI_rr <- exp(lagcomp$upperCI)
+lagcomp$cumrr <- exp(lagcomp$cumulative_fit)
+lagcomp$cumlowerCI_rr <- exp(lagcomp$cum_lowerCI)
+lagcomp$cumupperCI_rr <- exp(lagcomp$cum_upperCI)
+
+### subset for cumulative
+  lagcompspec <- subset(lagcomp, lagcomp$lag_num %in% c(3))
+  
+ 
+
+plot_lagsweekly <- ggplot(lagcomp[which(lagcomp$covariate=="so2_lag0")])+
+  geom_line(aes(x=var,y=rr,group=interaction(lag_num, lagtotal, covariate), color=lagtotal),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=lowerCI_rr,ymax=upperCI_rr, group=interaction(lag_num,lagtotal,covariate), fill=lagtotal),alpha=0.3)+
+  labs(color = "", fill = "")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  ggtitle("lag comparisons")+
+  xlab("concentration")+
+  facet_grid(lagtotal ~ lag_num)+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+plot_lagsweekly
+
+library(patchwork)
+plot_lagsweekly
+
+
+
+ ##plot cumulative
+plot_lagscum <- ggplot(lagcompspec)+
+  geom_line(aes(x=var,y=cumrr,group=interaction(lag_num, lagtotal, covariate), color=lagtotal),alpha=0.5)+
+  geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+  geom_ribbon(aes(x=var, ymin=cumlowerCI_rr,ymax=cumupperCI_rr, group=interaction(lag_num,lagtotal,covariate), fill=lagtotal),alpha=0.3)+
+  labs(color = "", fill = "")+
+  theme_bw()+
+  xlab("Var")+
+  ylab("Relative Risk")+
+  scale_y_continuous(trans="log10")+
+  ggtitle("lag comparisons")+
+  xlab("concentration")+
+  facet_grid(. ~ covariate, scales = "free_x")+
+  theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
+        strip.text = element_text(size=13), axis.text.x = element_text(angle = 45,hjust=1, size=13),
+        legend.position = "right")
+plot_lagscum
+```
+
+
+
+
+Random effects from final PM2.5 model
+```{r}
+time = "weekly"
+space = "adm2"
+endyear = 2019
+data<-fread(file=paste0("dataframes/sa_",space,"_",time,"_lag_sc.csv"))
+g <- inla.read.graph(filename = "input_datasets/shps/sa_adjacency_map.adj")
+shp<-st_read("input_datasets/shps/gadm41_namematch_ZAF_2.shp")
+modlist <- readRDS(file=paste0("models/dlnms/bivariable/model_out_summary_list_weekly_adm2_dlnm_none_bivariable_8_2019_templag0humlag3.rds"))
+mmod <- modlist[[1]][[2]]
+## spatial effects
+N=52
+mod<-mmod
+  shp_a1<-shp
+  if(is.null(shp_a1$areaid)){
+    if(N==52){
+    shp_a1$areaid <- shp_a1$GID_2
+    }else{
+      shp_a1$areaid <- shp_a1$GID_1
+      
+    }
+  }
+  shp_a1 <- shp_a1[order(shp_a1$areaid), ]
+  cov<-mod$cov
+  unstructured_effects <- mod$summary.random$id_u$mean[1:N]
+  shp_a1$unstructured_effects<-unstructured_effects
+  
+  spat<-ggplot(data = shp_a1) +
+    geom_sf(aes(fill = unstructured_effects),color=NA) +
+    scale_fill_gradient2(low="blue",mid="white",high="red",midpoint = 0)+
+    theme_classic() +
+    labs(fill = "Random Effect")
+
+  
+##### do the same but for basemod
+  basemod <- readRDS(file=paste0("models/base_models/base_model_",time,"_20092011_popdens_",space,"_",endyear,".rds"))
+## seasonal effects
+  month_names <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", 
+                         "October", "November", "December")
+  mp <- mmod$summary.random$id_m
+  mpbase <- basemod$summary.random$id_m
+  mpbase$month_name <- mp$month_name<-month_names
+  mpbase$month_name <- mp$month_name <- factor(mp$month_name, levels = c(month_names))
+  colnames(mpbase)[grep("quant",colnames(mpbase))] <- colnames(mp)[grep("quant",colnames(mp))] <- c("lowerCI","median","upperCI")
+  m <- ggplot(mp)+
+        geom_line(aes(x = month_name, y = median, group=1))+
+        geom_hline(yintercept=0, linetype="dashed", color="red")+
+        geom_ribbon(aes(x = month_name, ymin = lowerCI, ymax = upperCI, group =1), alpha = 0.5)+
+        geom_line(data = mpbase, aes(x = month_name, y = median, group=1), color = "blue",linetype="dashed" )+
+        theme_bw()+
+        theme(axis.text.x = element_text(angle = 45, hjust = 1), axis.text = element_text(size = 11), axis.title = element_text(size = 11))+
+        xlab("Month")+
+        ylab("Seasonal Effect")
+  
+  yp <- mmod$summary.random$id_y
+  yp$year <- 2004+ yp$ID
+  year_n <- nrow(yp)/9 
+  colnames(yp)[grep("quant",colnames(yp))] <- c("lowerCI","median","upperCI")
+  reg_month_year <- rep(c("Eastern_Cape", "Free_State", "Gauteng",
+                                                       "KwaZulu-Natal", "Limpopo", "Mpumalanga",
+                                                       "North_West", "Northern_Cape", "Western_Cape"), each = year_n)
+  yp$region <- factor(reg_month_year)
+      y <- ggplot(yp)+
+        geom_hline(yintercept=0, linetype="dashed", color="red")+
+        geom_ribbon(aes(x = year, ymin = lowerCI, ymax = upperCI, group = region, ), alpha = 0.3)+
+        geom_line(aes(x = year, y = median, group=region))+
+        theme_bw()+
+        theme(axis.text.x = element_text(angle = 45, hjust = 1), axis.text = element_text(size = 11), axis.title = element_text(size = 11))+
+        xlab("Year")+
+        ylab("Annual Effect")+
+        labs(fill="Province",color = "Province")+
+        facet_wrap(region ~.)
+      
+      library(patchwork)
+      
+     print(spat + m + y)
+     
+### compare seasonal effect from each.
+```

@@ -17,9 +17,9 @@ source("scripts2/0_source_functions.R")
 ### set if interaction is true or not
 interaction = FALSE
 ### set resolution
-time = "monthly"
+time = "weekly"
 space = "adm2"
-precov = FALSE
+precov = TRUE
 permute = FALSE
 ## load spatial data
 if(space == "adm1"){
@@ -133,7 +133,8 @@ if(interaction == TRUE){
   cov_names <- grep("pm2p5|pm10", all, value = TRUE)
   
 }else{
-cov_names <- grep("tasmax|tas|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|spei3|spei6|pm2p5|pm10|o3|so2", all, value = TRUE)
+# cov_names <- grep("tasmax|tas|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|spei3|spei6|pm2p5|pm10|o3|so2", all, value = TRUE)
+cov_names <- grep("tasmax|tas|tasmin|hurs|absh|prlrsum|prlrmean|sfcWind|spei3|spei6", all, value = TRUE)
 # cov_names <- grep("hurs|pm2p5|pm10", all, value = TRUE)
 }
 cov_names_labels <- gsub("_lag0", "", cov_names)
@@ -569,7 +570,7 @@ for(gp in 1:length(gpsc_vec_sub)){
  
         ############## SAVE FILES ##############################################
         saveRDS(model_out,file=paste0("models/dlnms/univariable/model_out_summary_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
-        # saveRDS(cp_list,file=paste0("models/dlnms/univariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",maxlag,"_",endyear,".rds"))
+        saveRDS(cp_list,file=paste0("models/dlnms/univariable/crosspred_list_",time,"_",space,"_dlnm_",interact_var,"_",max_lag,"_",endyear,".rds"))
         write.table(mod_sum2, file=paste0("models/dlnms/univariable/mod_gof_dlnm_",time,"_",space,"_",interact_var,"_",max_lag,"_",endyear,".csv"), quote = FALSE, col.names = TRUE, row.names = TRUE, sep = ",")
 
   } ### end of loop through gpscs
