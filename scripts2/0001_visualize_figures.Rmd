@@ -394,8 +394,8 @@ print(dis_pm/dis_hurs)
 dev.off()
 ```
 
-Scripts for visualizing Main Figure 2
-## Figures 2A-C
+Scripts for visualizing Main Extended Figure 1
+## Extended Figure 1A-C
 #### base model random effects
 ```{r}
 time = "weekly"
@@ -466,7 +466,7 @@ pdf(file=paste0("figures/figure2/res_weekly_adm2_",endyear,".pdf"), width = 12,h
 print(spat+m+y)
 dev.off()
 ```
-## Figure 2D: Fixed Effects
+## Extended Figure 1D: Fixed Effects
 #### plot fixed effects from baseline model
 ```{r}
 ###### plot vaccination period and population_density
@@ -531,8 +531,8 @@ print(fixedplot)
 dev.off()
 ```
 
-## Figure 3
-Scripts for visualizing Main Figure 3 and associated supplementary figures
+## Figure 2
+Scripts for visualizing Main Figure 2 and associated supplementary figures
 ## LOAD DATA FOR AIR POLLUTION AND METEOROLOGICAL MODELS
 ```{r}
 # ##  VISUALIZE BIVARIABLE OUTPUTS 
@@ -585,7 +585,7 @@ linetype_labels <- c("absh_lag3 + tas_lag0"="solid", "hurs_lag3 + tas_lag0" = "s
 # linetype_labels <-c("pm2p5" = "solid", "pm10" = "solid","so2" = "solid","absh"="solid", "hurs" = "solid","tasmax" = "solid", "tas" = "solid", "tasmin" = "solid", "none" = "longdash")
 ```
 
-## FIGURE 3:  Cumulative Plot for each
+## Figure 2:  Cumulative Plot for each
 ```{r}
 space_time_str <- "weekly_adm2"
 data_unscaled <- fread("dataframes/sa_adm2_weekly_lag.csv")
@@ -1058,7 +1058,7 @@ pdf(paste0("figures/figure3/tas_weeklags_additive_sa_",space_time_str,".pdf"),wi
 dev.off()
 ```
 
-## Scripts for visualizing Main Figure 4
+## Scripts for visualizing Main Figure 3
 #### SUBSET BY MULTIPLE OUTCOME MODELS
 ```{r}
 ## multiple outcomes
@@ -1132,7 +1132,7 @@ dev.off()
     fits_sero$GPSC <- gsub("_count","",fits_sero$GPSC)
 ```
 
-#### Figure 4 and Figure S15 age distributions
+#### Figure 3 and Figure S15 age distributions
 ```{r}
   fits_age_cum <- fits_age[which(fits_age$lag_num==3),]
   fits_age_cum$GPSC <- factor(fits_age_cum$GPSC, levels = c("age_lt6","age_6t14","age_15t64","age_gt65", "age_gt80","female_count"))
@@ -1196,8 +1196,8 @@ dev.off()
       dev.off()
 
 ```
-## Figure 4A
-### Figure 4
+## Figure 3A
+### Figure 3
 #### plot the relative risk ratio for each sub model as compared to the main models with the cumulative effect
 ```{r}
 # Filter to just age groups (GPSC column) — adapt if needed
@@ -1301,7 +1301,7 @@ fits_age[which(fits_age$cumfit_lowerRR>1&fits_age$predvar==50&fits_age$lag_num==
 age_rr[,c("GPSC","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
 ```
 
-#### Figure 4 and Figure S15: disease types distributions
+#### Figure 3 and Figure S15: disease types distributions
 ```{r}
   fits_distypes_cum <- fits_distypes[which(fits_distypes$lag_num==3),]
   fits_distypes_cum$GPSC <- factor(fits_distypes_cum$GPSC, levels = c("bact_count","mening_count","other_count", "WGS_PEN_SIR_Meningitis_R_count"), labels = c("bact_count","mening_count","other_count", "penR_count"))
@@ -1529,7 +1529,7 @@ plot_seropcv7 <- ggplot(fits_sero_cum[which(fits_sero_cum$pcv_type=="PCV7"& fits
               ggtitle("PM2.5") +
               scale_y_continuous(trans = "log10")
 ```
-#### Figure 4D and Figure S16 vt vs nvt distributions
+#### Figure 3D and Figure S16 vt vs nvt distributions
 ```{r}
 pcv_cols <- c("nvt"="#E75480","pcv7" ="#522081","pcv13"="darkgreen")
 
@@ -1741,7 +1741,7 @@ dev.off()
 ```
 
 ### TEXT SECTION
-### Print the numbers I need from Figure 3
+### Print the numbers I need from Figure 2
 ```{r}
 ### particulate matter numbers PM2.5
 tmppm2[which(tmppm2$var==50&tmppm2$lag=="lag3"),c("cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
@@ -1823,8 +1823,8 @@ tmptas[which(tmptas$cov=="tasmax"&tmptas$var==35),c("cov","lag","var","rr","lowe
 ```
 
 
-## Scripts for visualizing Main Figure 5
-#### Figure 5C: plot GPSC21 19F and pull numbers for manuscript
+## Scripts for visualizing Main Figure 4
+#### Figure 4C: plot GPSC21 19F and pull numbers for manuscript
 ```{r}
 time = "weekly"
 space = "adm2"
@@ -1845,7 +1845,7 @@ exp(gpsc21[which(gpsc21$lag_num==1 & gpsc21$var==50),c("fit","lowerCI","upperCI"
 exp(nointer[which(nointer$lag_num==1 & nointer$var==50),c("fit","lowerCI","upperCI")])
 ```
 
-#### Figure 5A: Proportion of GPSC 21 over space and time
+#### Figure 4A: Proportion of GPSC 21 over space and time
 ```{r}
 # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
@@ -1897,7 +1897,7 @@ print(plotgpsc21)
 ggsave(file="figures/figure5/proportionsGPSC21.png", width = 8,height=4)
 dev.off()
 ```
-### Figure 5B: proportion of GPSCs for each serotype 19f, 12f, and 6a
+### Figure 4B: proportion of GPSCs for each serotype 19f, 12f, and 6a
 ```{r}
 # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
@@ -1983,7 +1983,7 @@ print(p19f)
 dev.off()
 ```
 
-## Figure S20B : Figure 4 associated
+## Figure S20B : Figure 3 associated
 #### cumulative dose response curves for all GPSCs
 ```{r}
 # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
@@ -2249,7 +2249,7 @@ dev.off()
 # ggsave("figures/weeklymonthlyprov_casecount.png", width=12,height=4)
 
 ```
-## FIGURE 3 TEXT SECTION ATTRIBUTABLE FRACTION
+## Figure 2 TEXT SECTION ATTRIBUTABLE FRACTION
 ```{r}
 data <-fread(file="dataframes/sa_adm2_weekly_lag_sc.csv")
 data_unscaled <- fread(file="dataframes/sa_adm2_weekly_lag.csv")
@@ -3303,7 +3303,7 @@ cor_table <- lapply(names(periods), function(p){
 }) %>% bind_rows()
 ```
 
-#### TABLE S3 - FIGURE 2 ADJACENT
+#### TABLE S3 - Extended Figure 1 ADJACENT
 #### report random effects by space and month
 ```{r}
 endyear = 2019
