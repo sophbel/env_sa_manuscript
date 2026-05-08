@@ -3216,7 +3216,7 @@ plot_list <- lapply(gpsc_vec, function(gpsc) {
 wrap_plots(plot_list)
 ggsave(file = "figures/supplement/airpollution_GPSC_surfaces.png", width = 15, height = 10)
 dev.off()
-pdf(file = "figures/supplement/airpollution_GPSC_surfaces.pdf", width = 15, height = 10)
+cairo_pdf(file = "figures/supplement/airpollution_GPSC_surfaces.pdf", width = 15, height = 10)
 wrap_plots(plot_list)
 dev.off()
 
