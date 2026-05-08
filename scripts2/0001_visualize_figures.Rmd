@@ -903,7 +903,7 @@ dev.off()
 
 
 
-### FIGURE S5
+### Extended Figure S5
 ### Plot with lags across 8 weeks
 ```{r}
 # Temperature
@@ -1132,7 +1132,7 @@ dev.off()
     fits_sero$GPSC <- gsub("_count","",fits_sero$GPSC)
 ```
 
-#### Figure 3 and Figure S15 age distributions
+#### Figure 3 and Figure S9 age distributions
 ```{r}
   fits_age_cum <- fits_age[which(fits_age$lag_num==3),]
   fits_age_cum$GPSC <- factor(fits_age_cum$GPSC, levels = c("age_lt6","age_6t14","age_15t64","age_gt65", "age_gt80","female_count"))
@@ -1301,7 +1301,7 @@ fits_age[which(fits_age$cumfit_lowerRR>1&fits_age$predvar==50&fits_age$lag_num==
 age_rr[,c("GPSC","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
 ```
 
-#### Figure 3 and Figure S15: disease types distributions
+#### Figure 3 and Figure S9: disease types distributions
 ```{r}
   fits_distypes_cum <- fits_distypes[which(fits_distypes$lag_num==3),]
   fits_distypes_cum$GPSC <- factor(fits_distypes_cum$GPSC, levels = c("bact_count","mening_count","other_count", "WGS_PEN_SIR_Meningitis_R_count"), labels = c("bact_count","mening_count","other_count", "penR_count"))
@@ -1386,7 +1386,7 @@ fits_distypes_cum[which(fits_distypes_cum$cumfit_lowerRR>0.9&fits_distypes_cum$p
 ```
 
 
-#### Figure S17: serotype distributions
+#### Extended Figure S8: serotype distributions
 ```{r}
 # Create a nested label based on pcv_type and serotype
 nested_labels <- c(
@@ -1529,7 +1529,7 @@ plot_seropcv7 <- ggplot(fits_sero_cum[which(fits_sero_cum$pcv_type=="PCV7"& fits
               ggtitle("PM2.5") +
               scale_y_continuous(trans = "log10")
 ```
-#### Figure 3D and Figure S16 vt vs nvt distributions
+#### Figure 3D and Figure S10 vt vs nvt distributions
 ```{r}
 pcv_cols <- c("nvt"="#E75480","pcv7" ="#522081","pcv13"="darkgreen")
 
@@ -1599,7 +1599,7 @@ ggsave(file="figures/figure4/pcv_pm2p5_cumulative.png", width = 12,height=3)
 
 ```
 
-## Figure S6: CUMULATIVE PLOT for less important variables (SPEI, O3, PRLR, SFCWIND)
+## Extended Figure S6: CUMULATIVE PLOT for less important variables (SPEI, O3, PRLR, SFCWIND)
 ```{r}
 space_time_str <- "weekly_adm2"
 data_unscaled <- fread("dataframes/sa_adm2_weekly_lag.csv")
@@ -1983,7 +1983,7 @@ print(p19f)
 dev.off()
 ```
 
-## Figure S20B : Figure 3 associated
+## Figure S13B : Figure 3 associated
 #### cumulative dose response curves for all GPSCs
 ```{r}
 # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
@@ -2037,7 +2037,7 @@ pdf(file=paste0("figures/figure5/cumulative_effect_pm2p5",space,".pdf"), width =
 print(p14)
 dev.off()
 ```
-##### Figure S20A: 8 week lagged dose response curves
+##### Figure S13A: 8 week lagged dose response curves
 ```{r}
 space = "adm1"
 tmps <- subset(allfits, allfits$cov== "pm2p5" & allfits$interaction_level %in% c("low","high","none") & allfits$space_time==paste0("weekly_",space))
@@ -2356,7 +2356,7 @@ cat(sprintf("If PM2.5 reduced to <= %g ug/m3, %.1f cases (~%.2f%%) could be prev
 
 ```
 
-## FIGURE S3: SPEARMAN CORRELATION ACROSS LAGS 
+## Extended Figure S3: SPEARMAN CORRELATION ACROSS LAGS 
 ```{r}
 data <- fread(file="dataframes/sa_adm1_weekly_lag.csv")
 
@@ -2436,7 +2436,7 @@ pdf("figures/supplement/envvariablespearmanlagcorrelation_LEGEND.pdf", width=3, 
 print(p)
 dev.off()
 ```
-## FIGURE S4: ENVIRONMENTAL DATA SUMMARY PLOTS
+## Extended Figure S4: ENVIRONMENTAL DATA SUMMARY PLOTS
 ### days with particulate matter of 100ug/m3
 ### AND THRESHOLD EXCEEDANCE CALCULATIONS
 ```{r}
@@ -2559,7 +2559,7 @@ mean(summary_by_year[which(summary_by_year$year>2015&summary_by_year$year<=2023)
 ```
 
 
-## FIGURE S8: SENSITIVITY ACROSS CONFOUNDERS IN AIR POLLUTION MODELS
+## Figure S3: SENSITIVITY ACROSS CONFOUNDERS IN AIR POLLUTION MODELS
 ```{r}
 ##### compare CBpm2p5 + CBtas + absh model TO CBpm2p5 + tas + absh model
 dfth1 <- fread("models/dlnms/bivariable/nointeraction_results_fits_weekly_adm2_bivariable_8_2019_templag0humlag3.csv")
@@ -2634,7 +2634,7 @@ dfCB2C[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr"
 dfintC[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr")])
 ```
 
-#### Figure S14: visualize count of sequences for Figure S14
+#### Extended Figure S7: visualize count of sequences for Extended Figure S7
 ```{r}
 data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
@@ -2657,7 +2657,7 @@ print(countpyeryear)
 dev.off()
 ```
 
-#### Figure S7 and S12 VISUALIZE SURFACE PLOTS FOR SUPPLEMENT Figure S12 and Figure S7
+#### Figure S2 and S17 VISUALIZE SURFACE PLOTS FOR SUPPLEMENT Figure S7 and Figure S2
 ```{r}
 library(GHRmodel)
 
@@ -2973,7 +2973,7 @@ pdf("figures/figure3/gautengsouthAfrica_aq_weekly.pdf", width = 13, height = 4.5
 print(aqlaggautplot)
 dev.off() 
 ```
-##### FIGURE S9 and S10
+##### FIGURE S4 and S5
 ###### GAUTENG VS SOUTH AFRICA
 ```{r}
 ############# CUMULATIVE EFFECT PLOTS ############
@@ -3045,7 +3045,7 @@ pdf("figures/gauteng_vs_southafrica_lags.pdf",width=20,height=15)
 print(laggaut)
 dev.off()
 ```
-## Figure S11: PLOT WITH GAUTENG ALONE, NO GAUTENG, AND ALL OF SOUTH AFRICA. RELIES ON TOP PART OF CHUNK ABOVE
+## Figure S6: PLOT WITH GAUTENG ALONE, NO GAUTENG, AND ALL OF SOUTH AFRICA. RELIES ON TOP PART OF CHUNK ABOVE
 ```{r}
 fit_listcompcum$type <- factor(fit_listcompcum$type, levels = c("NoGauteng","Gauteng","South Africa"))
 cumplotsno <- ggplot(fit_listcompcum[which(fit_listcompcum$cov%in%c("pm2p5","pm10","so2"))])+
@@ -3100,7 +3100,7 @@ plotfit50 <- ggplot(fits50) +
   dev.off()
 ```
 
-#### Figure S12: plot summary of proportions of GPSCs for supplement S12
+#### Figure S7: plot summary of proportions of GPSCs for supplement S12
 ```{r}
 # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
@@ -3189,7 +3189,7 @@ pdf("figures/figure5/gpsc_proportions_perprovince.pdf",width = 6, height =6)
 print(plot_b)
 dev.off()
 ```
-## Figure S22: SURFACE PLOTS FOR GPSC MODELS 
+## Extended Figure S9: SURFACE PLOTS FOR GPSC MODELS 
 ```{r}
 library(GHRmodel)
 library(patchwork)
