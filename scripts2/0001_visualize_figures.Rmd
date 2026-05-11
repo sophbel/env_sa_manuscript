@@ -1139,27 +1139,33 @@ dev.off()
   
 
   plot_age <- ggplot(fits_age_cum)+
-          geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC,cov)), color="black", alpha=0.7, linetype = "dashed") +
-          # geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI_dis),ymax=exp(cum_upperCI_dis), group=interaction(lag_week,GPSC,cov)), fill = "black",alpha=0.2)+
+    ## all disease
+          geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC,cov)), color="black", alpha=0.7, linetype = "dotted", color = "black") +
+          geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI_dis),ymax=exp(cum_upperCI_dis), group=interaction(lag_week,GPSC,cov)), fill = "black",alpha=0.07)+
+    # geom_line(aes(x=predvar, y=exp(cum_upperCI_dis), group=interaction(lag_week,GPSC,cov)), 
+    #         color="black", linetype="1F", linewidth = 0.5) +
+    # geom_line(aes(x=predvar, y=exp(cum_lowerCI_dis), group=interaction(lag_week,GPSC,cov)), 
+    #         color="black", linetype="1F", linewidth = 0.5) +
           geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-      geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
-      geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(lag_week,GPSC,cov), fill = GPSC),alpha=0.2)+
-      # geom_ribbon(aes(x=predvar, ymin=exp(lowerCI_dis),ymax=exp(upperCI_dis), group=interaction(lag_week,GPSC)), fill = "black" ,alpha=0.1)+
+    ## vars
+      geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.9, linewidth = 0.7)+
+      geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(lag_week,GPSC,cov), fill = GPSC),alpha=0.1)+
       theme_bw()+
       xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-      ylab("Relative Risk")+
+      ylab("Cumulative Relative Risk")+
       # scale_y_continuous(trans="log10", limits = c(0.9,1.25), breaks = c(0.9, 1, 1.25))+
       scale_y_continuous(trans="log10")+
-      ggtitle("PM2.5")+
+         scale_x_continuous(breaks = seq(0, 200, by = 40))+
+      # ggtitle("PM2.5")+
       # facet_wrap(GPSC~lag_week , ncol=13)+
       labs(color="Age Group",fill="Age Group")+
       theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
             strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
-            legend.position = "right")
+            legend.position = "none")
     plot_age
-    ggsave(file="figures/figure4/age_pm2p5_cumulative.png", width = 5,height=3)
+    ggsave(file="figures/figure3/age_pm2p5_cumulative.png", width = 3,height=3)
     
-pdf(file="figures/figure4/age_pm2p5_cumulative.pdf", width = 5,height=3)
+cairo_pdf(file="figures/figure3/age_pm2p5_cumulative.pdf", width = 3,height=3)
 print(plot_age)
 dev.off()
 
@@ -1184,14 +1190,14 @@ dev.off()
       #                    values = c("bact_count"="#D7191C","mening_count"="#2C7BB6","other_count"="#1A9641"))+
       # scale_fill_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="other invasive disease"),
       #                   values =  c("bact_count"="#D7191C","mening_count"="#2C7BB6","other_count"="#1A9641"))+
-      ggtitle("PM2.5")+
+      # ggtitle("PM2.5")+
       labs(color="Disease Type",fill="Disease Type")+
       theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
             strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
             legend.position = "right")+
            facet_grid(GPSC~lag_num, scales = "free_y")
    
-      pdf(file="figures/figure4/age_pm2p5_weekly.pdf", width = 12,height=6)
+      pdf(file="figures/figure3/age_pm2p5_weekly.pdf", width = 12,height=6)
       print(plot_agelag)
       dev.off()
 
@@ -1312,17 +1318,18 @@ age_rr[,c("GPSC","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
   fits_distypes_cum$cumfit_upperRR <- exp(fits_distypes_cum$cum_upperCI)
 
   plot_dis <- ggplot(fits_distypes_cum)+
-      geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7, linetype = "dashed")+
-              # geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI_dis),ymax=exp(cum_upperCI_dis), group=interaction(lag_week,GPSC,cov)), fill = "black",alpha=0.2)+
+    geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC,cov)), color="black", alpha=0.7, linetype = "dotted", color = "black") +
+          geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI_dis),ymax=exp(cum_upperCI_dis), group=interaction(lag_week,GPSC,cov)), fill = "black",alpha=0.07)+
 
-      geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.2)+
+      geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.9, linewidth=0.7)+
       geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
       geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(lag_week,GPSC,cov), fill = GPSC),alpha=0.1)+
       theme_bw()+
       xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
-      ylab("Relative Risk")+
+      ylab("Cumulative Relative Risk")+
       # scale_y_continuous(trans="log10", limits = c(0.9,1.25), breaks = c(0.9, 1, 1.25))+
       scale_y_continuous(trans="log10")+
+    scale_x_continuous(breaks = seq(0, 200, by = 40))+
       scale_color_manual(labels = c("bact_count"="bacteremia","mening_count"="meningitis","other_count"="other invasive disease"
                                     # ),
                                     ,"penR_count" = "penicillin resistant"),
@@ -1335,16 +1342,16 @@ age_rr[,c("GPSC","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
                         values =  c("bact_count"="#D7191C","mening_count"="#2C7BB6","other_count"="#1A9641"
                                     # ))+
                                     ,"penR_count" = "purple"))+
-      ggtitle("PM2.5")+
+      # ggtitle("PM2.5")+
       # facet_wrap(GPSC~. , ncol=3)+
       labs(color="Disease Type",fill="Disease Type")+
       theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
             strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
             legend.position = "right")
     plot_dis
-    ggsave(file="figures/figure4/disease_type_pm2p5_cumulative.png", width = 5,height=3)
+    ggsave(file="figures/figure3/disease_type_pm2p5_cumulative.png", width = 5,height=3)
 #     
-pdf(file="figures/figure4/disease_type_pm2p5_cumulative.pdf", width = 5,height=3)
+cairo_pdf(file="figures/figure3/disease_type_pm2p5_cumulative.pdf", width = 3,height=3)
 print(plot_dis)
 dev.off()
 
@@ -1537,20 +1544,23 @@ pcv_cols <- c("nvt"="#E75480","pcv7" ="#522081","pcv13"="darkgreen")
   fits_pcv_type_cum <- fits_pcv_type[which(fits_pcv_type$lag_num==3),]
   fits_pcv_type_cum$GPSC <- factor(fits_pcv_type_cum$GPSC, levels = c("nvt","pcv7","pcv13"))
   plot_pcv_cum <- ggplot(fits_pcv_type_cum)+
-       geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7, linetype = "dashed")+
-      geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
+    ## disease
+       geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7, linetype = "dotted")+
+          # geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI_dis),ymax=exp(cum_upperCI_dis), group=interaction(lag_week,GPSC)), fill = "black" ,alpha=0.1)+
+    
+    ## vars
+      geom_line(aes(x=predvar,y=exp(cumulative_fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.9, linewidth = 0.7)+
+          geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(lag_week,GPSC,cov), fill = GPSC),alpha=0.1)+
       geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
-      geom_ribbon(aes(x=predvar, ymin=exp(cum_lowerCI),ymax=exp(cum_upperCI), group=interaction(lag_week,GPSC,cov), fill = GPSC),alpha=0.1)+
-      # geom_line(aes(x=predvar,y=exp(fit_dis),group=interaction(lag_week,GPSC)), color="black", alpha=0.7)+
-      # geom_ribbon(aes(x=predvar, ymin=exp(lowerCI_dis),ymax=exp(upperCI_dis), group=interaction(lag_week,GPSC)), fill = "black" ,alpha=0.1)+
-      scale_color_manual(values =pcv_cols )+
-      scale_fill_manual(values =pcv_cols )+
+      scale_color_manual(values = pcv_cols )+
+      scale_fill_manual(values = pcv_cols )+
       theme_bw()+
       xlab(expression(paste('Concentration (', mu, 'g/m'^3, ')')))+
       ylab("Relative Risk")+
       # scale_y_continuous(trans="log10", limits = c(0.9,1.25), breaks = c(0.9, 1, 1.25))+
       scale_y_continuous(trans="log10")+
-      ggtitle("PM2.5")+
+    scale_x_continuous(breaks = seq(0, 200, by = 40)) +
+      # ggtitle("PM2.5")+
       # facet_wrap(GPSC~. , ncol=3)+
       labs(color="Vaccine Type",fill="Vaccine Type")+
       theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
@@ -1568,13 +1578,17 @@ ggsave(file="figures/figure4/pcv_pm2p5_cumulative.png", width = 5,height=3)
     fit_disease$rr_fit_disnorm <- exp(fit_disease$fit_dis)
     fits_pcv_type2 <- left_join(fits_pcv_type,fit_disease[,c("predvar","lag_num","rr_fit_disnorm")],by=c("lag_num","predvar"))
     
-    #### plot first 4 weeks
-     fits_pcv_type_4 <- fits_pcv_type2[which(fits_pcv_type2$lag_num%in%0:8),]
-  fits_pcv_type_4$GPSC <- factor(fits_pcv_type_4$GPSC, levels = c("nvt","pcv7","pcv13"), labels =  c("nvt","pcv7","pcv13"))
-  plot_pcv_4 <- ggplot(fits_pcv_type_4)+
-      geom_line(aes(x=predvar,y=rr_fit_disnorm,group=interaction(lag_week,GPSC)), color="black", alpha=0.7, linetype = "dashed")+
-      geom_line(aes(x=predvar,y=exp(fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.7)+
-      geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+    #### plot 8 weeks weeks
+     fits_pcv_type_8 <- fits_pcv_type2[which(fits_pcv_type2$lag_num%in%0:8),]
+  fits_pcv_type_8$GPSC <- factor(fits_pcv_type_8$GPSC, levels = c("nvt","pcv7","pcv13"), labels =  c("nvt","pcv7","pcv13"))
+  ## weekly plot
+  plot_pcv_8 <- ggplot(fits_pcv_type_8)+
+          geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
+    ## dis
+      geom_line(aes(x=predvar,y=rr_fit_disnorm,group=interaction(lag_week,GPSC)), color="black", alpha=0.7, linetype = "dotted")+
+          geom_ribbon(aes(x=predvar, ymin=exp(lowerCI_dis),ymax=exp(upperCI_dis), group=interaction(lag_week,GPSC,cov)), fill = "black",alpha=0.07)+
+    ## vars
+      geom_line(aes(x=predvar,y=exp(fit),group=interaction(lag_week,GPSC,cov), color=GPSC),alpha=0.9, linewidth = 0.6)+
       geom_ribbon(aes(x=predvar, ymin=exp(lowerCI),ymax=exp(upperCI), group=interaction(lag_week,GPSC,cov), fill = GPSC),alpha=0.1)+
       # geom_ribbon(aes(x=predvar, ymin=exp(lowerCI_dis),ymax=exp(upperCI_dis), group=interaction(lag_week,GPSC)), fill = "black" ,alpha=0.1)+
       scale_color_manual(values =pcv_cols )+
@@ -1584,18 +1598,19 @@ ggsave(file="figures/figure4/pcv_pm2p5_cumulative.png", width = 5,height=3)
       ylab("Relative Risk")+
       # scale_y_continuous(trans="log10", limits = c(0.9,1.25), breaks = c(0.9, 1, 1.25))+
       scale_y_continuous(trans="log10")+
-      ggtitle("PM2.5")+
+    scale_x_continuous(breaks = seq(0, 200, by = 40))+
+      # ggtitle("PM2.5")+
       facet_wrap(lag_num~. , ncol=9)+
       labs(color="Vaccine Type",fill="Vaccine Type")+
       theme(axis.text = element_text(size=13),axis.title=element_text(size=13), 
             strip.text = element_text(size=9), axis.text.x = element_text(angle = 45,hjust=1, size=13), 
             legend.position = "right")
-  plot_pcv_4
-pdf(file="figures/figure4/pcv_pm2p5_8weeks.pdf", width = 12,height=3)
-print(plot_pcv_4)
+  plot_pcv_8
+cairo_pdf(file="figures/figure3/pcv_pm2p5_8weeks.pdf", width = 13,height=3)
+print(plot_pcv_8)
 dev.off()
 plot_pcv_cum
-ggsave(file="figures/figure4/pcv_pm2p5_cumulative.png", width = 12,height=3)
+ggsave(file="figures/figure3/pcv_pm2p5_cumulative.png", width = 13,height=3)
 
 ```
 
@@ -1983,7 +1998,7 @@ print(p19f)
 dev.off()
 ```
 
-## Figure S13B : Figure 3 associated
+## Figure S13B : Figure 4 associated
 #### cumulative dose response curves for all GPSCs
 ```{r}
 # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
