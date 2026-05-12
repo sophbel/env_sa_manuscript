@@ -1292,3 +1292,57 @@ idx4 <- unique(sa_adm2_monthly_lag_sc$id_u)
 #   theme_bw()+
 #   theme(legend.position = "none")+
 #   facet_grid(GID_1 ~. )
+
+
+######## serotype concordance ##############
+library(dplyr)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv")
+data2 <- subset(data2, data2$year<2020 & data2$year>2004)
+# Define your dominant serotypes
+dominant_serotypes <- c("14", "19F", "23F", "4", "1", "19A", "3", "6A", "12F", "8")
+library(dplyr)
+
+# 1. Define your dominant serotypes
+dominant_serotypes <- data2 %>%
+  filter(serotype %notin%c("","NEG38")) %>%
+  count(serotype) %>%
+  mutate(perc = (n / sum(n)) * 100) %>%
+  filter(perc > 1 ) %>%
+  pull(serotype)
+# dominant_serotypes <- c("14", "19F", "23F", "4", "1", "19A", "3", "6A", "12F", "8")
+
+# 2. Generate  Concordance Table
+concordance_table <- data2 %>%
+  filter(serotype %in% dominant_serotypes) %>%
+  group_by(serotype) %>%
+  # Calculate the phenotypic total first (the "baseline")
+  mutate(Total_Phenotypic = n()) %>% 
+  # Now filter to only those with a genomic result
+  filter(!In_silico_serotype %in% c("_", "UNTYPABLE", NA)) %>%
+  summarize(
+    Phenotype_Total = first(Total_Phenotypic),
+    In_Silico_Total = n(),
+    Matches = sum(serotype == In_silico_serotype, na.rm = TRUE),
+    Concordance_Pct = round((Matches / n()) * 100, 2)#,
+    # Mismatched_Labels = paste(unique(In_silico_serotype[serotype != In_silico_serotype]), collapse = ", ")
+  ) %>%
+  arrange(desc(Phenotype_Total))
+
+print(concordance_table)
+# Calculate GPSC distribution for the dominant types
+gpsc_table <- data2 %>%
+  filter(serotype %in% dominant_serotypes) %>%
+  # Filter out missing GPSC data if necessary
+  filter(!GPSC %in% c("_", "NA", NA)) %>%
+  group_by(serotype, GPSC) %>%
+  summarise(Count = n(), .groups = "drop_last") %>%
+  # Calculate percentage within each serotype group
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2)) %>%
+  # Filter for those representing > 10%
+  filter(Percentage > 10) %>%
+  arrange(serotype, desc(Percentage))
+
+print(gpsc_table)
+
+write.table(concordance_table, file  = "figures/tables/concordance_table_serotypes.csv", quote = FALSE, col.names = TRUE, row.names = FALSE)
+write.table(gpsc_table, file  = "figures/tables/GPSC_by_serotypes.csv", quote = FALSE, col.names = TRUE, row.names = FALSE)
