@@ -1272,8 +1272,12 @@ prr <- ggplot(age_rr,aes(x = GPSC, y = RR_ratio, group = interaction(cov, type))
 age_rr[,c("GPSC","RR","RR_lower","RR_upper","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
 prr
   
-pdf(file="figures/figure4/rrratio_suboutcomes.pdf", width = 12,height=4)
+pdf(file="figures/figure3/rrratio_suboutcomes.pdf", width = 12,height=4)
 print(prr)
+dev.off()
+
+print(prr)
+ggsave(file="figures/figure3/rrratio_suboutcomes.png", width = 13,height=4)
 dev.off()
 
 #### numbers for text
