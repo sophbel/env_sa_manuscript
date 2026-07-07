@@ -82,9 +82,12 @@ displotinc <- ggplot(shp_dis) +
   scale_fill_viridis(trans = "log10",
                      # breaks = legend_breaks_inc, labels = scales::comma(legend_breaks_inc),
                      na.value = "gray90",name = "Disease Incidence\nper 100,000") +
-  theme_minimal(base_size = 12) +
-  theme(plot.title = element_text(face = "bold", size = 16),plot.subtitle = element_text(size = 12),legend.position = "right",
-    panel.grid = element_blank(),axis.text = element_blank(),axis.title = element_blank(),axis.ticks = element_blank())
+  theme_classic(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 16), plot.subtitle = element_text(size = 12),legend.position = "right", axis.text = element_text(size=13))
+
+
+# ,
+    # panel.grid = element_blank(),axis.text = element_blank(),axis.title = element_blank(),axis.ticks = element_blank())
 ## count
 displot_count <- ggplot(shp_dis) +
   geom_sf(aes(fill = disease), color = "white", size = 0.1) +
@@ -2601,6 +2604,66 @@ summary_by_year
 mean(summary_by_year[which(summary_by_year$year<=2010),]$avg_weeks_exceeding,na.rm=T)
 mean(summary_by_year[which(summary_by_year$year>2010&summary_by_year$year<=2923),]$avg_weeks_exceeding,na.rm=T)
 mean(summary_by_year[which(summary_by_year$year>2015&summary_by_year$year<=2023),]$avg_weeks_exceeding,na.rm=T)
+
+#### maps in extended data figure 4
+library(ggplot2)
+library(sf)
+library(dplyr)
+library(patchwork)
+library(data.table)
+shp1 <-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
+data_adm1 <-fread(file="dataframes/sa_adm1_weekly_lag.csv")
+
+# 1. Prepare your data
+# We join the attribute data to the shapefile so ggplot can map it spatially
+data_prov_means <- data_adm1 %>%
+  group_by(adm1_name) %>%
+  summarize(
+    mean_pm2p5  = mean(pm2p5_lag0, na.rm = TRUE),
+    mean_tasmax = mean(tasmax_lag0, na.rm = TRUE),
+    mean_hurs   = mean(hurs_lag0, na.rm = TRUE),
+    mean_absh   = mean(absh_lag0, na.rm = TRUE)
+  )
+map_data <- shp1 %>%
+  left_join(data_prov_means, by = c("NAME_1" = "adm1_name"))
+
+# 2. Build the individual plots using standard ggplot2
+p1 <- ggplot(data = map_data) +
+  geom_sf(aes(fill = log10(mean_pm2p5))) +
+  scale_fill_distiller(palette = "OrRd", direction = 1, name = "Log10 PM2.5") +
+  theme_classic()
+
+p2 <- ggplot(data = map_data) +
+  geom_sf(aes(fill = log10(mean_tasmax))) +
+  scale_fill_distiller(palette = "YlOrRd", direction = 1, name = "Log10 Max.Temp") +
+  theme_classic()
+
+p3 <- ggplot(data = map_data) +
+  geom_sf(aes(fill = mean_hurs)) +
+  scale_fill_distiller(palette = "Blues", direction = 1, name = "Relative Humidity") +
+  theme_classic()
+
+p4 <- ggplot(data = map_data) +
+  geom_sf(aes(fill = mean_absh)) +
+  scale_fill_distiller(palette = "Blues", direction = 1, name = "Absolute Humidity") +
+  theme_classic()
+
+# 3. Stack them vertically using patchwork
+map_seas <- p1 / p2 / p3 / p4
+pdf("figures/extendeddatafigure4/envoverall_SA.pdf", width=5,height=16)
+print(map_seas)
+dev.off()
+# 
+# ## from GHRexplore but has no lats and longs
+# map_seas <- (
+# plot_map(data = data_adm1, var = "pm2p5_lag0",  time = "date", type = "cov", area = "adm1_name",  
+#          map = shp1, map_area = "NAME_1", by_year = FALSE, var_label= "PM2.5", palette = "OrRd", transform = "log10") )/
+#   (plot_map(data = data_adm1, var = "tasmax_lag0",  time = "date", type = "cov", area = "adm1_name",  
+#             map = shp1, map_area = "NAME_1", by_year = FALSE, var_label= "Max.Temp", palette = "YlOrRd", transform = "log10"))/
+#   (plot_map(data = data_adm1, var = "hurs_lag0",  time = "date", type = "cov", area = "adm1_name",  
+#            map = shp1, map_area = "NAME_1", by_year = FALSE, var_label= "Relative Humidity", palette = "Blues")) /
+#   (plot_map(data = data_adm1, var = "absh_lag0",  time = "date", type = "cov", area = "adm1_name",  
+#             map = shp1, map_area = "NAME_1", by_year = FALSE, var_label= "Absolute Humidity", palette = "Blues"))
 ```
 
 
