@@ -2629,13 +2629,15 @@ map_data <- shp1 %>%
 
 # 2. Build the individual plots using standard ggplot2
 p1 <- ggplot(data = map_data) +
-  geom_sf(aes(fill = log10(mean_pm2p5))) +
-  scale_fill_distiller(palette = "OrRd", direction = 1, name = "Log10 PM2.5") +
+  geom_sf(aes(fill = mean_pm2p5), color = "white", size = 0.1) +
+  # Use transform = "log10" instead of trans = "log10"
+  scale_fill_distiller(palette = "OrRd", direction = 1, name = "Mean PM2.5", transform = "log10") +
   theme_classic()
 
 p2 <- ggplot(data = map_data) +
-  geom_sf(aes(fill = log10(mean_tasmax))) +
-  scale_fill_distiller(palette = "YlOrRd", direction = 1, name = "Log10 Max.Temp") +
+  geom_sf(aes(fill = mean_tasmax), color = "white", size = 0.1) +
+  # Use transform = "log10" here too
+  scale_fill_distiller(palette = "YlOrRd", direction = 1, name = "Mean Max.Temp", transform = "log10") +
   theme_classic()
 
 p3 <- ggplot(data = map_data) +
