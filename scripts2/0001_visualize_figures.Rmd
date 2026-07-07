@@ -248,6 +248,9 @@ socts <- ggplot(soc_data_2019) +
 pdf(file="figures/figure1/soc_ts_2019.pdf", width = 6,height=7)
 print(socts)
 dev.off()
+
+testsaadm2weekly <- subset(sa_adm2_weekly, sa_adm2_weekly$year<2021)
+sum(testsaadm2weekly$disease)
 ```
 ## Figure 1D: disease separately with particulate matter and hurs
 ```{r}
@@ -1217,26 +1220,29 @@ age_rr <- fits_cum_pm2p5 %>%
     RR_lower = exp(cum_lowerCI),
     RR_upper = exp(cum_upperCI)
   )
-# Get the reference RR (age_lt5)
-ref_rr <- age_rr %>%
-  filter(GPSC == "age_lt6") %>%
-  pull(RR)
 
 ### using the disease value
 ref_cumfit_dis = (unique(fits_cum_pm2p5$cumulative_fit_dis))
 ref_cumfit_dislower = (unique(fits_cum_pm2p5$cum_lowerCI_dis))
 ref_cumfit_disupper = (unique(fits_cum_pm2p5$cum_upperCI_dis))
 
-# Calculate RR ratio compared to age_lt5
+# Calculate RR ratio compared to disease reference
 age_rr <- age_rr %>%
   mutate(
-        SE_var = (cum_upperCI - cum_lowerCI) / (2 * 1.96),
-        SE_ref  = (ref_cumfit_disupper - ref_cumfit_dislower) / (2 * 1.96),
-        SE_diff = sqrt(SE_var^2 + SE_ref^2),
-            
-        RR_ratio = exp(cumulative_fit - ref_cumfit_dis),
-        RR_ratio_lower = exp((cumulative_fit - ref_cumfit_dislower) - 1.96 * SE_diff),
-        RR_ratio_upper = exp((cumulative_fit - ref_cumfit_disupper) + 1.96 * SE_diff)
+    # 1. Back-calculate standard errors from the original CIs
+    SE_var  = (cum_upperCI - cum_lowerCI) / (2 * 1.96),
+    SE_ref  = (ref_cumfit_disupper - ref_cumfit_dislower) / (2 * 1.96),
+    
+    # 2. Pool the standard errors (assuming independence)
+    SE_diff = sqrt(SE_var^2 + SE_ref^2),
+    
+    # 3. Calculate the log-RR ratio point estimate
+    log_RR_ratio = cumulative_fit - ref_cumfit_dis,
+    
+    # 4. Calculate bounds on the log scale, then exponentiate
+    RR_ratio       = exp(log_RR_ratio),
+    RR_ratio_lower = exp(log_RR_ratio - 1.96 * SE_diff),
+    RR_ratio_upper = exp(log_RR_ratio + 1.96 * SE_diff)
   )
 
 # Plot
@@ -1281,10 +1287,14 @@ ggsave(file="figures/figure3/rrratio_suboutcomes.png", width = 13,height=4)
 dev.off()
 
 #### numbers for text
-age_rr[which(age_rr$GPSC=="female" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio")]
-age_rr[which(age_rr$GPSC=="age <6" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio")]
-age_rr[which(age_rr$GPSC=="other invasive disease" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio")]
+age_rr[which(age_rr$GPSC=="female" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio",  "RR_ratio_lower","RR_ratio_upper")]
+age_rr[which(age_rr$GPSC=="age 65+" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio",  "RR_ratio_lower","RR_ratio_upper")]
+age_rr[which(age_rr$GPSC=="penicillin resistant" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio", "RR_ratio_lower","RR_ratio_upper")]
+age_rr[which(age_rr$GPSC=="age 65+" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio",  "RR_ratio_lower","RR_ratio_upper")]
+
 age_rr[which(age_rr$GPSC=="Sero14" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio", "RR_ratio_lower","RR_ratio_upper")]
+age_rr[which(age_rr$GPSC=="Sero19A" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio", "RR_ratio_lower","RR_ratio_upper")]
+age_rr[which(age_rr$GPSC=="Sero8" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio", "RR_ratio_lower","RR_ratio_upper")]
 
 
 # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
@@ -1817,6 +1827,8 @@ tmphurs[which(tmphurs$rr==max(tmphurs$rr))]
 highhursrisk <- tmphurs[which(tmphurs$cumlowerCI_rr>1 & tmphurs$cov2%in%c("none","pm2p5")),c("lag","cov2","var","rr","lowerCI_rr","upperCI_rr","cumrr","cumlowerCI_rr","cumupperCI_rr")]
 highhursrisk[highhursrisk$var>35&highhursrisk$var<40]
 tmphurs[which(tmphurs$var>39&tmphurs$var<40 & tmphurs$lag=="lag3"),c("lag","cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+tmphurs[which(tmphurs$var>33&tmphurs$var<49 & tmphurs$lag=="lag3"),c("lag","cov2","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+
 tmphurs[which(tmphurs$cumlowerCI_rr>1 & tmphurs$lag=="lag3"),c("var")]
 ### high humidity
 tmphurs[which(tmphurs$var>74& tmphurs$var<76 & tmphurs$lag=="lag3"),c("cov2","var","lag","cumrr","cumlowerCI_rr","cumupperCI_rr")]
@@ -1834,11 +1846,25 @@ tmpabsh[which(tmpabsh$var>=4.0&tmpabsh$var<5.8 & tmpabsh$lag%in%c("lag0","lag1",
 tmpabsh[which(tmpabsh$cumlowerCI_rr>1 & tmpabsh$lag=="lag3"),c("var")]
 
 
-tmptas[which(tmptas$cov=="tasmin"&tmptas$lag=="lag3"&tmptas$cumlowerCI_rr>1),c("cov","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+inc <- tmptas[which(tmptas$cov=="tasmin"&tmptas$lag=="lag3"&tmptas$cumlowerCI_rr>1.005),c("cov","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+inc <- tmptas[which(tmptas$cov=="tasmin"&tmptas$lag=="lag3"&tmptas$var > 4 & tmptas$var <11),c("cov","var","cumrr","cumlowerCI_rr","cumupperCI_rr")]
+mean(inc$cumrr)
+
+inc <- tmptas[which(tmptas$cov=="tasmax"&tmptas$lowerCI_rr>1.01 & tmptas$rr>1.01),c("cov","lag","var","rr","lowerCI_rr","upperCI_rr")]
+range(inc$var)
+mean(inc$rr)
 
 tmptas[which(tmptas$cov=="tas" & tmptas$var==24),c("cov","var","lag","rr","lowerCI_rr","upperCI_rr")]
 
 tmptas[which(tmptas$cov=="tasmax"&tmptas$var==35),c("cov","lag","var","rr","lowerCI_rr","upperCI_rr")]
+
+inc <- tmptas[which(tmptas$cov=="tas"&tmptas$lowerCI_rr>1.01 & tmptas$rr>1.01),c("cov","lag","var","rr","lowerCI_rr","upperCI_rr")]
+range(inc$var)
+mean(inc$rr)
+
+inc <- tmptas[which(tmptas$cov=="tas"&tmptas$upperCI_rr<0.9 ),c("cov","lag","var","rr","lowerCI_rr","upperCI_rr")]
+range(inc$var)
+mean(inc$rr)
 ```
 
 
