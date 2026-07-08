@@ -53,8 +53,8 @@ data$hospital_name[data$hospital_name==""]<-"unknown"
 # # which are present
 # missingaccs <- dtmpac[which(dtmpac$laneid%notin%monc$laneid),]
 # newmiss <- missingaccs[which(missingaccs$laneid%notin%accs$`Isolate ID`),]
+# data <- data |> subset(district!="")
 
-# data <- data |> subset(district!="") 
 ############### ASSIGN DISEASE COLUMN ######################
 data$disease<-1
 # Extract epi week and epi year
