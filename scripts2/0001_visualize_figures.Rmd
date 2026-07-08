@@ -53,6 +53,8 @@ pprov<-ggplot(shp)+
 # pdf(file="figures/figure1/hosp_pprov.pdf", width = 7,height=5)
 # print(pprov)
 # dev.off()
+
+write.table(st_drop_geometry(shp), file = "figures/main_figures/Source_Data/figure1/figure1A.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 ```
 
 #### Figure 1B: PLOT DISEASE INCIDENCE
@@ -76,6 +78,7 @@ legend_breaks <- c(1, 10, 100, 1000, 10000, 50000, 100000)
 # legend_breaks_inc <- c(1, 5, 10, 50, 100, 500, 1000)
 
 # Plot with log-transformed color scale but real value labels
+shp_dis$incidence <- (shp_dis$disease/shp_dis$population_size)*100000
 ## incidence
 displotinc <- ggplot(shp_dis) +
   geom_sf(aes(fill = (disease/population_size)*100000), color = "white", size = 0.1) +
@@ -84,6 +87,8 @@ displotinc <- ggplot(shp_dis) +
                      na.value = "gray90",name = "Disease Incidence\nper 100,000") +
   theme_classic(base_size = 12) +
   theme(plot.title = element_text(face = "bold", size = 16), plot.subtitle = element_text(size = 12),legend.position = "right", axis.text = element_text(size=13))
+
+# write.table(st_drop_geometry(shp_dis), file = "figures/main_figures/Source_Data/figure1/figure1B.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 
 # ,
@@ -143,6 +148,8 @@ envs <- ggplot(env_data)+
 pdf(file="figures/figure1/env_ts.pdf", width = 9,height=7)
 print(envs)
 dev.off()
+
+write.table(env_data, file = "./figures/main_figures/Source_Data/extendedfig4/edfig4D.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
 
 
 ### sociodemographic time series  ###
@@ -233,6 +240,9 @@ pdf(file="figures/figure1/soc_ts_2023.pdf", width = 7.5,height=7)
 print(soc_ts_2023)
 dev.off()
 
+# write.table(soc_data_2023, file = "figures/main_figures/Source_Data/figure1/figure1C.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
 ### repeat for <2020
 soc_data_2019 <- subset(soc_data, soc_data$date < as.Date("2020-01-01") & soc_data$variable != "disease")
 socts <- ggplot(soc_data_2019) +
@@ -317,6 +327,8 @@ dis_env <- ggplot(df_scaled, aes(x = date)) +
 # dev.off()
 
 
+
+
 dis_pm <- ggplot(df_scaled, aes(x = date)) +
       geom_vline(xintercept=as.Date("2009-01-01"), linetype ="dashed",color = "grey20", alpha = 0.7)+
     geom_vline(xintercept=as.Date("2011-01-01"), linetype ="dashed",color = "grey20", alpha = 0.7)+
@@ -398,6 +410,8 @@ dis_hurs <- ggplot(df_scaled_2019, aes(x = date)) +
 pdf(file="figures/figure1/dispmhurs_ts_2019.pdf", width = 8,height=5)
 print(dis_pm/dis_hurs)
 dev.off()
+
+# write.table(df_scaled, file = "figures/main_figures/Source_Data/figure1/figure1D.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 ```
 
 Scripts for visualizing Main Extended Figure 1
@@ -433,6 +447,8 @@ mod<-basemod
     scale_fill_gradient2(low="blue",mid="white",high="red",midpoint = 0)+
     theme_classic() +
     labs(fill = "Random Effect")
+  
+  # write.table(st_drop_geometry(shp_a1), file = "figures/main_figures/Source_Data/extendedfig1/edfig1A.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 ## seasonal effects
   month_names <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", 
                          "October", "November", "December")
@@ -448,6 +464,8 @@ mod<-basemod
         theme(axis.text.x = element_text(angle = 45, hjust = 1), axis.text = element_text(size = 11), axis.title = element_text(size = 11))+
         xlab("Month")+
         ylab("Seasonal Effect")
+  
+  # write.table(mp, file = "figures/main_figures/Source_Data/extendedfig1/edfig1B.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
   
   yp <- basemod$summary.random$id_y
   yp$year <- 2004+ yp$ID
@@ -468,6 +486,8 @@ mod<-basemod
         labs(fill="Province",color = "Province")+
         facet_wrap(region ~.)
 
+       # write.table(yp, file = "figures/main_figures/Source_Data/extendedfig1/edfig1C.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+      
 pdf(file=paste0("figures/figure2/res_weekly_adm2_",endyear,".pdf"), width = 12,height=4)
 print(spat+m+y)
 dev.off()
@@ -515,6 +535,9 @@ fixedplot <- ggplot(fixedeffs) +
   ylab("Fixed Effect") +
   theme(legend.title = element_blank(), axis.text = element_text(size =11), axis.title = element_text(size=13),
         axis.text.x = element_text(angle=45, hjust =1))
+
+       # write.table(fixedeffs, file = "figures/main_figures/Source_Data/extendedfig1/edfig1DE.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 
 scaleFUN <- function(x) sprintf("%.4f", x)
 popinset <- ggplot(fixedeffs[which(fixedeffs$type=="population"),]) +
@@ -609,6 +632,9 @@ tmp <- subset(fit_list, fit_list$cov%in%c("tas","tasmax","tasmin") & fit_list$la
 # set limit at 0.6 for plot
 tmp$cumlowerCI_rr[which(tmp$cumlowerCI_rr<=0.6)] <- 0.6
 
+       write.table(tmp, file = "figures/main_figures/Source_Data/figure2/figure2A.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
 plot_temp_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -651,6 +677,8 @@ plot_temptasmin_cum <- ggplot(tmp)+
 # HURS
 tmp <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
 # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+       write.table(tmp, file = "figures/main_figures/Source_Data/figure2/figure2B1.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 plot_hurs_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -674,6 +702,8 @@ plot_hurs_cum <- ggplot(tmp)+
 # ABSH
 tmp <- subset(fit_list, fit_list$cov%in%c("absh") &  fit_list$lag_num %in% c(3) & fit_list$space_time%in%space_time_str)
 # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
+       write.table(tmp, file = "figures/main_figures/Source_Data/figure2/figure2B2.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 plot_absh_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -699,6 +729,9 @@ tmp <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$lag_num %in% c(3) 
 tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
 
 tmp$cumlowerCI_rr[which(tmp$cumlowerCI_rr<=0.8)] <- 0.8
+
+       write.table(tmp, file = "figures/main_figures/Source_Data/figure2/figure2C1.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 plot_pm2p5_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -725,6 +758,9 @@ tmp <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$lag_num %in% c(3) &
 tmp$cumlowerCI_rr[which(tmp$cumlowerCI_rr<=0.8)] <- 0.8
 
 tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
+       write.table(tmp, file = "figures/main_figures/Source_Data/figure2/figure2C2.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
 plot_pm10_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -752,6 +788,8 @@ tmp <- subset(fit_list, fit_list$cov%in%c("so2") &  fit_list$lag_num %in% c(3) &
 tmp$cumlowerCI_rr[which(tmp$cumlowerCI_rr<=0.8)] <- 0.8
 
 tmp$cov2 <- factor(tmp$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
+       write.table(tmp, file = "figures/main_figures/Source_Data/figure2/figure2C3.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 plot_so2_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.5)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -914,6 +952,7 @@ dev.off()
 ```{r}
 # Temperature
 tmptas <- subset(fit_list, fit_list$cov%in%c("tasmin","tas","tasmax") & fit_list$lag_num %in% c(0:8) & fit_list$space_time=="weekly_adm2")
+       write.table(tmptas, file = "figures/main_figures/Source_Data/extendedfig5/edfig5C.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 # tmphurs$cov2 <- factor(tmphurs$cov2, levels = c("pm2p5","pm10","so2","absh","tasmax","none"))
 plot_tas <- ggplot(tmptas)+
@@ -936,6 +975,7 @@ plot_tas <- ggplot(tmptas)+
 
 # Relative humidity
 tmphurs <- subset(fit_list, fit_list$cov%in%c("hurs") & fit_list$lag_num %in% c(0:8) & fit_list$space_time=="weekly_adm2")
+       write.table(tmphurs, file = "figures/main_figures/Source_Data/extendedfig5/edfig5A.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 # tmphurs$cov2 <- factor(tmphurs$cov2, levels = c("pm2p5","pm10","so2","absh","tasmax","none"))
 plot_hurs <- ggplot(tmphurs)+
@@ -959,6 +999,8 @@ plot_hurs <- ggplot(tmphurs)+
 
 # ABSH
 tmpabsh <- subset(fit_list, fit_list$cov%in%c("absh") &  fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
+       write.table(tmpabsh, file = "figures/main_figures/Source_Data/extendedfig5/edfig5B.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 # tmpabsh$cov2 <- factor(tmpabsh$cov2, levels = c("pm2p5","pm10","so2","hurs","tasmax","none"))
 plot_absh <- ggplot(tmpabsh)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
@@ -982,6 +1024,8 @@ plot_absh <- ggplot(tmpabsh)+
 ### pm2.5
 tmppm2 <- subset(fit_list, fit_list$cov%in%c("pm2p5") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
 tmppm2$cov2 <- factor(tmppm2$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
+       write.table(tmppm2, file = "figures/main_figures/Source_Data/extendedfig5/edfig5D.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 plot_pm2p5 <- ggplot(tmppm2)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1004,6 +1048,8 @@ plot_pm2p5 <- ggplot(tmppm2)+
 ### PM10
 tmppm1 <- subset(fit_list, fit_list$cov%in%c("pm10") & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
 tmppm1$cov2 <- factor(tmppm1$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
+       write.table(tmppm1, file = "figures/main_figures/Source_Data/extendedfig5/edfig5E.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 plot_pm10 <- ggplot(tmppm1)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype=cov2),alpha=0.7)+
   geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1025,6 +1071,7 @@ plot_pm10 <- ggplot(tmppm1)+
 # SO2
 tmpso2 <- subset(fit_list, fit_list$cov%in%c("so2")  & fit_list$lag_num %in% c(0:12) & fit_list$space_time=="weekly_adm2")
 tmpso2$cov2 <- factor(tmpso2$cov2, levels = c("absh_lag3 + tas_lag0","hurs_lag3 + tas_lag0","tas_lag0","tasmax_lag0","none"))
+       write.table(tmpso2, file = "figures/main_figures/Source_Data/extendedfig5/edfig5F.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 plot_so2 <- ggplot(tmpso2)+
   geom_line(aes(x=var,y=rr,group=interaction(lag_week,space_time, cov2), color=cov2, linetype = cov2),alpha=0.7)+
@@ -1175,6 +1222,8 @@ cairo_pdf(file="figures/figure3/age_pm2p5_cumulative.pdf", width = 3,height=3)
 print(plot_age)
 dev.off()
 
+       # write.table(fits_age_cum, file = "figures/main_figures/Source_Data/figure3/figure3B.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 #### across lags
      fits_age_lag <- fits_age[which(fits_age$lag_num<9),]
      fits_age_lag$GPSC <- factor(fits_age_lag$GPSC, levels = c("age_lt6","age_6t14","age_15t64","age_gt65", "age_gt80","female_count"))
@@ -1267,6 +1316,7 @@ age_rr$GPSC <- factor(age_rr$GPSC, levels = c("age_lt6","age_6t14","age_15t64","
 "PCV7","PCV13","NVT","Sero14","Sero19F","Sero23F","Sero4","Sero1","Sero19A","Sero3","Sero6A","Sero12F","Sero8") ))
 
 
+       # write.table(age_rr, file = "figures/main_figures/Source_Data/figure3/figure3A.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 prr <- ggplot(age_rr,aes(x = GPSC, y = RR_ratio, group = interaction(cov, type))) +
     geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
@@ -1333,6 +1383,8 @@ age_rr[,c("GPSC","RR_ratio","RR_ratio_lower","RR_ratio_upper")]
   fits_distypes_cum$cum_fitRR <- exp(fits_distypes_cum$cumulative_fit)
     fits_distypes_cum$cumfit_lowerRR <- exp(fits_distypes_cum$cum_lowerCI)
   fits_distypes_cum$cumfit_upperRR <- exp(fits_distypes_cum$cum_upperCI)
+
+         # write.table(fits_distypes_cum, file = "figures/main_figures/Source_Data/figure3/figure3C.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
   plot_dis <- ggplot(fits_distypes_cum)+
     geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC,cov)), color="black", alpha=0.7, linetype = "dotted", color = "black") +
@@ -1437,7 +1489,8 @@ fits_sero_cum$pcv_type <- factor(fits_sero_cum$pcv_type, levels = c("NVT","PCV13
   fits_sero_cum$cumfit_lowerRR <- exp(fits_sero_cum$cum_lowerCI)
   fits_sero_cum$cumfit_upperRR <- exp(fits_sero_cum$cum_upperCI)
 
-  
+           write.table(fits_sero_cum, file = "figures/main_figures/Source_Data/extendedfig8/edfig8D.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 # Plot using the new nested label
 plot_sero <- ggplot(fits_sero_cum) +
               geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC)), 
@@ -1476,6 +1529,9 @@ fits_sero_week$GPSC <- factor(fits_sero_week$GPSC, levels = c("Sero12F","Sero8",
                                                               "Sero1","Sero19A","Sero3","Sero6A",
                                                               "Sero14","Sero19F","Sero23F","Sero4"))
 fits_sero_week$upperCI[which(fits_sero_week$upperCI>=0.4054651)] <- 0.4054651
+
+           # write.table(fits_sero_week, file = "figures/main_figures/Source_Data/extendedfig8/edfig8ABC.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 plot_sero_week <- ggplot(fits_sero_week) +
               # geom_line(aes(x=predvar,y=exp(cumulative_fit_dis),group=interaction(lag_week,GPSC)), 
                         # color="black", alpha=0.7, linetype = "dashed")+
@@ -1598,6 +1654,9 @@ ggsave(file="figures/figure4/pcv_pm2p5_cumulative.png", width = 5,height=3)
     #### plot 8 weeks weeks
      fits_pcv_type_8 <- fits_pcv_type2[which(fits_pcv_type2$lag_num%in%0:8),]
   fits_pcv_type_8$GPSC <- factor(fits_pcv_type_8$GPSC, levels = c("nvt","pcv7","pcv13"), labels =  c("nvt","pcv7","pcv13"))
+  
+             # write.table(fits_pcv_type_8, file = "figures/main_figures/Source_Data/figure3/figure3D.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
   ## weekly plot
   plot_pcv_8 <- ggplot(fits_pcv_type_8)+
           geom_hline(yintercept = 1, linetype = "dashed", color="red", alpha=0.6)+
@@ -1643,6 +1702,8 @@ data_unscaled_aggregate <- data_unscaled %>%
             sfcWind = mean(sfcWind_lag0,na.rm=T))
 # SPEI
 tmp <- subset(fit_list, fit_list$cov%in%c("spei3","spei6") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+write.table(tmp, file = "figures/main_figures/Source_Data/extendedfig6/edfig6B.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
 plot_spei_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.5)+
@@ -1666,6 +1727,8 @@ plot_spei_cum <- ggplot(tmp)+
 
 ##### PRECIPITATION
 tmp <- subset(fit_list, fit_list$cov%in%c("prlrsum") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+write.table(tmp, file = "figures/main_figures/Source_Data/extendedfig6/edfig6A1.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
 plot_prlrsum_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.5)+
@@ -1688,6 +1751,8 @@ plot_prlrsum_cum <- ggplot(tmp)+
 
 ##### PRECIPITATION
 tmp <- subset(fit_list, fit_list$cov%in%c("prlrmean") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+write.table(tmp, file = "figures/main_figures/Source_Data/extendedfig6/edfig6A2.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
 plot_prlrmean_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov), color=cov),alpha=0.5)+
@@ -1711,6 +1776,8 @@ plot_prlrmean_cum <- ggplot(tmp)+
 
 ##### WIND
 tmp <- subset(fit_list, fit_list$cov%in%c("sfcWind") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+write.table(tmp, file = "figures/main_figures/Source_Data/extendedfig6/edfig6C.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
 plot_wind_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov)),alpha=0.5)+
@@ -1731,6 +1798,8 @@ plot_wind_cum <- ggplot(tmp)+
 
 ##### OZONE
 tmp <- subset(fit_list, fit_list$cov%in%c("o3") & fit_list$lag_num %in% c(3) & fit_list$space_time==space_time_str)
+write.table(tmp, file = "figures/main_figures/Source_Data/extendedfig6/edfig6D.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 # tmp$cov2 <- factor(tmp$cov2, levels = c("pm2p5","pm10","so2","tasmax","none"))
 plot_o3_cum <- ggplot(tmp)+
   geom_line(aes(x=var,y=cumrr,group=interaction(lag_week,space_time, cov)),alpha=0.5)+
@@ -1895,8 +1964,8 @@ exp(nointer[which(nointer$lag_num==1 & nointer$var==50),c("fit","lowerCI","upper
 
 #### Figure 4A: Proportion of GPSC 21 over space and time
 ```{r}
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 
 # Convert date to week start (ISO week)
 data2 <- data2 %>% 
@@ -1918,7 +1987,7 @@ data2 <- data2 %>%
       weekly_data2 <- weekly_data %>%
         mutate(prop_gpsc21plot = ifelse(total_seq == 0, NA, prop_gpsc21),
                prop_gpsc1plot = ifelse(total_seq == 0, NA, prop_gpsc1))
-      
+      # write.table(weekly_data2, file = "figures/main_figures/Source_Data/figure4/figure4A.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
       plotgpsc21 <- ggplot(weekly_data2, aes(x = week, y = prop_gpsc21plot, size = prop_gpsc21plot, colour = prop_gpsc21plot)) +
           geom_point(alpha = 0.8) +
           scale_colour_gradientn(colours = c("#d6e9f9", "#4a7bd0", "#8b2f8c", "#d7191c"),values = scales::rescale(c(0, 0.25, 0.6, 1)),limits = c(0, 1),name = "Proportion GPSC21 per week")+
@@ -1947,8 +2016,8 @@ dev.off()
 ```
 ### Figure 4B: proportion of GPSCs for each serotype 19f, 12f, and 6a
 ```{r}
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 
 highlighted_gpscs <- c("1", "21", "26", "56", "13", "41")
 gpsc_colors <- c(
@@ -1971,6 +2040,7 @@ gpsc_year_props <- gpsc_year_counts %>%
   group_by(year) %>%
   mutate(total = sum(n),
          proportion = n / total)
+      # write.table(gpsc_year_props, file = "figures/main_figures/Source_Data/figure4/figure4B.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 p19f <- ggplot(gpsc_year_props, aes(x = factor(year), y = proportion, fill = GPSC_highlight)) +
   geom_bar(stat = "identity") +
   labs(title = "",
@@ -2032,10 +2102,38 @@ dev.off()
 ```
 
 ## Figure S13B : Figure 4 associated
+```{r}
+st_vec <- c("weekly_adm1","weekly_adm2")
+
+stlist <- list()
+for(s in 1:length(st_vec)){
+  m1 <- fread(file=paste0("models/dlnms/bivariable/nointeraction_results_fits_",st_vec[s],"_bivariable_8_2019_templag0humlag3.csv"))
+  m1$space_time <- st_vec[s]
+  stlist[[s]] <- m1
+}
+fit_list_norm <- rbindlist(stlist)
+fit_list_norm$cov <- gsub("_lag0","",fit_list_norm$covariate)
+
+### with the interactions -- WITH INTERACTION
+st_vec <- c("weekly_adm1","weekly_adm2")
+stlist <- list()
+
+for(s in 1:length(st_vec)){
+  m1 <- fread(file=paste0("./models/dlnms/bivariable/gpsc_results_fits_",st_vec[s],"_allGPSCs_propprov_bivariable_8_2019_templag0humlag3.csv"))
+  m1$space_time <- st_vec[s]
+  stlist[[s]] <- m1
+}
+interfit_list <- rbindlist(stlist)
+interfit_list$cov <- gsub("_lag0","",interfit_list$covariate)
+interfit_list$cov2 <- "absh_lag3"
+## bind this with the no interaction models
+allfits <- rbind(interfit_list, fit_list_norm)
+```
+
 #### cumulative dose response curves for all GPSCs
 ```{r}
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 
 dtgpsc <- data.table(table(data2$GPSC))[which(data.table(table(data2$GPSC))$N>100 | data.table(table(data2$GPSC))$V1%in%c("8","41"))]
 gpsc_vec <- c(paste0("GPSC",dtgpsc[order(-N)]$V1))
@@ -2172,6 +2270,8 @@ p16 <- ggplot(allfits_pivoted[which(allfits_pivoted$GPSC%in%c("GPSC1","GPSC21"))
   theme(axis.text = element_text(size=10),axis.title=element_text(size=13), strip.text = element_text(size=13),
         strip.text.y = element_text(angle=0), axis.text.x = element_text(angle=45, hjust =1))
 p16
+
+      # write.table(allfits_pivoted[which(allfits_pivoted$GPSC%in%c("GPSC1","GPSC21")),], file = "figures/main_figures/Source_Data/figure4/figure4C.csv", sep = ",", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 pdf(file= paste0("figures/figure5/lagged_effect_GPSCswith19F_pm2p5_",space,".pdf"), width = 10,height=3)
 print(p16)
@@ -2462,7 +2562,7 @@ for(c in 1:length(cov_names_vec)){
     
     p_list[[c]] <- p
 }
-
+# write.table(corr_results, file = "./figures/main_figures/Source_Data/extendedfig3/figure3.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
 p <- ggplot(corr_results, aes(x = lag, y = spearman_corr, color = province), alpha=0.8) +
               geom_hline(yintercept = 0, linetype = "dashed", color = "red", alpha = 0.7)+
               geom_line() +
@@ -2470,6 +2570,7 @@ p <- ggplot(corr_results, aes(x = lag, y = spearman_corr, color = province), alp
               scale_color_manual(values = color_labels) +
               labs(title = cov_names_vec[c],x = "Lag (weeks)",y = "Spearman Correlation",color = "Province") +
               theme(legend.position = "right")
+
 pdf("figures/supplement/envvariablespearmanlagcorrelation.pdf", width=10, height =10)
 grid.arrange(grobs = p_list, nrow=3)
 dev.off()
@@ -2492,13 +2593,14 @@ dev.off()
 data_unscaled <- fread("dataframes/sa_adm2_weekly_lag.csv")
 # Filter for high PM2.5 weeks and count per province and year
 weeks_over_50_by_dist_year <- data_unscaled %>%
-  filter(pm2p5_lag0 >= 100) %>%
+  filter(pm2p5_lag0 >= 40) %>%
   group_by(district, NAME_1, year) %>%
   summarise(weeks_over_50 = n(), .groups = "drop") %>%
   arrange(NAME_1, district,year) 
 # View results
 color_labels = c("Eastern_Cape" = "#008080", "Free_State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
                      "Limpopo" = "#228B22", "Mpumalanga" = "#FFC000", "North_West" = "#8B5A2B", "Northern_Cape" = "#606060", "Western_Cape" = "#1A2D6D" )
+write.table(weeks_over_50_by_dist_year, file = "./figures/main_figures/Source_Data/extendedfig7/edfig7A.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
 weeksover <- ggplot(weeks_over_50_by_dist_year, aes(x = year, y = weeks_over_50, color = NAME_1, group = district)) +
   geom_line(size = 1, alpha = 0.7) +
   # geom_point(alpha = 0.7) +
@@ -2515,11 +2617,12 @@ weeksover <- ggplot(weeks_over_50_by_dist_year, aes(x = year, y = weeks_over_50,
   theme(legend.position = "none")
 
 weeks_over_50_by_dist_year[which(weeks_over_50_by_dist_year$weeks_over_50>10),]
+
 ####### tasmax vs relative humidity
 data_unscaled <- fread("dataframes/sa_adm1_weekly_lag.csv")
 color_labels = c("Eastern Cape" = "#008080", "Free State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
                      "Limpopo" = "#228B22", "Mpumalanga" = "#FFC000", "North West" = "#8B5A2B", "Northern Cape" = "#606060", "Western Cape" = "#1A2D6D" )
-
+write.table(data_unscaled, file = "./figures/main_figures/Source_Data/extendedfig4/edfig4C.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
 tmpvhum <- ggplot(data_unscaled, aes(x = tasmax_lag0, y = hurs_lag0, group=province,color=province)) +
   geom_point(alpha = 0.4) +
   scale_color_manual(values=color_labels)+
@@ -2566,7 +2669,9 @@ hist_pm25 <- ggplot(data_unscaled, aes(x = pm2p5_lag0, group=province, fill=prov
   labs(x = expression("PM"[2.5]*" (µg/m³)"),
     y = "Frequency"
   ) +
-  theme_minimal() 
+  theme_minimal()
+write.table(data_unscaled, file = "./figures/main_figures/Source_Data/extendedfig7/edfig7B.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+
 
 pdf(file="figures/supplement/envtmpvhum_descriptions.pdf", width = 4,height=4)
 tmpvhum
@@ -2583,7 +2688,7 @@ ggsave(file="figures/supplement/env_descriptions.png", width = 10,height=4)
 # Count weeks ≥100 for each district-year
 weeks_over_100 <- data_unscaled %>%
   group_by(district, NAME_1, year) %>%
-  summarise(weeks_over_100 = sum(pm2p5_lag0 >= 50), .groups = "drop")
+  summarise(weeks_over_100 = sum(pm2p5_lag0 >= 40), .groups = "drop")
 
 # Keep only district-years that had ≥1 exceedance
 districts_with_exceedance <- weeks_over_100 %>%
@@ -2626,6 +2731,9 @@ data_prov_means <- data_adm1 %>%
   )
 map_data <- shp1 %>%
   left_join(data_prov_means, by = c("NAME_1" = "adm1_name"))
+
+write.table(map_data, file = "./figures/main_figures/Source_Data/extendedfig4/edfig4E.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+
 
 # 2. Build the individual plots using standard ggplot2
 p1 <- ggplot(data = map_data) +
@@ -2746,8 +2854,8 @@ dfintC[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr"
 
 #### Extended Figure S7: visualize count of sequences for Extended Figure S7
 ```{r}
-data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 out <- data2 %>%
   group_by(province,year) %>%
   summarise(count_seq = sum(sequenced, na.rm = T))
@@ -2768,6 +2876,7 @@ dev.off()
 ```
 
 #### Figure S2 and S17 VISUALIZE SURFACE PLOTS FOR SUPPLEMENT Figure S7 and Figure S2
+#### extended data figure 9
 ```{r}
 library(GHRmodel)
 
@@ -3306,7 +3415,6 @@ library(patchwork)
 gpsc_vec <- c("3","17","2","14","10","5","13","26","1","21","56","41","8")
 # gpsc_vec <- c("21","2","3")
 gpsc_vec <- paste0("GPSC", gpsc_vec)
-
 plot_list <- lapply(gpsc_vec, function(gpsc) {
   
   cplist <- readRDS(paste0("models/dlnms/bivariable/",
@@ -3334,6 +3442,54 @@ print(plot_list[[10]] + plot_list[[9]]+plot_list[[1]] )
 ggsave(file = "figures/supplement/airpollution_GPSC21_1_surfaces.png", width = 9, height = 2.65)
 dev.off()
 
+
+
+######### save source data from this figure
+# Initialize an empty list to store dataframes
+all_surfaces_list <- list()
+
+for (gpsc in gpsc_vec) {
+  
+  # 1. Read the RDS file
+  file_path <- paste0("models/dlnms/bivariable/crosspred_list_weekly_adm1_dlnm_", 
+                      gpsc, "_count_bivariable_8_2019.rds")
+  cplist <- readRDS(file_path)
+  
+  # 2. Extract the specific crosspred object
+  cp <- cplist[[1]]$cp_high
+  
+  # 3. Extract the predicted RR surface matrix (exponentiated log-relative risks)
+  rr_matrix <- exp(cp$matfit)
+  
+  # 4. Convert the matrix into a long-format dataframe using existing dimnames
+  gpsc_df <- as.data.frame(rr_matrix) %>%
+    # Create the PM2.5 column from the matrix row names ("5", "10", etc.)
+    mutate(PM25 = as.numeric(rownames(rr_matrix))) %>%
+    # Pivot the lag columns into a long format
+    pivot_longer(
+      cols = starts_with("lag"), 
+      names_to = "Lag_Week", 
+      values_to = "Relative_Risk"
+    ) %>%
+    # Clean up "lag0", "lag1" into clean numeric values 0, 1, etc.
+    mutate(
+      Lag_Week = as.numeric(gsub("lag", "", Lag_Week)),
+      GPSC = gpsc  # Add the GPSC identifier column
+    )
+  
+  # Append to our list
+  all_surfaces_list[[gpsc]] <- gpsc_df
+}
+
+# 5. Bind them all into one master dataframe
+combined_surface_df <- bind_rows(all_surfaces_list)
+
+# 6. Reorder columns for optimal readability
+combined_surface_df <- combined_surface_df %>%
+  select(GPSC, PM25, Lag_Week, Relative_Risk)
+
+# 7. Save the master dataframe to a single CSV
+write.table(combined_surface_df, file = "./figures/main_figures/Source_Data/extendedfig9/edfig9.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
 ```
 
 
