@@ -252,6 +252,8 @@ tmp_long <- aq_gertsibande_monthly %>%
 obs_min <- min(gs_observations$year_month)
 # png("input_datasets/airquality/plots/gert_sibande_pm2p5_comparison.png", width=600,height=300)
 tmp_long<- subset(tmp_long, tmp_long$year_month>=obs_min & year(tmp_long$year_month)<2021)
+write.table(tmp_long, file = "./figures/main_figures/Source_Data/extendedfig10/edfig10B_GS.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+
 mpm_pm2 <- ggplot(tmp_long)+
   geom_point(aes(x=year_month, y=value, group=variable,   group= NAME_1, color=dataset, shape=dataset),alpha=0.7, size=3)+
   theme_bw()+
@@ -341,6 +343,8 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## subset by the minimum from the observations
     obs_min <- min(gaut_observations$year_month)
     tmp_long<- subset(tmp_long, tmp_long$year_month>=obs_min & year(tmp_long$year_month)<2021)
+    write.table(tmp_long, file = "./figures/main_figures/Source_Data/extendedfig10/edfig10B_Gaut.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+    
     gaut_pm2 <- ggplot(tmp_long[which(tmp_long$variable=="pm2p5"),])+
       geom_point(aes(x=year_month, y=value, group=variable, color=dataset, shape = dataset),size=3,alpha=0.7)+
       theme_bw()+
@@ -393,6 +397,8 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## subset by the minimum from the observations
     obs_min <- min(gaut_observations$year_month)
     tmp_long<- subset(tmp_long, tmp_long$year_month>=obs_min & year(tmp_long$year_month)<2021)
+    write.table(tmp_long, file = "./figures/main_figures/Source_Data/extendedfig10/edfig10B_Gaut.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+    
     ggplot(tmp_long[which(tmp_long$variable=="pm2p5"),])+
       geom_point(aes(x=year_month, y=value, group=variable, color=dataset, shape = dataset),alpha=0.7)+
       theme_bw()+
@@ -482,6 +488,8 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## subset by the minimum from the observations
     obs_min <- min(kzn_observations$year_month)
     tmp_long<- subset(tmp_long, tmp_long$year_month>=obs_min & year(tmp_long$year_month)<2021 & tmp_long$value<400)
+    write.table(tmp_long, file = "./figures/main_figures/Source_Data/extendedfig10/edfig10B_KZN.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+    
     # png("input_datasets/airquality/plots/kzn_pm2p5_comparison.png", width=600,height=300)
     kzn_pm2 <- ggplot(tmp_long[which(tmp_long$variable=="pm2p5"),])+
       geom_point(aes(x=year_month, y=value, group=variable,  color=dataset, shape=dataset),size=3,alpha=0.7)+
@@ -574,6 +582,8 @@ mpm_pm2 <- ggplot(tmp_long)+
     ## subset by the minimum from the observations
     obs_min <- min(wesc_observations$year_month)
     tmp_long<- subset(tmp_long, tmp_long$year_month>=obs_min & year(tmp_long$year_month)<2021 & tmp_long$value<400)
+    write.table(tmp_long, file = "./figures/main_figures/Source_Data/extendedfig10/edfig10B_WC.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+    
     # png("input_datasets/airquality/plots/wesc_pm2p5_comparison.png", width=600,height=300)
     wesc_pm2 <- ggplot(tmp_long[which(tmp_long$variable=="pm2p5"),])+
       geom_point(aes(x=year_month, y=value, group=variable,  color=dataset, shape=dataset),size=3,alpha=0.7)+
@@ -671,10 +681,13 @@ mpm_pm2 <- ggplot(tmp_long)+
     # Geocode using OpenStreetMap Nominatim
     geo_data <- name_list %>%
       geocode(name, method = "osm")
+    
 
     color_labels = c("Eastern Cape" = "#008080", "Free State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
                      "Limpopo" = "#228B22", "Mpumalanga" = "#FFC000", "North West" = "#8B5A2B", "Northern Cape" = "#606060", "Western Cape" = "#1A2D6D" )
     # png("input_datasets/airquality/plots/air_quality_observations_map.png", width=500,height=300)
+    write.table(geo_data, file = "./figures/main_figures/Source_Data/extendedfig10/edfig10A.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+    
     ggplot(shp) +
       geom_sf(aes(fill=NAME_1))+
       geom_point(data=geo_data,aes(x=long,y=lat), size=2, fill = "#FF6961", color= "red") +
