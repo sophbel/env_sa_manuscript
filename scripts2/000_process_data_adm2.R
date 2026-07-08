@@ -23,8 +23,8 @@ source("scripts2/0_source_functions.R")
 ## merge district data with shape file area ids
 ## dist_id, prov_id, dist_name, prov_name
 ## load disease data
-  # data<-fread("input_datasets/disease/SA_disease_point.csv")
-  data<-fread("input_datasets/disease/SA_disease_point_share.csv")
+  data<-fread("input_datasets/disease/SA_disease_point.csv")
+  # data<-fread("input_datasets/disease/SA_disease_point_share.csv")
 
   unknowns<-data[which(data$laneid!=""),]
 ## load shape
@@ -184,7 +184,7 @@ source("scripts2/0_source_functions.R")
   # bind lane IDs
   gps_lids<-c(gps1$Lane_id,gps2$Lane_id_x, gps2.1$Lane_id_x)
   drug_res<-colnames(gps1)[grepl("SIR",colnames(gps1))][!grepl("colour",colnames(gps1)[grepl("SIR",colnames(gps1))])]
-  col_names<-c("Lane_id","Region","City","Country","Manifestation","Source","HIV_status","In_silico_serotype","GPSC", drug_res,"PBP1A_2B_2X__autocolour")
+  col_names<-c("Lane_id","ERR","ERS","Region","City","Country","Manifestation","Source","HIV_status","In_silico_serotype","GPSC", drug_res,"PBP1A_2B_2X__autocolour")
   colnames(gps2)[which(colnames(gps2)=="Lane_id_x")]<-"Lane_id"
   colnames(gps2.1)[which(colnames(gps2.1)=="Lane_id_x")]<-"Lane_id"
   colnames(gps2.1)[which(colnames(gps2.1)=="Clinical_manifestation")]<-"Manifestation"
@@ -197,7 +197,10 @@ source("scripts2/0_source_functions.R")
   colnames(gps12)[which(colnames(gps12)=="Lane_id")]<-"laneid"
   ## find which are in the epi data
   data3<-left_join(data2,gps12,by="laneid")
+  
+  ## save
   write.table(data3, file="input_datasets/disease/SA_disease_point_base_allGPSCs.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
+
   
   ## serotypes
   data3$vaccine_status_insil<-ifelse(data3$In_silico_serotype%in%pcv7,"PCV7",ifelse(
@@ -208,16 +211,23 @@ source("scripts2/0_source_functions.R")
   ## drop unknown district and province
   data3 <- subset(data3, data3$district!="unknown")
   
+  # ### save laneIDs and accession numbers
+  # accs <- data3[!is.na(data3$laneid),]
+  # accs <- accs[,c("laneid","ERR","ERS","date","year")]
+  # accs <- accs[which(accs$year<2020),]
+  # missERS <- accs[which(accs$ERS=="_")]
+  # write.table(accs, file = "./input_datasets/germs/accessions.csv", row.names = FALSE, col.names = TRUE, quote = FALSE)
   
-  # data3 <- data2[,c("date","year","province","district","ageyears","sequenced","serotype","spec_type","spec_diagnosis","epi_week","epi_year","vaccine_status_phen","Manifestation","Source","NAME_1","GID_1","Region","City","GPSC","In_silico_serotype","WGS_PEN_SIR_Nonmeningitis")]
-  # write.table(data3, "input_datasets/disease/SA_disease_point_base_share.csv", col.names = TRUE, row.names = FALSE)
-  write.table(data3, file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE,row.names = FALSE, col.names = TRUE)
+  # data3 <- data2[,c("laneid","date","year","province","district","ageyears","sequenced","serotype","spec_type","spec_diagnosis","epi_week","epi_year","vaccine_status_phen","Manifestation","Source","NAME_1","GID_1","Region","City","GPSC","In_silico_serotype","WGS_PEN_SIR_Nonmeningitis")]
+  # data3 <- data3[which(data3$year>2004&data3$year<2024),]
+  # data3$laneid[which(data3$year==2020)] <- NA
+  write.table(data3, "input_datasets/disease/SA_disease_point_base_share.csv", col.names = TRUE, row.names = FALSE)
+  # write.table(data3, file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE,row.names = FALSE, col.names = TRUE)
 ################################################################################
 ######  CREATE DAILY AGGREGATED DATA FRAME WITH 52 (DISTRICT_N=52) NUMBERS FOR EACH DATE ######
 ################################################################################ 
-  # data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv")
   data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv")
-  
+  data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv")
     # ### test case count per year
   # test <- data2
   # test$month <- month(test$date)

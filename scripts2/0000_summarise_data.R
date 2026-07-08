@@ -10,20 +10,49 @@ library(tmaptools)
 library(tidygeocoder)
 library(osmdata)
 library(gridExtra)
-
-setwd("/home/sbelman/Documents/env_sa_manuscript/")
+library(readxl)
+library(readr)
+# setwd("/home/sbelman/Documents/env_sa_manuscript/")
 ################ RENAME AND SELECT COLUMNS REQUIRED FROM GERMS-SA ##########
 '%notin%'<-Negate('%in%')
-# setwd("/home/sbelman/Documents/BRD/SouthAfrica/disease/germs/")
+# setwd("")
 ### read in raw data file
-setwd("input_datasets/disease/germs/")
-data<-fread("./GERMS_SP_2003-2023_5Jul2024.csv")
+setwd("/home/sbelman/Documents/BRD/SouthAfrica/disease/germs/")
+data<-fread("/home/sbelman/Documents/BRD/SouthAfrica/disease/germs/GERMS_SP_2003-2023_5Jul2024.csv")
 data<-data.frame(data)
 data<-data[,c("Lane_id","YEAR","COLLECTDTE",colnames(data)[grep("HOSPITAL",colnames(data))],"SSEROTYPE","AGEMONTHS","AGEYEARS","SPECIMENTYPE","SPECDIAG","SPEN", "PREGNA", "SMOKER", "SEX")]
 colnames(data)<-c("laneid","year","date","hospital_name","province","district","subdistrict","serotype","agemonths","ageyears","spec_type","spec_diagnosis","spec_penR","pregnant","smoker","sex")
 data$district[data$district==""]<-"unknown"
 data$province[data$province==""]<-"unknown"
 data$hospital_name[data$hospital_name==""]<-"unknown"
+
+#################### accessions ##################
+#### exploring which datasets had accession numbers including GPS project from ENA, Monocle itself, and published paper Lekhuleni, et al., 2023. 
+#### accessions are included in the supplementary material.
+
+# data<-fread("input_datasets/disease/SA_disease_point.csv")
+# # only 2005-2020 of data
+# dtmpac <- data[which(!is.na(data$laneid)& data$year<2020),]
+# 
+# # 1. Fetch the entire sequencing run report for the GPS project from ENA
+# url <- "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJEB3084&result=read_run&fields=study_accession,sample_accession,run_accession,country,fastq_ftp"
+# gps_metadata <- read_tsv(url)
+# germs_sa_pneumo <- gps_metadata %>% 
+#   filter(grepl("South Africa", country, ignore.case = TRUE))
+# 
+# ### read in genomic accessions to check they match
+# accs <- read_excel("./input_datasets/germs/41467_2024_52459_MOESM10_ESM.xlsx")
+# accs <- accs[,c("Isolate ID","Isolate accession numbers")]
+# colnames(accs) <- c("laneid","accession","year")
+# 
+# ### read in from monocle
+# monc <- fread("./input_datasets/germs/monocle-metadata_all.csv")
+# monc <- monc[,c("Lane_id","ERS","ERR")]
+# colnames(monc) <- c("laneid","ERS","ERR")
+# 
+# # which are present
+# missingaccs <- dtmpac[which(dtmpac$laneid%notin%monc$laneid),]
+# newmiss <- missingaccs[which(missingaccs$laneid%notin%accs$`Isolate ID`),]
 
 # data <- data |> subset(district!="") 
 ############### ASSIGN DISEASE COLUMN ######################
