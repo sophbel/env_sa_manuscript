@@ -558,6 +558,137 @@ dev.off()
 pdf(file=paste0("figures/figure2/res_weekly_adm2_",endyear,"_fixedeffects.pdf"), width = 4,height=4)
 print(fixedplot)
 dev.off()
+
+```
+
+#### visualizing Extended Figure 2
+```{r}
+        endyear = 2019
+            fixed_effects_all_pr <- fread(file=paste0("models/pcvartprovrep_models/base_pcvartprovrep_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"))
+            fixed_effects_all <- fread(file=paste0("models/pcvart_models/base_pcvart_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"))
+
+#################### NO PROVINCE REPLICATION FIXED EFFECTS #########
+fixedeffs <- cbind(fixed_effects_all, model = rep(c("ART","PCV", "vaccine_periods", "2009vaccine","ARTnational","ART_Vax","ART_Vax"),5), 
+                   effect = rep(c("ART","PCV","vaccine_periods","2009vaccine","ARTnational","vaccine_periods","ART"),5))
+fixedeffs$model <- factor(fixedeffs$model, levels = c("ART_Vax","ART","ARTnational","2009vaccine","vaccine_periods","PCV"))
+colnames(fixedeffs) <- c("mean","sd","lowerCI","median","upperCI","mode","kld","outcome","model","effect")
+color_labels <- c("ART" = "#097969","PCV" = "#D91656", "ARTnational" = "grey", "ART_Vax" = "darkblue", "vaccine_periods"="orange","2009vaccine"="purple" )
+
+fixed_national_all <- ggplot(fixedeffs)+
+  geom_hline(yintercept=0,linetype="dashed",color="red")+
+  geom_point(aes(x=effect,y=median, group=model, color= model),size=3, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(x=effect,ymin=lowerCI,ymax=upperCI, group=model, color= model), width=.3, position=position_dodge(width=0.5))+
+  theme_bw()+
+  xlab("Intervention")+
+  ggtitle(paste0("2005-",endyear)) + 
+  # ylim(-4,0.1)+
+  ylab("Effect")+
+  theme(axis.text.x = element_text(angle=45,hjust=1, size=13), axis.text = element_text(size=13), axis.title = element_text(size=13)) +
+  scale_color_manual(values=color_labels)+
+  labs(color="Model")+
+  facet_wrap(outcome ~.)
+
+unique(fixedeffs$outcome)
+fixedeffs$outcome <- factor(fixedeffs$outcome,
+                               levels = c("disease", "adults", "children", "vts", "nvts"), 
+                               labels = c("disease", "adult (15-64)", "children (≤5)", "VT", "NVT"))
+
+fixed_national_all_model <- ggplot(fixedeffs)+
+  geom_hline(yintercept=0,linetype="dashed",color="red")+
+  geom_point(aes(x=outcome,y=median, group=model, color= effect),size=3, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(x=outcome,ymin=lowerCI,ymax=upperCI, group=model, color= effect), width=.3, position=position_dodge(width=0.5))+
+  theme_bw()+
+  xlab("Outcome")+
+  ggtitle(paste0("2005-",endyear)) + 
+  # ggtitle("Province Replicated Fixed Effects") + 
+  # ylim(-4,0.1)+
+  ylab("Effect")+
+  theme(axis.text.x = element_text(angle=45,hjust=1, size=13), axis.text = element_text(size=13), axis.title = element_text(size=13)) +
+  scale_color_manual(values=color_labels)+
+  labs(color="Model")+
+  facet_wrap(model ~.)
+
+
+pdf(paste0("models/pcvartprovrep_models/fixed_effect_perturbations_",endyear,".pdf"), width = 8, height =5)
+print(fixed_national_all_model)
+dev.off()
+
+print(fixed_national_all_model)
+ggsave(paste0("models/pcvartprovrep_models/fixed_effect_perturbations_",endyear,".png"), width = 8, height =5)
+dev.off()
+
+fixedeffs2019 <- fixedeffs
+# write.table(fixedeffs2023, file = "./figures/main_figures/Source_Data/extendedfig2/edfig2CD.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+write.table(fixedeffs2019, file = "./figures/main_figures/Source_Data/extendedfig2/edfig2AB.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+
+
+#### extended figure 2 E
+
+
+### extended figure 2
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+# 1. Copy data to avoid modifying the original data.table in place
+plot_dt <- copy(data2)
+
+# 2. Create the exact Age Groups requested
+plot_dt[, Age_Group := cut(ageyears, 
+                            breaks = c(-Inf, 5, 18, 64, Inf), 
+                            labels = c("0–5", "6–18", "19–64", "65+"))]
+
+# Convert to character to explicitly group and display the missing (NA) values
+plot_dt[, Age_Group := as.character(Age_Group)]
+plot_dt[is.na(Age_Group), Age_Group := "NA"]
+
+# Turn into a factor to lock in the legend order
+plot_dt[, Age_Group := factor(Age_Group, levels = c("0–5", "6–18", "19–64", "65+", "NA"))]
+
+# 3. Recode Vaccine Status into: NVT, VT, and unknown
+# (Assuming anything that isn't NVT or unknown/missing is a Vaccine Type 'VT')
+plot_dt[, Vaccine_Group := fifelse(vaccine_status_phen == "NVT", "NVT",
+                            fifelse(vaccine_status_phen %in% c("unknown", NA) | is.na(vaccine_status_phen), "unknown", "VT"))]
+
+# Order the facets exactly like the plot: NVT, VT, unknown
+plot_dt[, Vaccine_Group := factor(Vaccine_Group, levels = c("NVT", "VT", "unknown"))]
+
+# 4. Aggregate by Year, Vaccine Group, and Age Group to get yearly case counts
+yearly_counts <- plot_dt[, .(case_count = .N), by = .(year, Vaccine_Group, Age_Group)]
+
+# Filter for the year range visible in your plot (e.g., 2003 to 2023)
+yearly_counts <- yearly_counts[year >= 2003 & year <= 2023]
+write.table(yearly_counts, file = "./figures/main_figures/Source_Data/extendedfig2/edfig2E.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+
+# 5. Define the exact colors to match ggplot2's default scale + a solid grey for NA
+custom_colors <- c(
+  "0–5"   = "#F8766D", 
+  "6–18"  = "#7CAE00", 
+  "19–64" = "#00BFC4", 
+  "65+"   = "#C77CFF", 
+  "NA"    = "#7F7F7F"
+)
+
+# 6. Generate the Plot
+ggplot(yearly_counts, aes(x = year, y = case_count, color = Age_Group, group = Age_Group)) +
+  geom_line(linewidth = 0.7) +
+  geom_point(size = 1.2) +
+  facet_wrap(~ Vaccine_Group, ncol = 3) +
+  scale_color_manual(values = custom_colors) +
+  scale_x_continuous(breaks = seq(2005, 2020, by = 5)) +
+  labs(
+    x = "Year", 
+    y = "case count", 
+    color = "Age Group"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    strip.background = element_blank(),
+    strip.text        = element_text(size = 10, color = "grey30"),
+    panel.grid.minor  = element_blank(),
+    panel.grid.major  = element_line(color = "grey92"),
+    axis.title        = element_text(color = "grey20"),
+    legend.title      = element_text(face = "plain"),
+    legend.position   = "right"
+  )
+
 ```
 
 ## Figure 2
@@ -1350,7 +1481,7 @@ age_rr[which(age_rr$GPSC=="Sero19A" ),c("GPSC","RR","RR_lower","RR_upper","RR_ra
 age_rr[which(age_rr$GPSC=="Sero8" ),c("GPSC","RR","RR_lower","RR_upper","RR_ratio", "RR_ratio_lower","RR_ratio_upper")]
 
 
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 # table(data2[which(data2$serotype=="23F")]$GPSC)/sum(table(data2[which(data2$serotype=="23F")]$GPSC))
 # table(data2[which(data2$serotype=="8")]$GPSC)/sum(table(data2[which(data2$serotype=="8")]$GPSC))
 # table(data2[which(data2$serotype=="8")]$GPSC)
@@ -2589,6 +2720,40 @@ dev.off()
 ### days with particulate matter of 100ug/m3
 ### AND THRESHOLD EXCEEDANCE CALCULATIONS
 ```{r}
+### correlations extended figure 4A
+library(corrplot)
+data <- fread("dataframes/sa_adm2_weekly_lag.csv")
+cor_vecs <- c(grep("lag0", colnames(data), value = TRUE), "population_density", "month",  "flu_positivity","rsv_positivity", "disease")
+cor_matrix <- cor(data[, ..cor_vecs], use = "complete.obs")
+rownames(cor_matrix) <- gsub("_lag0","",rownames(cor_matrix))
+colnames(cor_matrix) <- gsub("_lag0","",colnames(cor_matrix))
+write.table(cor_matrix, file = "./figures/main_figures/Source_Data/extendedfig4/edfig4A.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+# Plot with circles
+# par(mar = c(1, 1, 1, 1))
+corrplot(cor_matrix,
+         method = "circle",         # Circles as glyphs
+         type = "upper",            # Only upper triangle
+         order = "original",          # Reorder variables by hierarchical clustering
+         col = colorRampPalette(c("red", "white", "blue"))(200),  # Color scale
+         addCoef.col = NULL,        # Optionally add correlation values
+         tl.col = "black",          # Label color
+         tl.srt = 45,               # Rotate labels
+         diag = FALSE)              # Hide diagonal
+### select those with high correlation
+cor_df <- melt(cor_matrix, varnames = c("Var1", "Var2"), value.name = "correlation")
+cor_df <- cor_df[as.numeric(factor(cor_df$Var1)) < as.numeric(factor(cor_df$Var2)), ]
+high_corr_df <- subset(cor_df, abs(correlation) > 0.75)
+
+### extended data figure 4B
+library(GHRexplore)
+data_adm1<-fread(file="./dataframes/sa_adm1_weekly_lag.csv")
+plot_seasonality(data_adm1, var = "hurs_lag0", var_label = "Relative Humidity",
+                 type = "cov", time = "date", area = "adm1_name",   
+                 aggregate_space = "adm1_name") 
+write.table(data_adm1, file = "./figures/main_figures/Source_Data/extendedfig4/edfig4B.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+
+
+########### extended data figure 7A
 ### adm1
 data_unscaled <- fread("dataframes/sa_adm2_weekly_lag.csv")
 # Filter for high PM2.5 weeks and count per province and year
@@ -2618,6 +2783,7 @@ weeksover <- ggplot(weeks_over_50_by_dist_year, aes(x = year, y = weeks_over_50,
 
 weeks_over_50_by_dist_year[which(weeks_over_50_by_dist_year$weeks_over_50>10),]
 
+### extended data figure 4C
 ####### tasmax vs relative humidity
 data_unscaled <- fread("dataframes/sa_adm1_weekly_lag.csv")
 color_labels = c("Eastern Cape" = "#008080", "Free State" = "#D75F00", "Gauteng" = "#967bb6" , "KwaZulu-Natal"= "#FFCCCB",
@@ -2710,7 +2876,8 @@ mean(summary_by_year[which(summary_by_year$year<=2010),]$avg_weeks_exceeding,na.
 mean(summary_by_year[which(summary_by_year$year>2010&summary_by_year$year<=2923),]$avg_weeks_exceeding,na.rm=T)
 mean(summary_by_year[which(summary_by_year$year>2015&summary_by_year$year<=2023),]$avg_weeks_exceeding,na.rm=T)
 
-#### maps in extended data figure 4
+
+#### maps in extended data figure 4E
 library(ggplot2)
 library(sf)
 library(dplyr)

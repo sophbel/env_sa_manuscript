@@ -590,7 +590,7 @@ write.table(mod_out_bases,file=paste0("models/pcvart_models/base_pcvart_summary_
 #################################################################################
 # #### PLOT COMPARISONS OF DIFFERENT OUTCOMES AND PERTURBATIONS
 #################################################################################
-            endyear = 2023
+            endyear = 2019
             fixed_effects_all_pr <- fread(file=paste0("models/pcvartprovrep_models/base_pcvartprovrep_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"))
             fixed_effects_all <- fread(file=paste0("models/pcvart_models/base_pcvart_variousoutcomes_fixedeffects_adm2_weekly_",endyear,".csv"))
 
@@ -644,6 +644,9 @@ print(fixed_national_all_model)
 ggsave(paste0("models/pcvartprovrep_models/fixed_effect_perturbations_",endyear,".png"), width = 8, height =5)
 dev.off()
 
+fixedeffs2019 <- fixedeffs
+# write.table(fixedeffs2023, file = "./figures/main_figures/Source_Data/extendedfig2/edfig2CD.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
+write.table(fixedeffs2019, file = "./figures/main_figures/Source_Data/extendedfig2/edfig2AB.csv", quote = FALSE, row.names = FALSE, col.names = TRUE, sep = ",")
 
 #################### WITH PROVINCE REPLICATION FIXED EFFECTS #########
 fixedeffs_pr <- cbind(fixed_effects_all_pr, model = rep(c("ART","PCV", "vaccine_periods", "2009vaccine","ARTnational","ART_Vax","ART_Vax"),5), 
