@@ -72,14 +72,11 @@ data$laneid[which(data$laneid=="")]<-NA
 # Save processed file including disease
 # write.table(data,"input_datasets/disease/SA_disease_point.csv",quote=FALSE,row.names = FALSE, col.names = TRUE,sep=",")
 
-# data5 <- data[,-c("laneid")]
-# write.table(data5,"input_datasets/disease/SA_disease_point_share.csv",quote=TRUE,row.names = FALSE, col.names = TRUE,sep=",")
-
 ################################################################################
 ## SAVE NAME MATCHED SHAPE FILES 
 ################################################################################
 # LOAD SHAPE FILES
-data<-fread("input_datasets/disease/SA_disease_point_share.csv")
+data<-fread("input_datasets/disease/SA_disease_point.csv")
 
 ######## district level
 shp<-st_read("input_datasets/shps/gadm41_ZAF_2.shp")

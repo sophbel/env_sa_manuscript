@@ -2096,7 +2096,6 @@ exp(nointer[which(nointer$lag_num==1 & nointer$var==50),c("fit","lowerCI","upper
 #### Figure 4A: Proportion of GPSC 21 over space and time
 ```{r}
 data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 
 # Convert date to week start (ISO week)
 data2 <- data2 %>% 
@@ -2148,7 +2147,6 @@ dev.off()
 ### Figure 4B: proportion of GPSCs for each serotype 19f, 12f, and 6a
 ```{r}
 data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 
 highlighted_gpscs <- c("1", "21", "26", "56", "13", "41")
 gpsc_colors <- c(
@@ -2264,7 +2262,6 @@ allfits <- rbind(interfit_list, fit_list_norm)
 #### cumulative dose response curves for all GPSCs
 ```{r}
 data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 
 dtgpsc <- data.table(table(data2$GPSC))[which(data.table(table(data2$GPSC))$N>100 | data.table(table(data2$GPSC))$V1%in%c("8","41"))]
 gpsc_vec <- c(paste0("GPSC",dtgpsc[order(-N)]$V1))
@@ -2426,8 +2423,8 @@ dev.off()
 # Scripts for visualizing supplemental figures
 ## FIGURE S1A-B: case counts weekly monthly and by province
 ```{r}
-# data<-fread("input_datasets/disease/SA_disease_point.csv")
 data<-fread("input_datasets/disease/SA_disease_point_share.csv")
+
 # save only necessary
 # data4 <- data[,c("date", "epi_year","epi_week","district","disease")]
 # write.table(data4, "input_datasets/disease/SA_disease_point_share.csv",quote = FALSE, col.names = TRUE, row.names = FALSE)
@@ -3021,7 +3018,6 @@ dfintC[which(dfthC$predvar==50),c("type","cumrr","cumlowerCI_rr","cumupperCI_rr"
 
 #### Extended Figure S7: visualize count of sequences for Extended Figure S7
 ```{r}
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
 data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 out <- data2 %>%
   group_by(province,year) %>%
@@ -3488,8 +3484,7 @@ plotfit50 <- ggplot(fits50) +
 
 #### Figure S7: plot summary of proportions of GPSCs for supplement S12
 ```{r}
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 gpscdf <- as.data.table(table(data2$GPSC))[order(-N)]
 shp <-st_read("input_datasets/shps/gadm41_namematch_ZAF_1.shp")
 
@@ -3674,8 +3669,7 @@ sa_adm1_weekly2019 <- sa_adm1_weekly[which(sa_adm1_weekly$year<2020),]
 
 sum(sa_adm2_weekly$other_count)/sum(sa_adm2_weekly$disease)
 sum(c(sa_adm2_weekly$other_count,sa_adm2_weekly$bact_count,sa_adm2_weekly$mening_count))
-# data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
-data2<- fread(file="input_datasets/disease/SA_disease_point_base_share.csv",quote=FALSE, header = TRUE)
+data2<- fread(file="input_datasets/disease/SA_disease_point_base.csv",quote=FALSE, header = TRUE)
 dattot <- data2[which(data2$year>2004 & data2$year<2020  )]
 
 ### grids per district
